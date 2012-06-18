@@ -16,7 +16,7 @@
   { "proof": "0.0.5"
   }
 , "dependencies":
-  { "xmldom": ">=0.1.0"
+  { "xmldom": "0.1.11"
   }
 , "bin": { "stencil": "./bin/stencil" }
 }
