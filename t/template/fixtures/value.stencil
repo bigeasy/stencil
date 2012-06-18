@@ -1,0 +1,5 @@
+<html xmlns:s="http://bigeasy.github.com/stencil">
+<body>
+<s:value element="p" select="source.file"/>
+</body>
+</html>

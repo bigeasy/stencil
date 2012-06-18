@@ -1,0 +1,26 @@
+STENCIL
+
+Asynchronous HTML5 templating for Node.js and the browser.
+
+    Home:           http://bigeasy.github.com/stencil
+    Source:         http://github.com/bigeasy/stencil
+    Documentation:  http://github.com/bigeasy/stencil/wiki
+
+    Build Status:   http://travis-ci.org/bigeasy/stencil
+    Issues:         https://github.com/bigeasy/stencil/issues
+
+    License:        The MIT License
+
+PURPOSE
+
+Revisiting the ideas explorted in a Java based Stencil.
+
+  https://github.com/defunct/stencil
+
+Stencil is asynchronous HTML5 templating for Node.js and the browser. It based
+on some ideas from yesteryear and some ideas from tomorrow.
+
+This project evolved from work with Streamline and CoffeeScript. That work has
+been moved to a project named Pastiche.
+
+  https://github.com/bigeasy/pastiche
