@@ -3,6 +3,14 @@
   else if (typeof define == "function" && typeof define.amd == "object") define(definition);
   else this.tz = definition();
 } (function () { function create (resolver) {
+  var __slice = [].slice;
+
+  function die () {
+    console.log.apply(console, __slice.call(arguments, 0));
+    return process.exit(1);
+  };
+
+  function say () { return console.log.apply(console, __slice.call(arguments, 0)) }
   // const      ELEMENT_NODE                   = 1;
   // const      ATTRIBUTE_NODE                 = 2;
   // const      TEXT_NODE                      = 3;
@@ -16,7 +24,7 @@
   // const      DOCUMENT_FRAGMENT_NODE         = 11;
   // const      NOTATION_NODE                  = 12;
 
-  var NS_STENCIL = "http://bigeasy.github.com/stencil";
+  var NS_STENCIL = "stencil";
 
   var REPLACEMENTS =
   { "<": "&lt;"
@@ -49,112 +57,114 @@
     }
   }
 
-  function loadModule(descent, node) {
-    var href = node.getAttribute("href"), into = node.getAttribute("into");
-    descent.context[0][into] = require(href);
-    resume(descent);
-  }
+  var functions = {};
 
-  function resume(descent) {
-    var stack = descent.stack, node = stack.pop()
-    while (stack.length != 0 && children(descent, node.nextSibling)) {
-      node = stack.pop();
-    }
-    if (stack.length == 0) {
-      descent.complete(null, node);
-    }
-  }
+  function wrap (node) { return { node: node, loading: 0, context: {} } }
 
-  function evaluate(descent, source, callback) {
-    var args = [], values = [], i, I, result;
-    for (var key in descent.context[0]) {
-      args.push(key);
-    }
-    for (i = 0, I = args.length; i < I; i++) {
-      values.push(descent.context[0][args[i]]);
-    }
-    var f = Function.apply(Function, args.concat([ "return " + source ]));
-    descent.callback = callback;
-    try {
-      result = f.apply(this, values);
-    } catch (e) {
-      descent.complete(e);
-    }
-    if (!descent.calledback) {
-      descent.callback(result);
-    }
-  }
+  function xmlify (template, done) {
+    function requireModule(href) {
+      var record = stack.pop()
+        , into = href.replace(/^.*\/([^.]+).*$/, "$1");
 
-  function writeValue(descent, node) {
-    evaluate(descent, node.getAttribute("select"), function (result) {
-      var e = node.ownerDocument.createElement(node.getAttribute("element"));
-      var text = node.ownerDocument.createTextNode(result);
-      e.appendChild(text);
-      node.parentNode.insertBefore(e, node);
-      node.parentNode.removeChild(node);
-      resume(descent);
-    });
-  }
+      resolver(href, "text/javascript", check(done, function (module) {
+        record.context[into] = module;
+        record.loading++;
+        if (visit(record)) resume();
+      }));
 
-  function children(descent, child) {
-    for (; child != null; child = child.nextSibling) {
-      if (!visit(descent, child)) {
-        return false;
+      return false;
+    }
+
+    function resume () {
+      var record = stack.pop();
+      while (stack.length != 0 && children(record.node.nextSibling)) {
+        record = stack.pop();
+      }
+      if (stack.length == 0) {
+        done(null, record.node);
       }
     }
-    return true;
-  }
 
-  function visit(descent, node) {
-    var i, I, child;
-    descent.stack.push(node);
-    switch (node.nodeType) {
-    case 1:
-      if (NS_STENCIL == node.namespaceURI) {
-        switch (node.localName) {
-        case "require":
+    function evaluate(source, consumer) {
+      var context = {}, parameters = [], values = []
+        , i, I, name, key, func, callbacks = 0;
+      for (i = 0, I = stack.length; i < I; i++) {
+        for (name in stack[i].context) {
+          context[name] = stack[i].context[name];
+        }
+      }
+      for (name in context) parameters.push(name);
+      parameters.sort();
+      for (i = 0, I = parameters.length; i < I; i++) {
+        values.push(context[parameters[i]]);
+      }
+      key = parameters.join(",") + "|" + source;
+      if (!(func = functions[key])) {
+        func = Function.apply(Function, parameters.concat([ "callback", "return " + source ]));
+        functions[key] = func;
+      }
+      values.push(function callback () {
+        if (callbacks++) throw new Error("multiple callbacks");
+        return function (error, result) {
+          if (error) done(error);
+          else consumer(result);
+        }
+      });
+      try {
+        result = func.apply(self, values);
+      } catch (error) {
+        done(error);
+      }
+      if (!callbacks) consumer(result);
+    }
+
+    function children (child) {
+      for (; child != null; child = child.nextSibling) {
+        if (!visit(wrap(child))) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function visit (record) {
+      var node = record.node, completed, I;
+      stack.push(record);
+      if (node.nodeType == 1) {
+        for (I = node.attributes.length; record.loading < I; record.loading++) {
+          attr = node.attributes.item(record.loading);
+          if ("stencil" == attr.namespaceURI) {
+            if ("require" == attr.localName) {
+              return requireModule(attr.nodeValue);
+            }
+          }
+        }
+        if ("stencil" == node.namespaceURI && elements[node.localName]) {
+          return elements[node.localName](record, node); 
+        }
+      }
+      completed = children(node.firstChild);
+      stack.pop();
+      return completed;
+    }
+
+    var stack = [], self = {}, doc = template.doc.cloneNode(true), elements;
+
+    elements = {
+      value: function (record, node) {
+        evaluate(node.getAttribute("select"), function (result) {
+          var e = node.ownerDocument.createElement(node.getAttribute("element"));
+          e.appendChild(node.ownerDocument.createTextNode(result));
+          node.parentNode.insertBefore(e, node);
           node.parentNode.removeChild(node);
-          loadModule(descent, node); 
-          return false;
-        case "value":
-          writeValue(descent, node);
-          return false;
-  /*      case "each":
-          each(descent, node);
-          return false;*/
-        }
-      } else {
-        for (i = 0, I = node.attributes.length; i < I; i++) {
-          if (NS_STENCIL == node.attributes.item(i).namespaceURI) {
-            console.log(node.attributes.item(i).namespaceURI);
-          }
-        }
+          resume();
+        });
       }
-    }
-    var completed = children(descent, node.firstChild);
-    descent.stack.pop();
-    return completed;
-  }
+    };
 
-  function completed(error, doc) {
-    if (error) throw error;
-    else serialize(doc);
-  }
-
-  function processor(callback) {
-    return function (error, file) {
-      if (error) {
-        callback(error);
-      } else {
-        descent.context[0].callback = function () {
-          descent.calledback = true;
-          return function (error, result) {
-            if (error) descent.complete(error);
-            else descent.callback(result);
-          }
-        };
-      }
-    }
+    var root = wrap(doc.documentElement);
+    root.context.source = { file: "foo.js" };
+    if (visit(root)) done(null, doc.documentElement);
   }
 
   var templates = {};
@@ -166,39 +176,12 @@
     }
   }
 
-  function Template (url, doc) {
-    this.url = url;
-    this.doc = doc;
-  }
-
-  Template.prototype = {
-    generate: function Template_generate (callback) {
-      var descent =
-      { stack: []
-      , context: [ { source: { file: "foo.js" } } ]
-      , complete: callback
-      };
-      descent.context[0].callback = function () {
-        descent.calledback = true;
-        return function (error, result) {
-          if (error) descent.complete(error);
-          else descent.callback(result);
-        }
-      };
-      var doc = this.doc.cloneNode(true);
-      if (visit(descent, doc.documentElement)) {
-        callback(null, doc.documentElement);
-      }
-    }
-  };
-
   function generate (url, callback) {
     if (templates[url]) {
-      templates[url].generate(callback);
+      xmlify(templates[url], callback);
     } else {
-      resolver(url, check(callback, function (doc) {
-        templates[url] = new Template(url, doc);
-        templates[url].generate(callback);
+      resolver(url, "text/xml", check(callback, function (doc) {
+        xmlify(templates[url] = { url: url, doc: doc }, callback);
       }));
     }
   }
