@@ -1,0 +1,5 @@
+<html xmlns:s="stencil" s:require="fixtures/quotes">
+<body>
+<s:value select="quotes.rosten" element="p"/>
+</body>
+</html>
