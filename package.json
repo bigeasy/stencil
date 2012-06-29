@@ -13,7 +13,7 @@
   }
 , "scripts" : { "test": "proof t/*/*.t" }
 , "devDependencies":
-  { "proof": "0.0.5"
+  { "proof": "0.0.9"
   }
 , "dependencies":
   { "xmldom": "0.1.11"
