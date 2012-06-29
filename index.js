@@ -87,7 +87,7 @@
 
     function evaluate(source, consumer) {
       var context = {}, parameters = [], values = []
-        , i, I, name, key, func, callbacks = 0;
+        , i, I, name, key, func, callbacks = 0, result;
       for (i = 0, I = stack.length; i < I; i++) {
         for (name in stack[i].context) {
           context[name] = stack[i].context[name];
@@ -128,7 +128,7 @@
     }
 
     function visit (record) {
-      var node = record.node, completed, I;
+      var node = record.node, completed, I, attr;
       stack.push(record);
       if (node.nodeType == 1) {
         for (I = node.attributes.length; record.loading < I; record.loading++) {
