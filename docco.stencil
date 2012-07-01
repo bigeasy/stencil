@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:s="http://bigeasy.github.com/stencil">
+<s:require href="./docco" into="edify"/>
+<head>
+  <title><s:value select="source.file">Title Goes Here</s:value></title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+  <link rel="stylesheet" media="all" href="/attendant/css/docco.css"/>
+</head>
+<body>
+<div id="container">
+<a alt=";&<>&quot;" href="http://github.com/bigeasy/strata"><img
+  style="position: fixed; top: 0; right: 0; border: 0;"
+  src="http://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub" /></a>
+<div id="background">
+  <table cellspacing="0" cellpadding="0">
+    <thead>
+      <tr>
+        <th class="docs"><h1><s:value select="source.file"></s:value></h1></th>
+        <th class="code"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <s:each select="edify.docco('coffeescript', source.body, callback())" into="page" element="tr">
+        <td class="docs"><s:html select="page.docco"/></td>
+        <td class="code"><div class="highlight"><pre><s:html select="page.source"/></pre></div></td>
+      </s:each>
+    </tbody>
+  </table>
+</div>
+</div>
+</body>
+</html>

@@ -13,10 +13,10 @@
   }
 , "scripts" : { "test": "proof t/*/*.t" }
 , "devDependencies":
-  { "proof": "0.0.9"
+  { "proof": "0.0.10"
   }
 , "dependencies":
-  { "xmldom": "0.1.11"
+  { "xmldom": "git://github.com/jindw/xmldom.git#master"
   }
 , "bin": { "stencil": "./bin/stencil" }
 }

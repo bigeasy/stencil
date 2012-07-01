@@ -29,6 +29,11 @@ function attributes (element) {
   return attrs;
 }
 
+function abend(message) {
+  return false;
+  throw new Error(message);
+}
+
 function compare (actual, expected) {
   if (typeof expected == "string") {
     expected = new (xmldom.DOMParser)().parseFromString(expected).documentElement;
@@ -45,16 +50,16 @@ function compare (actual, expected) {
         at.push(a.nodeValue);
         a = actual.shift();
       }
-      if (a.nodeType != 1) return false;
-      if (a.start != e.start) return false;
-      if (at.join("").trim() != et.join("").trim()) return false;
+      if (a.nodeType != 1) return abend();
+      if (a.start != e.start) return abend();
+      if (at.join("").trim() != et.join("").trim()) return abend();
       a = a.element;
       e = e.element;
       aa = attributes(a);
       ea = attributes(e);
       for (name in ea) {
-        if (!aa[name]) return false;
-        if (ea[name].nodeValue != aa[name].nodeValue) return false;
+        if (!aa[name]) return abend(name);
+        if (ea[name].nodeValue != aa[name].nodeValue) return abend();
       }
       at.length = et.length = 0;
       a = actual.shift();
@@ -68,11 +73,11 @@ function compare (actual, expected) {
   }
   while (actual.length) {
     a = actual.shift();
-    if (a.nodeType != 3 || a.nodeValue.trim() != "") return false;
+    if (a.nodeType != 3 || a.nodeValue.trim() != "") return abend();
   }
   while (expected.length) {
     e = expected.shift();
-    if (e.nodeType != 3 || e.nodeValue.trim() != "") return false;
+    if (e.nodeType != 3 || e.nodeValue.trim() != "") return abend();
   }
   return true;
 }
