@@ -11,10 +11,11 @@ module.exports.create = function create (base) {
       }
       break;
     case "text/xml":
-      fs.readFile(resolved, "utf8", function (error, source) {
+      callback(null, new (xmldom.DOMParser)().parseFromString(fs.readFileSync(resolved, "utf8")));
+      /*fs.readFile(resolved, "utf8", function (error, source) {
         if (error) callback(error);
         else callback(null, new (xmldom.DOMParser)().parseFromString(source));
-      });
+      });*/
       break;
     }
   }
