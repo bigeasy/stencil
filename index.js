@@ -70,7 +70,32 @@
     var self = {}, elements, layoutNS = "", stop = stack.length - 1, top, returned;
 
     elements =
-    { value: function (record, node) {
+    { each: function (record, node) {
+        evaluate(node.getAttribute("select"), function (result) {
+          var into = node.getAttribute('into')
+            , clone
+            , i = 0, item;
+
+          next();
+
+          function next () {
+            if (i < result.length) {
+              stack.unshift(wrap(node.cloneNode(true)));
+              stack[0].context[into] = result[i++]; 
+              xmlify(stack, stack, stack.length - 1, check(done, function (doc) {
+                while (doc.firstChild) {
+                  node.parentNode.insertBefore(doc.firstChild, node); 
+                }
+                next();
+              }));
+            } else {
+              node.parentNode.removeChild(node);
+              resume();
+            }
+          }
+        });
+      }
+    , value: function (record, node) {
         evaluate(node.getAttribute("select"), function (result) {
           var e = node.ownerDocument.createElement(node.getAttribute("element"));
           e.appendChild(node.ownerDocument.createTextNode(result));
@@ -82,8 +107,8 @@
       }
     };
 
-    if (visit(top = stack.shift())) {
-      done(null, top.node);
+    if (children(stack[0].node.firstChild)) {
+      done(null, stack[0].node);
     }
 
     function requisite (attr) {
@@ -108,7 +133,7 @@
         ;
 
       fetch(href, check(done, function (template) {
-        var callee = [ wrap(template.doc.documentElement.cloneNode(true)) ]
+        var callee = [ wrap(template.doc.cloneNode(true)) ]
           , blocks = record.node.getElementsByTagNameNS(attr.nodeValue, '*')
           , i, I
           ;
@@ -144,7 +169,7 @@
         , i, I
         ;
       for (i = 0, I = params.length; i < I; i++) {
-        record.context[params[i]] = stack[0].context.attrs[params[i]];
+        record.context[params[i]] = get('attrs')[params[i]];
       }
       layoutNS = attr.nodeValue;
     }
@@ -206,7 +231,7 @@
         func = Function.apply(Function, parameters.concat([ "callback", "return " + source ]));
         functions[key] = func;
       }
-      values.push(function callback () {
+      values.push(function () {
         if (callbacks++) throw new Error("multiple callbacks");
         return function (error, result) {
           if (error) done(error);
@@ -291,11 +316,12 @@
 
   function generate (url, callback) {
     fetch(url, check(callback, function (template) {
-      var stack = [ wrap(template.doc.documentElement.cloneNode(true)) ];
-      template.doc.createDocumentFragment().appendChild(stack[0].node);
+      var frag = template.doc.createDocumentFragment();
+      frag.appendChild(template.doc.documentElement.cloneNode(true));
+      var stack = [ wrap(frag) ];
       stack[0].context.source = { file: "foo.js", url: template.url };
       stack[0].funcs = template.funcs;
-      xmlify(stack, null, 0, callback);
+      xmlify(stack, null, 0, check(callback, function () { callback(null, frag.firstChild) }));
     }));
   }
 

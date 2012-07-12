@@ -1,0 +1,7 @@
+<html xmlns:s="stencil">
+<body>
+<s:each select="callback()(null, [ 0, 1, 2, 3 ])" into="number">
+  <s:value element="p" select="number"/> 
+</s:each>
+</body>
+</html>
