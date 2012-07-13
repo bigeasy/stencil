@@ -29,9 +29,20 @@ function attributes (element) {
   return attrs;
 }
 
-function abend(message) {
-  return false;
-  throw new Error(message);
+function name (node) {
+  return node.localName + (node.namespaceURI ? '(' + node.namespaceURI + ')' : '');
+}
+
+function abend(e) {
+  var stack = [], attrs = [], e = e.element, i;
+  do {
+    attrs.length = 0;
+    for (i = 0; i < e.attributes.length; i++) {
+      attrs.push(name(e.attributes[i]) + '=' + e.attributes[i].nodeValue)
+    }
+    stack.unshift(name(e) + (attrs.length ? '[' + (attrs.join(' ')) + ']' : ''));
+  } while ((e = e.parentNode) && e.nodeType == 1);
+  throw new Error(stack.join('/'));
 }
 
 function compare (actual, expected) {
@@ -50,16 +61,16 @@ function compare (actual, expected) {
         at.push(a.nodeValue);
         a = actual.shift();
       }
-      if (a.nodeType != 1) return abend();
-      if (a.start != e.start) return abend();
-      if (at.join("").trim() != et.join("").trim()) return abend();
+      if (a.nodeType != 1) return abend(e);
+      if (a.start != e.start) return abend(e);
+      if (at.join("").trim() != et.join("").trim()) return abend(e);
       a = a.element;
       e = e.element;
       aa = attributes(a);
       ea = attributes(e);
       for (name in ea) {
-        if (!aa[name]) return abend(name);
-        if (ea[name].nodeValue != aa[name].nodeValue) return abend();
+        if (!aa[name]) return abend(e);
+        if (ea[name].nodeValue != aa[name].nodeValue) return abend(e);
       }
       at.length = et.length = 0;
       a = actual.shift();
@@ -73,11 +84,11 @@ function compare (actual, expected) {
   }
   while (actual.length) {
     a = actual.shift();
-    if (a.nodeType != 3 || a.nodeValue.trim() != "") return abend();
+    if (a.nodeType != 3 || a.nodeValue.trim() != "") return abend(e);
   }
   while (expected.length) {
     e = expected.shift();
-    if (e.nodeType != 3 || e.nodeValue.trim() != "") return abend();
+    if (e.nodeType != 3 || e.nodeValue.trim() != "") return abend(e);
   }
   return true;
 }
