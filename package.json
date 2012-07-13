@@ -17,7 +17,7 @@
   , "uglify-js": "~1.3"
   }
 , "dependencies":
-  { "xmldom": "git://github.com/jindw/xmldom.git#master"
+  { "xmldom": "git://github.com/jindw/xmldom.git#121647d745530ef7908233a7249608926dfbfe7c"
   }
 , "bin": { "stencil": "./bin/stencil" }
 }
