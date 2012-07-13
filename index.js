@@ -69,8 +69,27 @@
   function xmlify (base, stack, caller, depth, done) {
     var elements, layoutNS = "", stop = stack.length - 1, top, returned;
 
+    function prune (node) {
+      node.parentNode.removeChild(node);
+      resume();
+    }
+
     elements =
-    { each: function (record, node) {
+    { if: function (record, node) {
+        evaluate(node.getAttribute("select"), function (result) {
+          if (result) {
+            xmlify(base, stack, stack, stack.length - 1, check(done, function (doc) {
+              while (doc.firstChild) {
+                node.parentNode.insertBefore(doc.firstChild, node); 
+              }
+              prune(node);
+            }));
+          } else {
+            prune(node);
+          }
+        });
+      }
+    , each: function (record, node) {
         evaluate(node.getAttribute("select"), function (result) {
           var into = node.getAttribute('into')
             , clone
@@ -89,8 +108,7 @@
                 next();
               }));
             } else {
-              node.parentNode.removeChild(node);
-              resume();
+              prune(node);
             }
           }
         });
