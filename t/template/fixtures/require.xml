@@ -1,4 +1,4 @@
-<html xmlns:s="stencil" xmlns:quotes="req:fixtures/quotes">
+<html xmlns:s="stencil" xmlns:quotes="req:quotes.js">
 <body>
 <p>A conservative is one who admires radicals centuries after they're dead.</p>
 </body>
