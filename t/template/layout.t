@@ -5,13 +5,13 @@ require('./proof')(1, function (async) {
   async(function (stencil, resolver) {
 
     context = stencil.create(__dirname + '/', resolver.create());
-    context.generate('fixtures/layedout.stencil', async('actual'));
+    context.generate('fixtures/layedout.stencil', async());
 
-  }, function (fixture) {
+  }, function (actual, fixture) {
 
-    fixture('fixtures/layedout.xml', async('expected'));
+    fixture('fixtures/layedout.xml', async());
     
-  }, function (ok, compare, actual, expected) {
+  }, function (expected, actual, ok, compare) {
 
     ok(compare(actual, expected), 'called');
 

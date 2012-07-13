@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 
-require("./proof")(1, function (async) {
-  var context, fs = require("fs");
+require('./proof')(1, function (async) {
+  var context, fs = require('fs');
 
   async(function (stencil, resolver) {
 
     context = stencil.create(__dirname + '/', resolver.create());
-    context.generate("fixtures/require.stencil", async("actual"));
+    context.generate('fixtures/require.stencil', async());
 
-  }, function (fixture) {
+  }, function (actual, fixture) {
 
-    fixture("fixtures/require.xml", async("expected"));
+    fixture('fixtures/require.xml', async());
 
-  }, function (ok, compare, actual, expected) {
+  }, function (expected, actual, ok, compare, actual) {
 
-    ok(compare(actual, expected), "called");
+    ok(compare(actual, expected), 'called');
 
   });
 });
