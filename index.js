@@ -2,7 +2,7 @@
   if (typeof module == "object" && module.exports) module.exports = definition();
   else if (typeof define == "function" && typeof define.amd == "object") define(definition);
   else this.tz = definition();
-} (function () { function create (resolver) {
+} (function () { function create (base, resolver) {
   var __slice = [].slice;
 
   function die () {
@@ -66,7 +66,7 @@
 
   var counter = 0, called =0;
 
-  function xmlify (stack, caller, depth, done) {
+  function xmlify (base, stack, caller, depth, done) {
     var self = {}, elements, layoutNS = "", stop = stack.length - 1, top, returned;
 
     elements =
@@ -82,7 +82,7 @@
             if (i < result.length) {
               stack.unshift(wrap(node.cloneNode(true)));
               stack[0].context[into] = result[i++]; 
-              xmlify(stack, stack, stack.length - 1, check(done, function (doc) {
+              xmlify(base, stack, stack, stack.length - 1, check(done, function (doc) {
                 while (doc.firstChild) {
                   node.parentNode.insertBefore(doc.firstChild, node); 
                 }
@@ -117,7 +117,7 @@
         , href = attr.nodeValue.replace(/^[^:]+:/, '')
         ;
 
-      resolver(href, "text/javascript", check(done, function (module) {
+      resolver(normalize(base, href), "text/javascript", check(done, function (module) {
         record.context[into] = module;
         record.loading++;
         if (visit(record)) resume();
@@ -129,7 +129,7 @@
     function include (record) {
       var node = record.node
         , attr = record.include
-        , href = attr.nodeValue.replace(/^[^:]+:/, '')
+        , href = normalize(base, attr.nodeValue.replace(/^[^:]+:/, ''))
         ;
 
       fetch(href, check(done, function (template) {
@@ -151,7 +151,7 @@
           callee[0].context.blocks[blocks[i].localName] = blocks[i];
         }
 
-        xmlify(callee, stack, depth + 1, check(done, function (doc) {
+        xmlify(href, callee, stack, depth + 1, check(done, function (doc) {
           doc = node.ownerDocument.importNode(doc, true);
           node.parentNode.insertBefore(doc, node);
           node.parentNode.removeChild(node);
@@ -182,7 +182,7 @@
       // Here we need to re-enter the context of the caller.
       caller.unshift(wrap(block));
 
-      xmlify(caller, stack, depth + 1, check(done, function (transformed) {
+      xmlify(base, caller, stack, depth + 1, check(done, function (transformed) {
         var child;
         record.node = { nextSibling: node.nextSibling };
         while (child = transformed.firstChild) {
@@ -303,6 +303,33 @@
     }
   }
 
+  function relativize (base, url) {
+    var $;
+    if (url[0] == '/') {
+      return ($ = /^(https?:\/\/[^\/]+/.exec(base)) ? $[1] + url : url;
+    }
+    if (!url.indexOf('http')) {
+      return url;
+    }
+    return /^([^?#]*\/).*$/.exec(base)[1] + url;
+  }
+
+  function normalize (base, url) {
+    var parts = relativize(base, url).split('/'), i, I, normal = [], http = /^https?:$/.test(parts[0]) ? 4 : 1;
+    for (i = http, I = parts.length; i < I; i++) {
+      if (/\?#/.test(parts[i])) {
+        normal.push.apply(normal, parts.slice(i));
+        break;
+      } if (parts[i] == '..') {
+        if (!parts.pop()) throw new Error('underflow');
+      } else if (parts[i] != '.') {
+        normal.push(parts[i]);
+      }
+    }
+    normal.unshift.apply(normal, parts.slice(0, http));
+    return normal.join('/');
+  }
+
   function fetch (url, callback) {
     if (templates[url]) callback(null, templates[url]);
     else resolver(url, "text/xml", check(callback, function (doc) {
@@ -315,13 +342,14 @@
   }
 
   function generate (url, callback) {
+    url = normalize(base, url);
     fetch(url, check(callback, function (template) {
       var frag = template.doc.createDocumentFragment();
       frag.appendChild(template.doc.documentElement.cloneNode(true));
       var stack = [ wrap(frag) ];
       stack[0].context.source = { file: "foo.js", url: template.url };
       stack[0].funcs = template.funcs;
-      xmlify(stack, null, 0, check(callback, function () { callback(null, frag.firstChild) }));
+      xmlify(url, stack, null, 0, check(callback, function () { callback(null, frag.firstChild) }));
     }));
   }
 

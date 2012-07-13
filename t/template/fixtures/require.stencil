@@ -1,4 +1,4 @@
-<html xmlns:s="stencil" xmlns:quotes="req:fixtures/quotes">
+<html xmlns:s="stencil" xmlns:quotes="req:quotes.js">
 <body>
 <s:value select="quotes.rosten" element="p"/>
 </body>
