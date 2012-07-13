@@ -1,4 +1,4 @@
-<div xmlns:s="stencil" xmlns:o="inc:fixtures/layout.stencil" title="Hello, World!">
+<div xmlns:s="stencil" xmlns:o="inc:layout.stencil" title="Hello, World!">
   <o:head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></o:head>
   <o:body><p>Hello, World!</p></o:body>
 </div>
