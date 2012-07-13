@@ -36,6 +36,10 @@
   , '&': "&amp;"
   };
 
+  // Because they can be shared across templates, We cache expressions compiled
+  // into functions by their trimmed source.
+  var functions = {};
+
   function replacements(string) { return REPLACEMENTS[string] }
 
   function serialize(node) {
@@ -60,14 +64,10 @@
     }
   }
 
-  var functions = {};
-
   function wrap (node) { return { node: node, loading: 0, context: {}, attrs: {} } }
 
-  var counter = 0, called =0;
-
   function xmlify (base, stack, caller, depth, done) {
-    var self = {}, elements, layoutNS = "", stop = stack.length - 1, top, returned;
+    var elements, layoutNS = "", stop = stack.length - 1, top, returned;
 
     elements =
     { each: function (record, node) {
@@ -213,23 +213,43 @@
         if (stack[i].context[name]) return stack[i].context[name];
     }
 
+    // We cache expressions compiled into functions by their trimmed source. We
+    // use the variables in scope the first time the function is encountered. If
+    // it works at all, then it supposed to work for every occurrence of the
+    // function.
+    //
+    // A branch in the function may mean that in a subsequent call may
+    // references a variable not in the parameter list, because the variable was
+    // not in scope the first time the function was compiled. This is going to
+    // be an *unfortunate* error and potentially very confusing, how can it not
+    // be in scope, when I see it right *there*.
+    //
+    // If it's a problem, don't go thinking you can add a `try/catch` to
+    // recompile the function on an error, because that might have side effects,
+    // creating spooky, silent erroneous behavior.
+    //
+    // The nature of Stencils is such that the do not have much logic in their
+    // expressions. Maybe our economies in evaluation will survive application.
     function evaluate (source, consumer) {
-      var context = {}, parameters = [], values = []
-        , i, I, name, key, func, callbacks = 0, result;
+      var context = {}, parameters = [], values = [], callbacks = 0
+        , i, I, name, result, compiled;
       for (i = 0, I = stack.length; i < I; i++) {
         for (name in stack[i].context) {
           context[name] = stack[i].context[name];
         }
       }
-      for (name in context) parameters.push(name);
-      parameters.sort();
+      compiled = functions[source.trim()];
+      if (!compiled) {
+        for (name in context) parameters.push(name);
+        functions[source.trim()] = compiled =
+        { parameters: parameters
+        , expression: Function.apply(Function, parameters.concat([ "callback", "return " + source ]))
+        }
+      } else {
+        parameters = compiled.parameters;
+      }
       for (i = 0, I = parameters.length; i < I; i++) {
         values.push(context[parameters[i]]);
-      }
-      key = parameters.join(",") + "|" + source;
-      if (!(func = functions[key])) {
-        func = Function.apply(Function, parameters.concat([ "callback", "return " + source ]));
-        functions[key] = func;
       }
       values.push(function () {
         if (callbacks++) throw new Error("multiple callbacks");
@@ -239,7 +259,7 @@
         }
       });
       try {
-        result = func.apply(self, values);
+        result = compiled.expression.apply(this, values);
       } catch (error) {
         done(error);
       }
