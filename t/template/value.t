@@ -2,7 +2,7 @@
 
 var context, fs = require("fs");
 require("./proof")(1, function (async, stencil, resolver) {
-  context = stencil.create(resolver.create(__dirname));
+  context = stencil.create(__dirname + '/', resolver.create());
   context.generate("fixtures/value.stencil", async());
 }, function (actual, async, fixture) {
   fixture("fixtures/value.xml", async());

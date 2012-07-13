@@ -1,18 +1,17 @@
 var parse = require("url").parse, path = require("path"), fs = require("fs"), xmldom = require("xmldom");
-module.exports.create = function create (base) {
+module.exports.create = function create () {
   return function resolver (url, mimeType, callback) {
-    var resolved = path.resolve(base, url)
     switch (mimeType) {
     case "text/javascript":
       try {
-        callback(null, require(resolved));
+        callback(null, require(url));
       } catch (error) {
         callback(error);
       }
       break;
     case "text/xml":
-      callback(null, new (xmldom.DOMParser)().parseFromString(fs.readFileSync(resolved, "utf8")));
-      /*fs.readFile(resolved, "utf8", function (error, source) {
+      callback(null, new (xmldom.DOMParser)().parseFromString(fs.readFileSync(url, "utf8")));
+      /*fs.readFile(url, "utf8", function (error, source) {
         if (error) callback(error);
         else callback(null, new (xmldom.DOMParser)().parseFromString(source));
       });*/
