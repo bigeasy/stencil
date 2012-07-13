@@ -11,9 +11,10 @@
   { "type": "git"
   , "url": "http://github.com/bigeasy/stencil.git"
   }
-, "scripts" : { "test": "proof t/*/*.t" }
+, "scripts" : { "test": "proof platform win32 && proof t/*/*.t || t/test" }
 , "devDependencies":
   { "proof": "0.0.14"
+  , "uglify-js": "~1.3"
   }
 , "dependencies":
   { "xmldom": "git://github.com/jindw/xmldom.git#master"
