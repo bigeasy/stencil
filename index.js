@@ -29,48 +29,37 @@
     , XMLNS = "http://www.w3.org/2000/xmlns/"
     ;
 
-  var REPLACEMENTS =
-  { "<": "&lt;"
-  , ">": "&gt;"
-  , '"': "&quot;"
-  , '&': "&amp;"
-  };
-
   // Because they can be shared across templates, We cache expressions compiled
   // into functions by their trimmed source.
   var functions = {};
 
-  function replacements(string) { return REPLACEMENTS[string] }
-
-  function serialize(node) {
-    var child, i, I, attr;
-    switch (node.nodeType) {
-    case 1:
-      process.stdout.write("<" + node.localName);
-      for (i = 0, I = node.attributes.length; i < I; i++) {
-        attr = node.attributes.item(i);
-        if (attr.namespaceURI) continue;
-        process.stdout.write([ " ", attr.name, '="', attr.value.replace(/[<>&"]/g, replacements), '"'].join(""))
-      }
-      process.stdout.write(">");
-      for (child = node.firstChild; child != null; child = child.nextSibling) {
-        serialize(child);
-      }
-      process.stdout.write("</" + node.localName + ">");
-      break;
-    case 3:
-      process.stdout.write(node.nodeValue);
-      break;
-    }
-  }
 
   function wrap (node) { return { node: node, loading: 0, context: {}, attrs: {} } }
 
   function xmlify (base, stack, caller, depth, done) {
     var elements, layoutNS = "", stop = stack.length - 1, top, returned;
 
+    function prune (node) {
+      node.parentNode.removeChild(node);
+      resume();
+    }
+
     elements =
-    { each: function (record, node) {
+    { if: function (record, node) {
+        evaluate(node.getAttribute("select"), function (result) {
+          if (result) {
+            xmlify(base, stack, stack, stack.length - 1, check(done, function (doc) {
+              while (doc.firstChild) {
+                node.parentNode.insertBefore(doc.firstChild, node); 
+              }
+              prune(node);
+            }));
+          } else {
+            prune(node);
+          }
+        });
+      }
+    , each: function (record, node) {
         evaluate(node.getAttribute("select"), function (result) {
           var into = node.getAttribute('into')
             , clone
@@ -89,8 +78,7 @@
                 next();
               }));
             } else {
-              node.parentNode.removeChild(node);
-              resume();
+              prune(node);
             }
           }
         });
@@ -307,6 +295,8 @@
         for (attr in attrs) {
           node.setAttributeNS(null, attr, String(attrs[attr]));
         }
+      } else if (node.nodeType == 4) {
+        node.parentNode.replaceChild(document.createTextNode(node.nodeValue), node);
       }
       completed = children(node.firstChild);
       stack.shift();

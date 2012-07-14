@@ -40,6 +40,15 @@ Pages laid out.
 The same templates run on the browser and in Node.js, so you can use the same
 logic you use to serve a generate page to refresh that page.
 
+## Stencil on the Server
+
+On the server, we create a template and serialize it to HTML5. You can also
+serialize to older HTML flavors for older browsers.
+
+## Stencil on the Browser
+
+On the browser, when we genrerate Stencil XML, we simply import it into the
+existing DOM using `Document.adoptNode`.
 
 ## Motivations
 
