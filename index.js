@@ -29,40 +29,10 @@
     , XMLNS = "http://www.w3.org/2000/xmlns/"
     ;
 
-  var REPLACEMENTS =
-  { "<": "&lt;"
-  , ">": "&gt;"
-  , '"': "&quot;"
-  , '&': "&amp;"
-  };
-
   // Because they can be shared across templates, We cache expressions compiled
   // into functions by their trimmed source.
   var functions = {};
 
-  function replacements(string) { return REPLACEMENTS[string] }
-
-  function serialize(node) {
-    var child, i, I, attr;
-    switch (node.nodeType) {
-    case 1:
-      process.stdout.write("<" + node.localName);
-      for (i = 0, I = node.attributes.length; i < I; i++) {
-        attr = node.attributes.item(i);
-        if (attr.namespaceURI) continue;
-        process.stdout.write([ " ", attr.name, '="', attr.value.replace(/[<>&"]/g, replacements), '"'].join(""))
-      }
-      process.stdout.write(">");
-      for (child = node.firstChild; child != null; child = child.nextSibling) {
-        serialize(child);
-      }
-      process.stdout.write("</" + node.localName + ">");
-      break;
-    case 3:
-      process.stdout.write(node.nodeValue);
-      break;
-    }
-  }
 
   function wrap (node) { return { node: node, loading: 0, context: {}, attrs: {} } }
 
@@ -325,6 +295,8 @@
         for (attr in attrs) {
           node.setAttributeNS(null, attr, String(attrs[attr]));
         }
+      } else if (node.nodeType == 4) {
+        node.parentNode.replaceChild(document.createTextNode(node.nodeValue), node);
       }
       completed = children(node.firstChild);
       stack.shift();
