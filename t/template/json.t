@@ -16,9 +16,9 @@ require('./proof')(2, function (async) {
 
     ok(compare(actual.node, expected), 'called');
 
-    actual.update('%2fhome%2falan%2fgit%2fecma%2fstencil%2ft%2ftemplate%2ffixtures%2fwatchers.js', JSON.parse(fs.readFileSync(__dirname + '/fixtures/watchers-2.json')), async());
+    var path = escape(__dirname + '/fixtures/watchers.js').replace(/\//g, '%2f');
+    actual.update(path, JSON.parse(fs.readFileSync(__dirname + '/fixtures/watchers-2.json')), async());
   }, function (fixture) {
-    
     fixture('fixtures/json-2.xml', async());
   }, function (expected, actual, ok, compare) {
     ok(compare(actual.node, expected), 'updated');
