@@ -48,11 +48,7 @@
   , { firstName: "George", middleInitial:"W", lastName:"Bush" }
   , { firstName: "Barack", lastName:"Obama" }
   ];
-  return function (module) {
-    module.each("presidents", { into: "president" },  function (attr, callback) {
-      var from = attr.from || 0;
-      var to = attr.from || presidents.length;
-      callback(null, presidents.slice(from, to));
-    });
+  return function json (expire, callback) {
+    callback(null, presidents);
   }
 });
