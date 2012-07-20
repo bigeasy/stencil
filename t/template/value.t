@@ -8,7 +8,7 @@ require('./proof')(1, function (async) {
   }, function (actual, fixture) {
     fixture('fixtures/value.xml', async());
   }, function (expected, actual, ok, compare) {
-    ok(compare(actual, expected), 'called');
+    ok(compare(actual.node, expected), 'called');
   });
 });
 
