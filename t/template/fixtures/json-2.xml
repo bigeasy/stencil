@@ -1,0 +1,9 @@
+<html xmlns:s="stencil" xmlns:watchers="req:watchers.js">
+<body>
+<ul>
+  <li>b</li>
+  <li>_</li>
+  <li>a</li>
+</ul>
+</body>
+</html>
