@@ -60,3 +60,15 @@ on some ideas from yesteryear and some ideas from tomorrow.
 
 This project evolved from work with Streamline and CoffeeScript. That work has
 been moved to a project named [Pastiche](https://github.com/bigeasy/pastiche).
+
+## Philosophy
+
+Especially when dealing with a library that has a goal of being small, you're
+limited as to how much scaffolding you can offer developers. My approach for
+Stencil is to define three roles, application developer, web developer, and web
+designer, and say the first two roles labor to create a childlike sense of
+wonder in the latter role.
+
+An application developer creates APIs that the web develoepr can query. The web
+developer wraps those APIs in tag libraries, so that the web designer can focus
+on semantic layout.

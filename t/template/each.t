@@ -14,7 +14,7 @@ require('./proof')(1, function (async) {
 
   }, function (expected, actual, ok, compare) {
 
-    ok(compare(actual, expected), 'called');
+    ok(compare(actual.node, expected), 'called');
 
   });
 });
