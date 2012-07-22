@@ -7,6 +7,7 @@
   { "type": "MIT"
   , "url": "http://github.com/bigeasy/stencil/raw/master/LICENSE"
   }]
+, "homepage": "https://github.com/bigeasy/stencil"
 , "repository":
   { "type": "git"
   , "url": "http://github.com/bigeasy/stencil.git"
@@ -19,5 +20,4 @@
 , "dependencies":
   { "xmldom": "git://github.com/jindw/xmldom.git#121647d745530ef7908233a7249608926dfbfe7c"
   }
-, "bin": { "stencil": "./bin/stencil" }
 }
