@@ -57,20 +57,23 @@ function compare (actual, expected) {
     e = expected.shift();
     switch (e.nodeType) {
     case 1:
+    case 8:
       while (a.nodeType == 3 && actual.length) {
         at.push(a.nodeValue);
         a = actual.shift();
       }
-      if (a.nodeType != 1) return abend(e);
+      if (a.nodeType != e.nodeType) return abend(e);
       if (a.start != e.start) return abend(e);
       if (at.join("").trim() != et.join("").trim()) return abend(e);
-      a = a.element;
-      e = e.element;
-      aa = attributes(a);
-      ea = attributes(e);
-      for (name in ea) {
-        if (!aa[name]) return abend(e);
-        if (ea[name].nodeValue != aa[name].nodeValue) return abend(e);
+      if (a.nodeType == 1) {
+        a = a.element;
+        e = e.element;
+        aa = attributes(a);
+        ea = attributes(e);
+        for (name in ea) {
+          if (!aa[name]) return abend(e);
+          if (ea[name].nodeValue != aa[name].nodeValue) return abend(e);
+        }
       }
       at.length = et.length = 0;
       a = actual.shift();
