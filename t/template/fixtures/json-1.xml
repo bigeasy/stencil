@@ -1,9 +1,12 @@
 <html xmlns:s="stencil" xmlns:watchers="req:watchers.js">
 <body>
 <ul>
+<!--[0]-->
   <li>b</li>
+<!--[1]-->
   <li>c</li>
+<!--[2]-->
   <li>a</li>
 </ul>
 </body>
-</html>
+<!----></html>

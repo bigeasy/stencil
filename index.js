@@ -14,8 +14,14 @@
 
   var trace = {}, getters = {};
 
+  // TODO: This is the name that I ususally use to extend hashes.
   function extend (base, name) {
     return base + '/' + escape(name).replace(/\//g, '%2f');
+  }
+
+  function _extend (to, from) {
+    for (var key in from) to[key] = from[key];
+    return to;
   }
 
   // const      ELEMENT_NODE                   = 1;
@@ -39,12 +45,50 @@
   // into functions by their trimmed source.
   var functions = {};
 
+  // A structure that surrounds a DOM node, create a level in context stack.
   function wrap (node) {
     return  { node: node
             , loading: 0
             , trace: []
             , context: {}
             , attrs: {} }
+  }
+
+  // `nodes` is a node who's children are inserted before the given `node`.
+  function insertSnippet (stencil, snippet, node, nodes) {
+    var identifier = stencil.identifier++
+      , text = '[' + (identifier)  + ']'
+      , parentNode = node.parentNode
+      , child 
+      , comment
+      ;
+
+    _extend(snippet, { elements: 0, characters: 0, identifier: identifier });
+
+    // TODO: To implement specific place-holders, keep this comment. Count the
+    // number of character at the outset. If you encounter a place holder,
+    // remove this comment.
+    stencil.comments[text] = parentNode.insertBefore(node.ownerDocument.createComment(text), node);
+
+    // TODO: What to do about wierdos, like comments and PIs.
+    while (nodes.firstChild) {
+      child = nodes.firstChild;
+      switch (child.nodeType) {
+      case 1:
+        snippet.elements++;
+        snippet.characters = 0;
+        break;
+      case 3:
+      case 4:
+        snippet.characters += child.nodeValue.length;
+        break;
+      }
+      parentNode.insertBefore(child, node); 
+    }
+
+    snippet.comment = text;
+
+    return snippet;
   }
 
   function xmlify (stencil, base, stack, caller, depth, done) {
@@ -106,9 +150,10 @@
           }
         });
       }
-    // TODO Note that `each` is the same thing as `with`.
     , each: function (record, node) {
-        evaluate(contextSnapshot(), node.getAttribute('select'), function (result) {
+        evaluate(contextSnapshot(), node.getAttribute('select'), replace);
+        
+        function replace (result) {
           var into = node.getAttribute('into')
             , limit = node.getAttribute('limit')
             , unique = node.getAttribute('unique')
@@ -121,19 +166,22 @@
 
           next();
 
+          // TODO: I'm expecting base to always be a full url.
           function execute (id) {
-            xmlify(stencil, base, stack, stack, stack.length - 1, check(done, function (doc) {
-              var children = [];
-              while (doc.firstChild) {
-                children.push(node.parentNode.insertBefore(doc.firstChild, node)); 
-              }
+            xmlify(stencil, base, stack, stack, stack.length - 1, check(done, function (nodes) {
               if (id != null) {
-                stencil.snippets.push(rootObject(context[into],
+                var snippet = rootObject(context[into],
                   { unique: { name: unique, value: id }
                   , into: into
-                  , node: node
-                  , children: children
-                }));
+                  , url: base
+                  , node: node.getAttribute('id')
+                  });
+                insertSnippet(stencil, snippet, node, nodes);
+                stencil.snippets[snippet.identifier] = snippet;
+              } else {
+                while (nodes.firstChild) {
+                  node.parentNode.insertBefore(nodes.firstChild, node); 
+                }
               }
               next();
             }));
@@ -154,7 +202,7 @@
               prune(node);
             }
           }
-        });
+        }
       }
     , value: function (record, node) {
         evaluate(contextSnapshot(), node.getAttribute("select"), function (result) {
@@ -454,6 +502,7 @@
     try {
       result = compiled.expression.apply(this, values);
     } catch (error) {
+      throw error;
       done(error);
     }
     if (!callbacks) consumer(result);
@@ -507,6 +556,12 @@
   function fetch (url, callback) {
     if (templates[url]) callback(null, templates[url]);
     else resolver(url, "text/xml", check(callback, function (doc) {
+      // Give each Stencil element an `id` attribute that will be consistent on
+      // the server and in the browser.
+      var i, I, each = doc.getElementsByTagNameNS(NS_STENCIL, '*'); 
+      for (i = 0, I = each.length; i < I; i++) {
+        each.item(i).setAttribute('id', String(i));
+      }
       callback(null,  templates[url] = { url: url, doc: doc });
     }));
   }
@@ -517,7 +572,7 @@
 
   // Structure is a little funky. The same unique id would be used for all
   // members.
-  function descend (branch, object, counter) {
+  function descend (stencil, branch, object, counter) {
     var i, I, object, key;
     if (Array.isArray(branch)) {
       var into = branch[0].into
@@ -540,9 +595,11 @@
         });
       }
 
+      var snippet;
       function compare () {
         if (!branch.length) return complete();
-        var snippet = branch.shift(), i, I;
+        snippet = branch.shift()
+        var i, I;
         var update = table[snippet.unique.value]
         var dirty;
         if (update) {
@@ -554,26 +611,45 @@
           }
         }
         if (dirty) {
-          var stack = [ wrap(snippet.node.cloneNode(true)) ];
-          stack[0].context = context;
-          stack[0].context[snippet.into] = update;
-          xmlify({}, snippet.url,  stack, null, 0, function (error, doc) {
-            if (error) throw error;
-            var child;
-            while (snippet.children.length != 1) {
-              child = snippet.children.shift();
-              child.parentNode.removeChild(child);
-            }
-            child = snippet.children.shift(); 
-            while (doc.firstChild) {
-              snippet.children.push(child.parentNode.insertBefore(doc.firstChild, child)); 
-            }
-            child.parentNode.removeChild(child);
-            compare();
-          });
+          fetch(snippet.url, check(counter.callback, generate));
         } else {
           compare();
         }
+      }
+
+      function generate (template) {
+        var stack = [ wrap(template.doc.getElementById(snippet.node).cloneNode(true)) ];
+        var update = table[snippet.unique.value]
+        stack[0].context = context;
+        stack[0].context[snippet.into] = update;
+        xmlify({}, snippet.url,  stack, null, 0, function (error, nodes) {
+          if (error) throw error;
+          var comment = stencil.comments[snippet.comment]
+            , parentNode = comment.parentNode
+            , factory = comment.ownerDocument
+            , count, removed, chars
+            ;
+          for (count = snippet.elements; count; count--) {
+            while (parentNode.removeChild(comment.nextSibling).nodeType != 1);
+          }
+          var length;
+          for (count = snippet.characters; count;) {
+            removed = parentNode.removeChild(comment.nextSibling)
+            count -= (length = Math.min(count, removed.nodeValue.length));
+          }
+          if (length < removed.nodeValue.length) {
+            var text = removed.nodeValue.slice(length);
+            parentNode.insertBefore(removed, comment.nextSibling);
+            removed.splitText(length);
+            parentNode.removeChild(removed.nextSibling);
+          }
+          stencil.comments[snippet.comment] = parentNode.insertBefore(parentNode.ownerDocument.createComment(comment.nodeValue), comment);
+          while (nodes.firstChild) {
+            parentNode.insertBefore(nodes.firstChild, comment);
+          }
+          parentNode.removeChild(comment);
+          compare();
+        });
       }
 
       function complete() {
@@ -581,22 +657,23 @@
       }
     } else {
       for (key in branch) {
-        descend(branch[key], object[key], counter);
+        descend(stencil, branch[key], object[key], counter);
       }
     }
   }
 
   function update (url, json, callback) {
     var snippets = this.snippets,
-        check = [], tree = {}, branch = tree, i, I, j, J, completed = 0;
-    for (i = 0, I = snippets.length; i < I; i++) {
-      if (snippets[i].root.substring(1) == url) {
+        check = [], tree = {}, branch = tree, key, snippet, j, J, completed = 0;
+    for (key in snippets) {
+      snippet = snippets[key];
+      if (snippet.root.substring(1) == url) {
         branch = tree;
-        var path = snippets[i].root.split('/').slice(1);
+        var path = snippet.root.split('/').slice(1);
         for (j = 0, J = path.length; j < J - 1; j++) {
           branch = branch[path[j]] || (branch[path[j]] = {});
         }
-        (branch[path[j]] || (branch[path[j]] = [])).push(snippets[i]);
+        (branch[path[j]] || (branch[path[j]] = [])).push(snippet);
       }
     }
     var wrapper = {};
@@ -606,8 +683,32 @@
         callback(null);
       }
     }};
-    descend(tree, wrapper, counter);
+    descend(this, tree, wrapper, counter);
     counter.callback();
+  }
+
+  function comments (stencil, child) {
+    for (;child;child = child.nextSibling) {
+      if (child.nodeType == 8) {
+        if (/^\[\d+\]$/.test(child.nodeValue)) {
+          stencil.comments[child.nodeValue] = child;
+        } else {
+          var json = child.nodeValue.replace(/^\/\/ Regions./, '');
+          if (json.length != child.nodeValue.length) {
+            stencil.snippets = JSON.parse(json);
+          }
+        }
+      }
+      comments(stencil, child.firstChild);
+    }
+  }
+
+  function deserialize (dom) { 
+    var stencil = { comments: {} };
+    comments(stencil, dom.documentElement);
+    stencil.node = dom.documentElement;
+    stencil.update = update;
+    return stencil;
   }
 
   function generate (url, callback) {
@@ -617,14 +718,17 @@
       frag.appendChild(template.doc.documentElement.cloneNode(true));
       var stack = [ wrap(frag) ];
       stack[0].context.source = { file: "foo.js", url: template.url };
-      var stencil = { snippets: [] };
+      var stencil = { snippets: {}, identifier: 0, comments: {} };
       xmlify(stencil, url, stack, null, 0, check(callback, function () {
-        stencil.node = frag.firstChild;
+        var node;
+        stencil.node = node = frag.firstChild;
         stencil.update = update;
+        if (Object.keys(stencil.snippets).length)
+          node.appendChild(node.ownerDocument.createComment('// Regions.\n' + JSON.stringify(stencil.snippets, null, 2)));
         callback(null, stencil)
       }));
     }));
   }
 
-  return { generate: generate };
-}; return { create: create }});
+  return { generate: generate, deserialize: deserialize };
+}; return { create: create } });
