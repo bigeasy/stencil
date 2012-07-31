@@ -50,6 +50,7 @@
     return  { node: node
             , loading: 0
             , trace: []
+            , evaluations: []
             , context: {}
             , attrs: {} }
   }
@@ -137,21 +138,27 @@
 
     elements =
     { if: function (record, node) {
-        evaluate(contextSnapshot(), node.getAttribute('select'), function (result) {
-          if (result) {
-            xmlify(stencil, base, stack, stack, stack.length - 1, check(done, function (doc) {
-              while (doc.firstChild) {
-                node.parentNode.insertBefore(doc.firstChild, node); 
-              }
-              prune(node);
-            }));
-          } else {
+        var source = node.getAttribute('select').trim()
+          , result = evaluate(contextSnapshot(), source);
+        stack[0].evaluations.push(source);
+
+        if (result) {
+          xmlify(stencil, base, stack, stack, stack.length - 1, check(done, function (doc) {
+            while (doc.firstChild) {
+              node.parentNode.insertBefore(doc.firstChild, node); 
+            }
             prune(node);
-          }
-        });
+          }));
+        } else {
+          prune(node);
+        }
       }
     , each: function (record, node) {
-        evaluate(contextSnapshot(), node.getAttribute('select'), replace);
+        var source = node.getAttribute('select').trim()
+          , result = evaluate(contextSnapshot(), source);
+        stack[0].evaluations.push(source);
+
+        replace(result);
         
         function replace (result) {
           var into = node.getAttribute('into')
@@ -194,7 +201,7 @@
               context = contextSnapshot();
               if (unique) {
                 trace.push('');
-                evaluate(context, unique, execute);
+                execute(evaluate(context, unique));
               } else {
                 execute();
               }
@@ -205,14 +212,15 @@
         }
       }
     , value: function (record, node) {
-        evaluate(contextSnapshot(), node.getAttribute("select"), function (result) {
-          var e = node.ownerDocument.createElement(node.getAttribute("element"));
-          e.appendChild(node.ownerDocument.createTextNode(result));
-          node.parentNode.insertBefore(e, node);
-          node.parentNode.removeChild(node);
-          record.node = e;
-          resume();
-        });
+        var source = node.getAttribute('select').trim()
+          , result = evaluate(contextSnapshot(), source)
+          , e = node.ownerDocument.createElement(node.getAttribute("element"));
+        stack[0].evaluations.push(source);
+        e.appendChild(node.ownerDocument.createTextNode(result));
+        node.parentNode.insertBefore(e, node);
+        node.parentNode.removeChild(node);
+        record.node = e;
+        resume();
       }
     };
 
@@ -276,10 +284,10 @@
       // Need to step back and remember that I want to see this from the
       // perspective of the templates, not from MVC frameworkery.
       resolver(href, "text/javascript", check(done, function (module) {
-        if (typeof module == 'function' && module.name == 'json') {
+        if (typeof module == 'function' && module.name == 'dynamic') {
           function expires () {}
           var trace = [];
-          module(expires, function (error, object) {
+          module(true, function (error, object) {
             var prototype = {};
             prototype[into] = object;
             hrefs[href] = object;
@@ -476,15 +484,16 @@
   //
   // The nature of Stencils is such that the do not have much logic in their
   // expressions. Maybe our economies in evaluation will survive application.
-  function evaluate (context, source, consumer) {
+  function evaluate (context, source) {
     var parameters = [], values = [], callbacks = 0
       , i, I, name, result, compiled;
-    compiled = functions[source.trim()];
+    source = source.trim();
+    compiled = functions[source];
     if (!compiled) {
       for (name in context) parameters.push(name);
-      functions[source.trim()] = compiled =
+      functions[source] = compiled =
       { parameters: parameters
-      , expression: Function.apply(Function, parameters.concat([ "callback", "return " + source ]))
+      , expression: Function.apply(Function, parameters.concat([ "return " + source ]))
       }
     } else {
       parameters = compiled.parameters;
@@ -492,20 +501,13 @@
     for (i = 0, I = parameters.length; i < I; i++) {
       values.push(context[parameters[i]]);
     }
-    values.push(function () {
-      if (callbacks++) throw new Error("multiple callbacks");
-      return function (error, result) {
-        if (error) done(error);
-        else consumer(result);
-      }
-    });
     try {
       result = compiled.expression.apply(this, values);
     } catch (error) {
       throw error;
       done(error);
     }
-    if (!callbacks) consumer(result);
+    return result;
   }
 
   function getJSON (object, path) {
@@ -589,10 +591,9 @@
       function gather () {
         if (!object.length) return compare();
         context[into] = object.shift();
-        evaluate(context, unique, function (key) {
-          table[key] = context[into];
-          gather();
-        });
+        key = evaluate(context, unique);
+        table[key] = context[into];
+        gather();
       }
 
       var snippet;
