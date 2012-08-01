@@ -12,14 +12,7 @@
 
   function say () { return console.log.apply(console, slice.call(arguments, 0)) }
 
-  var trace = {}, getters = {};
-
-  // TODO: This is the name that I ususally use to extend hashes.
-  function extend (base, name) {
-    return base + '/' + escape(name).replace(/\//g, '%2f');
-  }
-
-  function _extend (to, from) {
+  function extend (to, from) {
     for (var key in from) to[key] = from[key];
     return to;
   }
@@ -49,7 +42,6 @@
   function wrap (node) {
     return  { node: node
             , loading: 0
-            , trace: []
             , evaluations: {}
             , context: {}
             , attrs: {} }
@@ -64,7 +56,7 @@
       , comment
       ;
 
-    _extend(snippet, { elements: 0, characters: 0, identifier: identifier });
+    extend(snippet, { elements: 0, characters: 0, identifier: identifier });
 
     // TODO: To implement specific place-holders, keep this comment. Count the
     // number of character at the outset. If you encounter a place holder,
@@ -93,25 +85,17 @@
   }
 
   function xmlify (stencil, url, stack, caller, depth, done) {
-    var elements, layoutNS = "", stop = stack.length - 1, returned, trace = stack[stop].trace, dirty = {};
+    var elements, layoutNS = "", stop = stack.length - 1, returned, dirty = {};
 
     var base = url.replace(/\/[^\/]+$/, '/');
-
-    // TODO Belongs elsewhere.
-    var hrefs = {};
 
     function prune (node) {
       node.parentNode.removeChild(node);
       resume();
     }
 
-    function popTrace () {
-      return trace.splice(trace.lastIndexOf('')).slice(1);
-    }
-
     function rootObject (context, object) {
       object.context = contextSnapshot(stack);
-      object.evaluations = evaluationsSnapshot();
       object.stack = stackSnapshot(stack);
       return object;
     }
@@ -139,7 +123,7 @@
 
         replace(result);
         
-        // TODO DEDENT.
+        // TODO Use callback.
         function replace (result) {
           var into = node.getAttribute('into')
             , limit = node.getAttribute('limit')
@@ -155,7 +139,7 @@
 
           // TODO: I'm expecting base to always be a full url.
           function execute (id) {
-            xmlify(stencil, base, stack, stack, stack.length - 1, check(done, function (nodes, dirty) {
+            xmlify(stencil, url, stack, stack, stack.length - 1, check(done, function (nodes, dirty) {
               if (id != null) {
                 var snippet = rootObject(context[into],
                   { unique: { source: unique, value: id }
@@ -190,7 +174,6 @@
               stack[0].context[into] = result[i++]; 
               context = contextSnapshot(stack);
               if (unique) {
-                trace.push('');
                 execute(evaluate(context, unique));
               } else {
                 execute();
@@ -218,61 +201,12 @@
       done(null, stack[0].node, dirty);
     }
 
-    // With thanks to a chat with @hughfdjackson on ##javascript.
-    function getter (proto, cache, key, path) {
-      return function () {
-        if ((object = cache[key]) === void 0) {
-          var object = proto[key];
-          if (typeof object == 'object' && object != null) {
-            object = observe(object, extend(path, key));
-          }
-          cache[key] = object;
-        }
-        if (typeof object != 'object' || object == null) {
-          trace.push(extend(path, key));
-        }
-        return object;
-      }
-    }
-
-    function observe (proto, path) {
-      var i, I, key, object, cache, properties;
-      if (Array.isArray(proto)) {
-        object = proto.slice(0);
-        for (i = 0, I = object.length; i < I; i++) {
-          object[i] = observe(object[i], extend(path, i), trace);
-        }
-      } else {
-        object = {}, cache = {}, properties = {};
-        for (key in proto) properties[key] = { get: getter(proto, cache, key, path), enumerable: true };
-        Object.defineProperties(object, properties);
-      }
-      return object;
-    }
-
     // @maxogden: jsonp is only for single origin policy restricted GETs
     function requisite (attr) {
       var record = stack.shift()
         , into = attr.localName
         , href = normalize(attr.nodeValue.replace(/^[^:]+:/, ''))
         ;
-
-      // TODO: I sense that this is all wrong. The application itself is going
-      // to want to update the document. Here we are asking the resolver to ask
-      // a library. But, I imagine that we're not going to be pulling things in
-      // from an library all the time. That sometimes, we're going to want to
-      // update a template by forcing some JavaScript into the template.
-      //
-      // Right now, I really want a data bus. It would be easier to understand,
-      // add an abstraction layer, bind things loosely. I can imagine a data
-      // bus. I cannot imagine a functional composition.
-      //
-      // I suppose, for now, I can go ahead and fire off snippets directly using
-      // the thing that I got back, because from where I'm sitting, I can't see
-      // any one way to wire these programs together.
-      //
-      // Need to step back and remember that I want to see this from the
-      // perspective of the templates, not from MVC frameworkery.
 
       href = normalize(base + href);
       resolver(absolutize(stencil.base, href), "text/javascript", check(done, function (module) {
@@ -351,7 +285,7 @@
       // Here we need to re-enter the context of the caller.
       caller.unshift(wrap(block));
 
-      xmlify(stencil, base, caller, stack, depth + 1, check(done, function (transformed) {
+      xmlify(stencil, url, caller, stack, depth + 1, check(done, function (transformed) {
         var child;
         record.node = { nextSibling: node.nextSibling };
         while (child = transformed.firstChild) {
@@ -382,38 +316,13 @@
         if (stack[i].context[name]) return stack[i].context[name];
     }
 
-    function watchable (context) {
-      for (i = stack.length - 1; i != -1; i--)
-        for (j = stack[i].trace.length - 1; j != -1; j--)
-          if (stack[i].trace[j].object == context) return stack[i].trace[j];
-    }
-
-    function watch (context, selector) {
-      var path = select.split('/'), i, I, state = watchable(context), object = context;
-      for (i = 0, I = path.length; i < I; i++) {
-        object = object[path[i]];
-      }
-      stack[0].trace.push({ object: object, path: state.path + '/' + path });
-      return object;
-    }
-
     function stackSnapshot (stack) {
       var vargs = stack.slice(0).reverse().concat(slice.call(arguments, 1))
         , snapshot = [], i, I, name;
       for (i = 0, I = vargs.length; i < I; i++) {
-        snapshot.push({ evaluations: _extend({}, vargs[i].evaluations) });
+        snapshot.push({ evaluations: extend({}, vargs[i].evaluations) });
       }
       return snapshot;
-    }
-
-    function evaluationsSnapshot () {
-      var evaluations = {}, i, I, name;
-      for (i = 0, I = stack.length; i < I; i++) {
-        for (name in stack[i].evaluations) {
-          if (name[0] != '!') evaluations[name] = stack[i].evaluations[name];
-        }
-      }
-      return evaluations;
     }
 
     function children (child) {
@@ -509,15 +418,6 @@
     return result;
   }
 
-  function getJSON (object, path) {
-    var i, I;
-    for (i = 0, I = path.length; i < I; i++) {
-      object = object[unescape(path[i])];
-      if (!object) return null;
-    }
-    return object;
-  }
-
   var templates = {};
 
   function check(callback, next) {
@@ -565,128 +465,6 @@
     }));
   }
 
-  function _generate (url, caller, stack, callback) {
-    if (typeof url != "string") throw new Error();
-  }
-
-  // Structure is a little funky. The same unique id would be used for all
-  // members.
-  function descend (stencil, branch, object, counter) {
-    var i, I, object, key;
-    if (Array.isArray(branch)) {
-      var into = branch[0].into
-        , unique = branch[0].unique.name
-        , context = branch[0].context
-        , evaluation = branch[0].evaluation
-        , table = {}
-        , key;
-
-      object = object.slice(0);
-
-      counter.count++;
-      gather();
-
-      function gather () {
-        if (!object.length) return compare();
-        context[into] = object.shift();
-        key = evaluate(context, unique);
-        table[key] = context[into];
-        gather();
-      }
-
-      var snippet;
-      function compare () {
-        if (!branch.length) return complete();
-        snippet = branch.shift()
-        var i, I;
-        var update = table[snippet.unique.value]
-        var dirty;
-        if (update) {
-          for (i = 0, I = snippet.references.length; !dirty && i < I; i++) {
-            var actual = getJSON(update, snippet.references[i].path);
-            if (actual != snippet.references[i].value) {
-              dirty = true;
-            }
-          }
-        }
-        if (dirty) {
-          die(snippet.url);
-          fetch(snippet.url, check(counter.callback, generate));
-        } else {
-          compare();
-        }
-      }
-
-      function generate (template) {
-        var stack = [ wrap(template.doc.getElementById(snippet.node).cloneNode(true)) ];
-        var update = table[snippet.unique.value]
-        stack[0].context = context;
-        stack[0].context[snippet.into] = update;
-        xmlify({}, snippet.url,  stack, null, 0, function (error, nodes) {
-          if (error) throw error;
-          var comment = stencil.comments[snippet.comment]
-            , parentNode = comment.parentNode
-            , factory = comment.ownerDocument
-            , count, removed, chars
-            ;
-          for (count = snippet.elements; count; count--) {
-            while (parentNode.removeChild(comment.nextSibling).nodeType != 1);
-          }
-          var length;
-          for (count = snippet.characters; count;) {
-            removed = parentNode.removeChild(comment.nextSibling)
-            count -= (length = Math.min(count, removed.nodeValue.length));
-          }
-          if (length < removed.nodeValue.length) {
-            var text = removed.nodeValue.slice(length);
-            parentNode.insertBefore(removed, comment.nextSibling);
-            removed.splitText(length);
-            parentNode.removeChild(removed.nextSibling);
-          }
-          stencil.comments[snippet.comment] = parentNode.insertBefore(parentNode.ownerDocument.createComment(comment.nodeValue), comment);
-          while (nodes.firstChild) {
-            parentNode.insertBefore(nodes.firstChild, comment);
-          }
-          parentNode.removeChild(comment);
-          compare();
-        });
-      }
-
-      function complete() {
-        counter.callback();
-      }
-    } else {
-      for (key in branch) {
-        descend(stencil, branch[key], object[key], counter);
-      }
-    }
-  }
-
-  function _update (url, json, callback) {
-    var snippets = this.snippets,
-        check = [], tree = {}, branch = tree, key, snippet, j, J, completed = 0;
-    for (key in snippets) {
-      snippet = snippets[key];
-      if (snippet.root.substring(1) == url) {
-        branch = tree;
-        var path = snippet.root.split('/').slice(1);
-        for (j = 0, J = path.length; j < J - 1; j++) {
-          branch = branch[path[j]] || (branch[path[j]] = {});
-        }
-        (branch[path[j]] || (branch[path[j]] = [])).push(snippet);
-      }
-    }
-    var wrapper = {};
-    wrapper[url] = json;
-    var counter = { count: 1, callback: function () {
-      if (++completed == counter.count) {
-        callback(null);
-      }
-    }};
-    descend(this, tree, wrapper, counter);
-    counter.callback();
-  }
-
   function comments (stencil, child) {
     for (;child;child = child.nextSibling) {
       if (child.nodeType == 8) {
@@ -695,7 +473,7 @@
         } else {
           var json = child.nodeValue.replace(/^\/\/ Regions./, '');
           if (json.length != child.nodeValue.length) {
-            _extend(stencil, JSON.parse(json));
+            extend(stencil, JSON.parse(json));
           }
         }
       }
@@ -809,15 +587,15 @@
     }
   }
 
-    function contextSnapshot (source) {
-      var context = {}, i, I, name, source = source || stack;
-      for (i = 0, I = source.length; i < I; i++) {
-        for (name in source[i].context) {
-          if (name[0] != '!') context[name] = source[i].context[name];
-        }
+  function contextSnapshot (source) {
+    var context = {}, i, I, name, source = source || stack;
+    for (i = 0, I = source.length; i < I; i++) {
+      for (name in source[i].context) {
+        if (name[0] != '!') context[name] = source[i].context[name];
       }
-      return context;
     }
+    return context;
+  }
 
   var stencils = {}, stencilId = 0;
   // STEP: NEEDS CALLBACK.
