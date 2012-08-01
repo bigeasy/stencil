@@ -16,8 +16,9 @@ require('./proof')(2, function (async) {
 
     ok(compare(actual.node, expected), 'called');
 
-    var path = escape(__dirname + '/fixtures/watchers.js').replace(/\//g, '%2f');
-    actual.update(path, JSON.parse(fs.readFileSync(__dirname + '/fixtures/watchers-2.json')), async());
+    var watchers = require('./fixtures/watchers');
+    // STEP: Errors are getting hard.
+    watchers.emitter.emit('update', null, watchers.watchers2);
   }, function (fixture) {
     fixture('fixtures/json-2.xml', async());
   }, function (expected, actual, ok, compare) {
