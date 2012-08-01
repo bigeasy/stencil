@@ -50,6 +50,10 @@ serialize to older HTML flavors for older browsers.
 On the browser, when we genrerate Stencil XML, we simply import it into the
 existing DOM using `Document.adoptNode`.
 
+## Remember
+
+ * It's not a query tool. It's a templating tool.
+
 ## Expand
 
  * Functions must have no side-effects; i.e. do not use your template functions

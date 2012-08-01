@@ -92,8 +92,10 @@
     return snippet;
   }
 
-  function xmlify (stencil, base, stack, caller, depth, done) {
+  function xmlify (stencil, url, stack, caller, depth, done) {
     var elements, layoutNS = "", stop = stack.length - 1, returned, trace = stack[stop].trace, dirty = {};
+
+    var base = url.replace(/\/[^\/]+$/, '/');
 
     // TODO Belongs elsewhere.
     var hrefs = {};
@@ -108,16 +110,16 @@
     }
 
     function rootObject (context, object) {
-      object.context = contextSnapshot();
+      object.context = contextSnapshot(stack);
       object.evaluations = evaluationsSnapshot();
-      object.stack = stackSnapshot();
+      object.stack = stackSnapshot(stack);
       return object;
     }
 
     elements =
     { if: function (record, node) {
         var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(), source);
+          , result = evaluate(contextSnapshot(stack), source);
 
         if (result) {
           xmlify(stencil, base, stack, stack, stack.length - 1, check(done, function (doc) {
@@ -132,7 +134,7 @@
       }
     , each: function (record, node) {
         var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(), source);
+          , result = evaluate(contextSnapshot(stack), source);
         // Need to callback result if it is dynamic.
 
         replace(result);
@@ -149,8 +151,6 @@
           if (limit == '' || limit == null) limit = result.length;
           limit = Math.min(limit, result.length);
 
-          record.evaluations[into] = { source: source, type: 'array', unique: unique }
-
           next();
 
           // TODO: I'm expecting base to always be a full url.
@@ -160,7 +160,7 @@
                 var snippet = rootObject(context[into],
                   { unique: { source: unique, value: id }
                   , into: into
-                  , url: base
+                  , url: url
                   , dirty: dirty
                   , source: source
                   , node: node.getAttribute('id')
@@ -170,8 +170,9 @@
                 stack.forEach(function (element) {
                   for (var key in element.evaluations) {
                     var evaluation = element.evaluations[key];
-                    if (evaluation.dependencies)
-                      evaluation.dependencies.push(snippet.identifier);
+                    if (evaluation.index != null) {
+                      stencil.evaluations[evaluation.index].dependencies.push(snippet.identifier);
+                    }
                   }
                 });
               } else {
@@ -187,7 +188,7 @@
             if (i < limit) {
               stack.unshift(wrap(node.cloneNode(true)));
               stack[0].context[into] = result[i++]; 
-              context = contextSnapshot();
+              context = contextSnapshot(stack);
               if (unique) {
                 trace.push('');
                 execute(evaluate(context, unique));
@@ -202,7 +203,7 @@
       }
     , value: function (record, node) {
         var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(), source)
+          , result = evaluate(contextSnapshot(stack), source)
           , e = node.ownerDocument.createElement(node.getAttribute("element"));
         dirty[node.getAttribute('id')] = result;
         e.appendChild(node.ownerDocument.createTextNode(result));
@@ -253,7 +254,7 @@
     function requisite (attr) {
       var record = stack.shift()
         , into = attr.localName
-        , href = normalize(base, attr.nodeValue.replace(/^[^:]+:/, ''))
+        , href = normalize(attr.nodeValue.replace(/^[^:]+:/, ''))
         ;
 
       // TODO: I sense that this is all wrong. The application itself is going
@@ -272,12 +273,18 @@
       //
       // Need to step back and remember that I want to see this from the
       // perspective of the templates, not from MVC frameworkery.
-      resolver(href, "text/javascript", check(done, function (module) {
+
+      href = normalize(base + href);
+      resolver(absolutize(stencil.base, href), "text/javascript", check(done, function (module) {
         if (typeof module == 'function' && module.name == 'dynamic') {
-          module(true, x(stencil, { href: href }, stack, record, into, function (object) {
+          var snapshot = stackSnapshot(stack, record);
+          var registration = module(true, x(stencil, { dependencies: [], href: href }, snapshot, function (evaluation) {
+            record.context[into] = evaluation.value;
+            record.evaluations[into] = { index: evaluation.index };
             record.loading++;
             if (visit(record)) resume();
           }));
+          stencil.registrations.push(registration);
         } else {
           record.context[into] = module;
           record.loading++;
@@ -288,115 +295,15 @@
       return false;
     }
 
-    function x (stencil, evaluation, stack, record, into, initializer) {
-      var initialized = false, snapshot;
-      evaluation.dependencies = [];
-      return function (error, object) {
-        if (!initialized) {
-          initialized = true;
-          record.context[into] = evaluation.value = object;
-          record.evaluations[into] = evaluation;
-          snapshot = stackSnapshot(record);
-          initializer(object);
-        } else {
-          evaluation.value = object;
-          update(stencil, evaluation.dependencies.slice(0), snapshot);
-        }
-      }
-    }
-
-    function update (stencil, dependencies, stack) {
-      var regions = {}, templates = {};
-
-      step();
-
-      function step () {
-        if (!dependencies.length) return;
-
-        var region = stencil.snippets[dependencies.shift()];
-
-        region.stack = stack.concat(region.stack.slice(stack.length));
-
-        region.stack.forEach(function (element, i) {
-          region.stack[i].context = {};
-          var context = contextSnapshot(stack.slice(0, i));
-          for (var key in element.evaluations) {
-            var evaluation = element.evaluations[key];
-            if (evaluation.value) {
-              region.stack[i].context[key] = evaluation.value;
-            } 
-          }
-        });
-
-        region.stack.reverse();
-
-        var context = contextSnapshot(region.stack)
-          , key = region.url + '#' + region.identifier, table;
-
-        if (!(table = templates[key])) {
-          table = templates[key] = {}; 
-          evaluate(context, region.source).forEach(function (record) {
-            context[region.into] = record;
-            table[evaluate(context, region.unique.source)] = record;
-          });
-        }
-
-        fetch(region.url, generate);
-
-        function generate (error, template) {
-          if (error) throw error;
-          region.stack[0].context[region.into] = table[region.unique.value];
-          region.stack[0].node = template.doc.getElementById(region.node).cloneNode(true);
-
-        xmlify({}, region.url, region.stack, null, 0, function (error, nodes, dirty) {
-          if (error) throw error;
-          // Somehow, I don't believe the counts will mismatch without this also
-          // mismatching.
-          var count = 0;
-          for (var key in dirty) {
-            if (region.dirty[key] === dirty[key]) {
-              count++;
-            }
-          }
-          if (Object.keys(region.dirty).length != count) {
-            var comment = stencil.comments[region.comment]
-              , parentNode = comment.parentNode
-              , factory = comment.ownerDocument
-              , count, removed, chars
-              ;
-            for (count = region.elements; count; count--) {
-              while (parentNode.removeChild(comment.nextSibling).nodeType != 1);
-            }
-            var length;
-            for (count = region.characters; count;) {
-              removed = parentNode.removeChild(comment.nextSibling)
-              count -= (length = Math.min(count, removed.nodeValue.length));
-            }
-            if (length < removed.nodeValue.length) {
-              var text = removed.nodeValue.slice(length);
-              parentNode.insertBefore(removed, comment.nextSibling);
-              removed.splitText(length);
-              parentNode.removeChild(removed.nextSibling);
-            }
-            stencil.comments[region.comment] = parentNode.insertBefore(parentNode.ownerDocument.createComment(comment.nodeValue), comment);
-            while (nodes.firstChild) {
-              parentNode.insertBefore(nodes.firstChild, comment);
-            }
-            parentNode.removeChild(comment);
-          }
-          step();
-        });
-        }
-      }
-    }
 
     function include (record) {
       var node = record.node
         , attr = record.include
-        , href = normalize(base, attr.nodeValue.replace(/^[^:]+:/, ''))
+        , href = normalize(attr.nodeValue.replace(/^[^:]+:/, ''))
         ;
 
-      fetch(href, check(done, function (template) {
+      href = normalize(base + href);
+      fetch(absolutize(stencil.base, href), check(done, function (template) {
         var callee = [ wrap(template.doc.cloneNode(true)) ]
           , blocks = record.node.getElementsByTagNameNS(attr.nodeValue, '*')
           , i, I
@@ -490,8 +397,8 @@
       return object;
     }
 
-    function stackSnapshot () {
-      var vargs = stack.slice(0).reverse().concat(slice.call(arguments, 0))
+    function stackSnapshot (stack) {
+      var vargs = stack.slice(0).reverse().concat(slice.call(arguments, 1))
         , snapshot = [], i, I, name;
       for (i = 0, I = vargs.length; i < I; i++) {
         snapshot.push({ evaluations: _extend({}, vargs[i].evaluations) });
@@ -507,16 +414,6 @@
         }
       }
       return evaluations;
-    }
-
-    function contextSnapshot (source) {
-      var context = {}, i, I, name, source = source || stack;
-      for (i = 0, I = source.length; i < I; i++) {
-        for (name in source[i].context) {
-          if (name[0] != '!') context[name] = source[i].context[name];
-        }
-      }
-      return context;
     }
 
     function children (child) {
@@ -630,36 +527,34 @@
     }
   }
 
-  function relativize (base, url) {
-    var $;
-    if (url[0] == '/') {
-      return ($ = /^(https?:\/\/[^\/]+/.exec(base)) ? $[1] + url : url;
-    }
-    if (!url.indexOf('http')) {
-      return url;
-    }
-    return /^([^?#]*\/).*$/.exec(base)[1] + url;
+  function absolutize (base, url) {
+    return normalize(url[0] == '/' ? url : base + '/' + url);
   }
 
-  function normalize (base, url) {
-    var parts = relativize(base, url).split('/'), i, I, normal = [], http = /^https?:$/.test(parts[0]) ? 4 : 1;
-    for (i = http, I = parts.length; i < I; i++) {
+  function normalize (url) {
+    var parts = url.split('/'), i, I, normal = [];
+    for (i = 0, I = parts.length; i < I; i++) {
       if (/\?#/.test(parts[i])) {
         normal.push.apply(normal, parts.slice(i));
         break;
       } if (parts[i] == '..') {
-        if (!parts.pop()) throw new Error('underflow');
-      } else if (parts[i] != '.') {
+        if (normal.length && normal[normal.length - 1] != '..') {
+          if (normal.length == 1 && normal[0] == '') throw new Error('underflow');
+          normal.pop();
+        } else {
+          normal.push(parts[i]); 
+        }
+      } else if ((parts[i] != '' || i == 0) && parts[i] != '.') {
         normal.push(parts[i]);
       }
     }
-    normal.unshift.apply(normal, parts.slice(0, http));
     return normal.join('/');
   }
 
   function fetch (url, callback) {
+    url = normalize(url);
     if (templates[url]) callback(null, templates[url]);
-    else resolver(url, "text/xml", check(callback, function (doc) {
+    else resolver(absolutize(base, url), "text/xml", check(callback, function (doc) {
       // Give each Stencil element an `id` attribute that will be consistent on
       // the server and in the browser.
       var i, I, each = doc.getElementsByTagNameNS(NS_STENCIL, '*'); 
@@ -715,6 +610,7 @@
           }
         }
         if (dirty) {
+          die(snippet.url);
           fetch(snippet.url, check(counter.callback, generate));
         } else {
           compare();
@@ -799,7 +695,7 @@
         } else {
           var json = child.nodeValue.replace(/^\/\/ Regions./, '');
           if (json.length != child.nodeValue.length) {
-            stencil.snippets = JSON.parse(json);
+            _extend(stencil, JSON.parse(json));
           }
         }
       }
@@ -807,32 +703,183 @@
     }
   }
 
+  function x (stencil, evaluation, stack, initializer) {
+    if (evaluation.index == null) {
+      evaluation.index = stencil.evaluations.length;
+    }
+    stencil.evaluations[evaluation.index] = evaluation;
+    return function (error, object) {
+      evaluation.value = object;
+      if (initializer) {
+        initializer(evaluation);
+        initializer = null;
+      } else {
+        update(stencil, evaluation.dependencies.slice(0));
+      }
+    }
+  }
+
+  function update (stencil, dependencies) {
+    var regions = {}, templates = {};
+
+    step();
+
+    // Probably not using snapshot.
+
+    function step () {
+      if (!dependencies.length) return;
+
+      var region = stencil.snippets[dependencies.shift()];
+
+      var stack = region.stack.slice(0);
+      stack.forEach(function (element, i) {
+        stack[i].context = {};
+        var context = contextSnapshot(stack.slice(0, i));
+        for (var key in element.evaluations) {
+          var evaluation = element.evaluations[key];
+          if (evaluation.index != null) {
+            region.stack[i].context[key] = stencil.evaluations[evaluation.index].value;
+          } else if (evaluation.value) {
+            region.stack[i].context[key] = evaluation.value;
+          } else {
+            die(evaluation); 
+          }
+        }
+      });
+
+      stack.reverse();
+
+      var context = contextSnapshot(stack)
+        , key = region.url + '#' + region.identifier, table;
+
+      if (!(table = templates[key])) {
+        table = templates[key] = {}; 
+        evaluate(context, region.source).forEach(function (record) {
+          context[region.into] = record;
+          table[evaluate(context, region.unique.source)] = record;
+        });
+      }
+
+      fetch(absolutize(stencil.base, region.url), generate);
+
+      function generate (error, template) {
+        if (error) throw error;
+        region.stack[0].context[region.into] = table[region.unique.value];
+        region.stack[0].node = template.doc.getElementById(region.node).cloneNode(true);
+
+      xmlify({}, region.url, region.stack, null, 0, function (error, nodes, dirty) {
+        if (error) throw error;
+        // Somehow, I don't believe the counts will mismatch without this also
+        // mismatching.
+        var count = 0;
+        for (var key in dirty) {
+          if (region.dirty[key] === dirty[key]) {
+            count++;
+          }
+        }
+        if (Object.keys(region.dirty).length != count) {
+          var comment = stencil.comments[region.comment]
+            , parentNode = comment.parentNode
+            , factory = comment.ownerDocument
+            , count, removed, chars
+            ;
+          for (count = region.elements; count; count--) {
+            while (parentNode.removeChild(comment.nextSibling).nodeType != 1);
+          }
+          var length;
+          for (count = region.characters; count;) {
+            removed = parentNode.removeChild(comment.nextSibling)
+            count -= (length = Math.min(count, removed.nodeValue.length));
+          }
+          if (length < removed.nodeValue.length) {
+            var text = removed.nodeValue.slice(length);
+            parentNode.insertBefore(removed, comment.nextSibling);
+            removed.splitText(length);
+            parentNode.removeChild(removed.nextSibling);
+          }
+          stencil.comments[region.comment] = parentNode.insertBefore(parentNode.ownerDocument.createComment(comment.nodeValue), comment);
+          while (nodes.firstChild) {
+            parentNode.insertBefore(nodes.firstChild, comment);
+          }
+          parentNode.removeChild(comment);
+        }
+        step();
+      });
+      }
+    }
+  }
+
+    function contextSnapshot (source) {
+      var context = {}, i, I, name, source = source || stack;
+      for (i = 0, I = source.length; i < I; i++) {
+        for (name in source[i].context) {
+          if (name[0] != '!') context[name] = source[i].context[name];
+        }
+      }
+      return context;
+    }
+
+  var stencils = {}, stencilId = 0;
+  // STEP: NEEDS CALLBACK.
   function deserialize (dom) { 
-    var stencil = { comments: {} };
+    var stencil = { comments: {}, registrations: [] };
     comments(stencil, dom.documentElement);
+    stencil.base = base;
     stencil.node = dom.documentElement;
-    stencil.update = update;
+    stencil.node.__stencil__ = stencilId++;
+    stencils[stencil.node.__stencil__] = stencil;
+    var evaluations = stencil.evaluations.slice(0);
+
+    relink();
+
+    function relink() {
+      if (!evaluations.length) return;
+
+      var evaluation = evaluations.shift();
+      resolver(absolutize(stencil.base, evaluation.href), "text/javascript", function (error, module) {
+        if (error) throw error;
+        var registration = module(false, x(stencil, evaluation, []));
+        stencil.registrations.push(registration);
+      });
+    }
+
     return stencil;
   }
 
+  function deregister (node) {
+    var stencil = stencils[node.__stencil__];
+    stencil.registrations.forEach(function (unlink) {
+      unlink();
+    });
+    delete stencils[node.__stencil__];
+  }
+
   function generate (url, callback) {
-    url = normalize(base, url);
+    url = normalize(url);
     fetch(url, check(callback, function (template) {
       var frag = template.doc.createDocumentFragment();
       frag.appendChild(template.doc.documentElement.cloneNode(true));
       var stack = [ wrap(frag) ];
       stack[0].context.source = { file: "foo.js", url: template.url };
       stack[0].evaluations.source = { value: stack[0].context.source };
-      var stencil = { snippets: {}, identifier: 0, comments: {} };
+      var stencil = { snippets: {}, identifier: 0, comments: {}, registrations: [], evaluations: [] };
+      stencil.base = base;
       xmlify(stencil, url, stack, null, 0, check(callback, function () {
         var node;
         stencil.node = node = frag.firstChild;
-        if (Object.keys(stencil.snippets).length)
-          node.appendChild(node.ownerDocument.createComment('// Regions.\n' + JSON.stringify(stencil.snippets, null, 2)));
+        stencil.node.__stencil__ = stencilId++;
+        stencils[stencil.node.__stencil__] = stencil;
+        if (Object.keys(stencil.snippets).length) {
+          var serialize =
+          { snippets: stencil.snippets
+          , evaluations: stencil.evaluations
+          };
+          node.appendChild(node.ownerDocument.createComment('// Regions.\n' + JSON.stringify(serialize, null, 2)));
+        }
         callback(null, stencil)
       }));
     }));
   }
 
-  return { generate: generate, deserialize: deserialize };
+  return { generate: generate, deserialize: deserialize, deregister: deregister };
 }; return { create: create } });

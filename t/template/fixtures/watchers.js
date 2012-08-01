@@ -19,6 +19,7 @@
   var generator = function dynamic (immediate, callback) {
     if (immediate) callback(null, watchers1);
     emitter.on('update', callback);
+    return function () { emitter.removeListener('update', callback) }
   }
 
   generator.emitter = emitter;
