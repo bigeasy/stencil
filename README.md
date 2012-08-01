@@ -77,6 +77,12 @@ on semantic layout.
 
 Changes for each release.
 
+### Version 0.0.2
+
+Released: Pending.
+
+ * Update `t/sizes` to work with Bash 3, OS X. #46.
+
 ### Version 0.0.1
 
 Released: Sun Jul 22 22:05:35 UTC 2012.

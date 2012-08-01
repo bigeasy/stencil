@@ -1,27 +1,27 @@
 #!/bin/bash
 
-declare -A b
-declare -A k
+declare -a b
+declare -a k
 
 printf "    %-24s %11s %11s %11s %11s\n" File Raw Min Zip Min/Zip
 for file in $@; do
-  b[raw]=$(cat $file | wc -c)
-  b[min]=$(cat $file | uglifyjs | wc -c)
+  b[0]=$(cat $file | wc -c)
+  b[1]=$(cat $file | uglifyjs | wc -c)
   alt=$(cat $file | uglifyjs --lift-vars | wc -c)
-  if [ $alt -lt ${b[min]} ]; then
-    b[min]=$alt
+  if [ $alt -lt ${b[1]} ]; then
+    b[1]=$alt
   fi
-  b[zip]=$(cat $file | gzip -c  | wc -c)
-  b[minzip]=$(cat $file | uglifyjs | gzip -c | wc -c)
+  b[2]=$(cat $file | gzip -c  | wc -c)
+  b[3]=$(cat $file | uglifyjs | gzip -c | wc -c)
   alt=$(cat $file | uglifyjs --lift-vars | gzip -c | wc -c)
-  if [ $alt -lt ${b[minzip]} ]; then
-    b[minzip]=$alt
+  if [ $alt -lt ${b[3]} ]; then
+    b[3]=$alt
   fi
-  for field in raw min zip minzip; do
+  for field in 0 1 2 3; do
     k[$field]=$(echo "${b[$field]} / 1024" | bc -l)
   done
   printf "    %-24s" $file
-  for field in raw min zip minzip; do
+  for field in 0 1 2 3; do
     printf "%6d/%05.2f" ${b[$field]} ${k[$field]}
   done
   printf "\n"
