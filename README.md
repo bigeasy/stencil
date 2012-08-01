@@ -50,6 +50,14 @@ serialize to older HTML flavors for older browsers.
 On the browser, when we genrerate Stencil XML, we simply import it into the
 existing DOM using `Document.adoptNode`.
 
+## Expand
+
+ * Functions must have no side-effects; i.e. do not use your template functions
+   to create a hit counter.
+ * It's not hard to write template functions that do not have side effects. The
+   sort of functions that might have side effects are not likely to appear in
+   the logic that supports emitting markup.
+
 ## Motivations
 
 Revisiting the ideas explorted in a [Java based
