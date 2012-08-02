@@ -38,9 +38,10 @@
   // into functions by their trimmed source.
   var functions = {};
 
+  // A structure that surrounds a DOM node, create a level in context stack.
   function createElement (node) {
     return { node: node
-           , tags: {}
+           , includes: {}
            , loading: 0
            , assignments: {}
            , context: {}
@@ -205,6 +206,18 @@
         record.node = text;
         resume();
       }
+    , include: function (record, node) {
+        record.node = { nextSibling: node.firstChild };
+        var parentNode = node.parentNode;
+        while (node.firstChild) parentNode.insertBefore(node.firstChild, node);
+        prune(node);
+      }
+    , tag: function (record, node) {
+        record.node = { nextSibling: node.firstChild };
+        var parentNode = node.parentNode;
+        while (node.firstChild) parentNode.insertBefore(node.firstChild, node);
+        prune(node);
+      }
     , block: function (record, node) {
         var name = node.getAttribute('name');
         var block;
@@ -301,25 +314,30 @@
           }
         }
 
-        stack[0].tags[attr.nodeValue] = template.tags;
+        stack[0].includes[attr.nodeValue] = template;
 
         record.include = false;
         if (visit(stack.shift())) resume();
       }));
     }
 
-    function tagged (tag, record) {
+    function tagged (include, tag, record) {
       var node = record.node
         , href = normalize(base + normalize(node.namespaceURI.replace(/^[^:]+:/, '')))
+        , fragment = stencil.document.createDocumentFragment()
+        , nodes = stencil.document.importNode(include.nodes, false)
         , callee
         ;
+
+      fragment.appendChild(nodes);
+      nodes.appendChild(stencil.document.importNode(tag, true));
 
       callee = createDescent( stencil
                             , { url: href
                               , namespaceURI: node.namespaceURI
                               , contents: node
                               }
-                            , stencil.document.importNode(tag, true)
+                            , fragment
                             , { source: { file: "foo.js", url: href }
                               , attr: record.attrs
                               }
@@ -367,7 +385,7 @@
     }
 
     function visit (record) {
-      var node = record.node, completed, i, I, attr, attrs = record.attrs, protocol, blocks, tag;
+      var node = record.node, completed, i, I, attr, attrs = record.attrs, protocol, tag, inc;
       stack.unshift(record);
       if (node.nodeType == 1) {
         for (I = node.attributes.length; record.loading < I; record.loading++) {
@@ -392,8 +410,8 @@
           return elements[node.localName](record, node); 
         } else if (node.namespaceURI) {
           for (i = 0, I = stack.length; i < I; i++) {
-            if (tag = stack[i].tags[node.namespaceURI][node.localName]) {
-              return tagged(tag, record);
+            if ((inc = stack[i].includes[node.namespaceURI]) && (tag = inc.tags[node.localName])) {
+              return tagged(inc, tag, record);
             }
           }
         }
