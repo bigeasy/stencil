@@ -198,16 +198,6 @@
         record.node = text;
         resume();
       }
-    , include: function (record, node) {
-        for (var child = node.firstChild; child; child = child.nextSibling) {
-          if (child.nodeType == 1 && child.localName == "tag") {
-            caller[0].tags[caller.namespaceURI][child.getAttribute('name')] = child;
-          }
-        }
-        record.include = false;
-        record.node = { nextSibling: null };
-        resume();
-      }
     , block: function (record, node) {
         var name = node.getAttribute('name');
         var block;
@@ -279,21 +269,25 @@
 
       href = normalize(base + href);
       fetch(absolutize(stencil.base, href), check(done, function (template) {
-        var callee = [ wrap(template.doc.cloneNode(true)) ]
-          , i, I
+        var root = template.doc.documentElement
+          , child
           ;
 
-        callee[0].context =
-        { source: { file: "foo.js", url: template.url }
-        };
-        record.tags[attr.nodeValue] = {};
+        if (!template.tags) {
+          template.tags = {};
+          if (root.localName == 'include' && root.namespaceURI == NS_STENCIL) {
+            for (child = root.firstChild; child; child = child.nextSibling) {
+              if (child.localName == 'tag' && child.namespaceURI == NS_STENCIL) {
+                template.tags[child.getAttribute('name')] = child;
+              }
+            }
+          }
+        }
 
-        extend(stack, { namespaceURI: attr.nodeValue });
+        stack[0].tags[attr.nodeValue] = template.tags;
 
-        xmlify(stencil, href, callee, stack, depth + 1, check(done, function () {
-          record.include = false;
-          if (visit(stack.shift())) resume();
-        }));
+        record.include = false;
+        if (visit(stack.shift())) resume();
       }));
     }
 
