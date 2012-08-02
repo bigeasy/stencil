@@ -1,10 +1,10 @@
 <html xmlns:s="stencil" xmlns:o="layout:(title)">
 <head>
-  <s:value select="title" element="title"/>
+  <title><s:value select="title"/></title>
   <o:head/>
 </head>
 <body>
-  <s:value select="title" element="h1"/>
+  <h1><s:value select="title"/></h1>
   <o:body/>
 </body>
 </html>

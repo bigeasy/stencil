@@ -1,5 +1,5 @@
 <html xmlns:s="stencil" xmlns:quotes="req:quotes.js">
 <body>
-<s:value select="quotes.rosten" element="p"/>
+<p><s:value select="quotes.rosten"/></p>
 </body>
 </html>
