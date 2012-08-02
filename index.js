@@ -38,14 +38,14 @@
   // into functions by their trimmed source.
   var functions = {};
 
-  // A structure that surrounds a DOM node, create a level in context stack.
-  function wrap (node) {
-    return  { node: node
-            , tags: {}
-            , loading: 0
-            , evaluations: {}
-            , context: {}
-            , attrs: {} }
+  function createElement (node) {
+    return { node: node
+           , tags: {}
+           , loading: 0
+           , assignments: {}
+           , context: {}
+           , attrs: {}
+           };
   }
 
   // `nodes` is a node who's children are inserted before the given `node`.
@@ -85,29 +85,38 @@
     return snippet;
   }
 
+  function validator (callback) {
+    return function (forward) { return check(callback, forward) }
+  }
+
+  function check (callback, forward) {
+    return function (error) {
+      if (error) {
+        callback(error);
+      } else {
+        try {
+          forward.apply(null, slice.call(arguments, 1));
+        } catch (error) {
+          callback(error);
+        }
+      }
+    }
+  }
+
   // STEP: stack and caller are objects, where stack is this (rather self or callee).
-  function xmlify (stencil, url, stack, caller, done) {
-    var elements, stop = stack.length - 1, returned, dirty = {}
-      , base = url.replace(/\/[^\/]+$/, '/');
-
-    function prune (node) {
-      node.parentNode.removeChild(node);
-      resume();
-    }
-
-    function rootObject (context, object) {
-      object.context = contextSnapshot(stack);
-      object.stack = stackSnapshot(stack);
-      return object;
-    }
-
-    elements =
+  function xmlify (stencil, descent, caller, done) {
+    var stack = descent.stack
+      , stop = stack.length - 1, returned
+      , base = descent.url.replace(/\/[^\/]+$/, '/')
+      , dirty = {}
+      , okay = validator(done)
+      , elements =
     { if: function (record, node) {
         var source = node.getAttribute('select').trim()
           , result = evaluate(contextSnapshot(stack), source);
 
         if (result) {
-          xmlify(stencil, base, stack, stack, check(done, function (nodes) {
+          xmlify(stencil, descent, caller, okay(function (nodes) {
             while (nodes.firstChild) {
               node.parentNode.insertBefore(nodes.firstChild, node); 
             }
@@ -140,12 +149,12 @@
 
           // TODO: I'm expecting base to always be a full url.
           function execute (id) {
-            xmlify(stencil, url, stack, stack, check(done, function (nodes, dirty) {
+            xmlify(stencil, descent, caller, okay(function (nodes, dirty) {
               if (id != null) {
                 var snippet = rootObject(context[into],
                   { unique: { source: unique, value: id }
                   , into: into
-                  , url: url
+                  , url: descent.url
                   , dirty: dirty
                   , source: source
                   , node: node.getAttribute('id')
@@ -153,10 +162,10 @@
                 insertSnippet(stencil, snippet, node, nodes);
                 stencil.snippets[snippet.identifier] = snippet;
                 stack.forEach(function (element) {
-                  for (var key in element.evaluations) {
-                    var evaluation = element.evaluations[key];
-                    if (evaluation.index != null) {
-                      stencil.evaluations[evaluation.index].dependencies.push(snippet.identifier);
+                  for (var key in element.assignments) {
+                    var assignment = element.assignments[key];
+                    if (assignment.index != null) {
+                      stencil.dynamics[assignment.index].dependencies.push(snippet.identifier);
                     }
                   }
                 });
@@ -171,7 +180,7 @@
 
           function next () {
             if (i < limit) {
-              stack.unshift(wrap(node.cloneNode(true)));
+              stack.unshift(createElement(stencil.document.importNode(node, true)));
               stack[0].context[into] = result[i++]; 
               context = contextSnapshot(stack);
               if (unique) {
@@ -199,15 +208,15 @@
     , block: function (record, node) {
         var name = node.getAttribute('name');
         var block;
-        for (var child = stack.contents.firstChild; !block && child; child = child.nextSibling) {
-          if (child.namespaceURI == stack.namespaceURI && child.localName == name) {
+        for (var child = descent.contents.firstChild; !block && child; child = child.nextSibling) {
+          if (child.namespaceURI == descent.namespaceURI && child.localName == name) {
             block = child;
           }
         }
         if (block) {
-          caller.unshift(wrap(block));
-          xmlify(stencil, url, caller, stack, check(done, function (nodes) {
-            caller.shift();
+          caller.stack.unshift(createElement(stencil.document.importNode(block, true)));
+          xmlify(stencil, caller, descent, okay(function (nodes) {
+            caller.stack.shift();
             var child;
             record.node = { nextSibling: node.nextSibling };
             while (child = nodes.firstChild) {
@@ -230,6 +239,17 @@
       done(null, stack[0].node, dirty);
     }
 
+    function prune (node) {
+      node.parentNode.removeChild(node);
+      resume();
+    }
+
+    function rootObject (context, object) {
+      object.context = contextSnapshot(stack);
+      object.stack = stackSnapshot(stack);
+      return object;
+    }
+
     // @maxogden: jsonp is only for single origin policy restricted GETs
     function requisite (attr) {
       var record = stack.shift()
@@ -241,9 +261,9 @@
       resolver(absolutize(stencil.base, href), "text/javascript", check(done, function (module) {
         if (typeof module == 'function' && module.name == 'dynamic') {
           var snapshot = stackSnapshot(stack, record);
-          var registration = module(true, x(stencil, { dependencies: [], href: href }, snapshot, function (evaluation) {
-            record.context[into] = evaluation.value;
-            record.evaluations[into] = { index: evaluation.index };
+          var registration = module(true, x(stencil, { dependencies: [], href: href }, snapshot, function (dynamic) {
+            record.context[into] = dynamic.value;
+            record.assignments[into] = { index: dynamic.index };
             record.loading++;
             if (visit(record)) resume();
           }));
@@ -262,11 +282,10 @@
     function include (record) {
       var node = record.node
         , attr = record.include
-        , href = normalize(attr.nodeValue.replace(/^[^:]+:/, ''))
+        , href = normalize(base + attr.nodeValue.replace(/^[^:]+:/, ''))
         ;
 
-      href = normalize(base + href);
-      fetch(absolutize(stencil.base, href), check(done, function (template) {
+      fetch(absolutize(stencil.base, href), okay(function (template) {
         var root = template.nodes
           , child
           ;
@@ -291,17 +310,22 @@
 
     function tagged (tag, record) {
       var node = record.node
-        , href = normalize(node.namespaceURI.replace(/^[^:]+:/, ''))
-        , callee = [ wrap(stencil.document.importNode(tag, true)) ]
+        , href = normalize(base + normalize(node.namespaceURI.replace(/^[^:]+:/, '')))
+        , callee
         ;
-      href = normalize(base + href);
-      callee[0].context =
-      { source: { file: "foo.js", url: href }
-//      , caller: record.node
-      , attr: record.attrs
-      };
-      extend(callee, { namespaceURI: node.namespaceURI, contents: node });
-      xmlify(stencil, href, callee, stack, check(done, function (nodes) {
+
+      callee = createDescent( stencil
+                            , { url: href
+                              , namespaceURI: node.namespaceURI
+                              , contents: node
+                              }
+                            , stencil.document.importNode(tag, true)
+                            , { source: { file: "foo.js", url: href }
+                              , attr: record.attrs
+                              }
+                            );
+
+      xmlify(stencil, callee, descent, okay(function (nodes) {
         var child;
         record.node = { nextSibling: node.nextSibling };
         while (child = nodes.firstChild) {
@@ -330,14 +354,14 @@
       var vargs = stack.slice(0).reverse().concat(slice.call(arguments, 1))
         , snapshot = [], i, I, name;
       for (i = 0, I = vargs.length; i < I; i++) {
-        snapshot.push({ evaluations: extend({}, vargs[i].evaluations) });
+        snapshot.push({ assignments: extend({}, vargs[i].assignments) });
       }
       return snapshot;
     }
 
     function children (child) {
       for (; child != null; child = child.nextSibling) {
-        if (!visit(wrap(child))) return false;
+        if (!visit(createElement(child))) return false;
       }
       return true;
     }
@@ -401,7 +425,7 @@
   // spooky, silent erroneous behavior.
   //
   // The nature of Stencils is such that the do not have much logic in their
-  // expressions. Maybe our economies in evaluation will survive application.
+  // expressions. Maybe our economies in assignment will survive application.
   function evaluate (context, source) {
     var parameters = [], values = [], callbacks = 0
       , i, I, name, result, compiled;
@@ -429,13 +453,6 @@
   }
 
   var templates = {};
-
-  function check(callback, next) {
-    return function (error) {
-      if (error) callback(error);
-      else next.apply(this, slice.call(arguments, 1));
-    }
-  }
 
   function absolutize (base, url) {
     return normalize(url[0] == '/' ? url : base + '/' + url);
@@ -495,18 +512,33 @@
     }
   }
 
-  function x (stencil, evaluation, stack, initializer) {
-    if (evaluation.index == null) {
-      evaluation.index = stencil.evaluations.length;
+  function x (stencil, dynamic, stack, initializer) {
+    if (dynamic.index == null) {
+      dynamic.index = stencil.dynamics.length;
     }
-    stencil.evaluations[evaluation.index] = evaluation;
+    stencil.dynamics[dynamic.index] = dynamic;
     return function (error, object) {
-      evaluation.value = object;
+      dynamic.value = object;
       if (initializer) {
-        initializer(evaluation);
+        initializer(dynamic);
         initializer = null;
       } else {
-        update(stencil, evaluation.dependencies.slice(0));
+        update(stencil, dynamic.dependencies.slice(0));
+      }
+    }
+  }
+
+  function assign (stencil, stack, i) {
+    stack[i].context = {};
+    var context = contextSnapshot(stack.slice(0, i));
+    for (var key in stack[i].assignments) {
+      var assignment = stack[i].assignments[key];
+      if (assignment.index != null) {
+        stack[i].context[key] = stencil.dynamics[assignment.index].value;
+      } else if (assignment.value) {
+        stack[i].context[key] = assignment.value;
+      } else {
+        die(assignment); 
       }
     }
   }
@@ -524,20 +556,7 @@
       var region = stencil.snippets[dependencies.shift()];
 
       var stack = region.stack.slice(0);
-      stack.forEach(function (element, i) {
-        stack[i].context = {};
-        var context = contextSnapshot(stack.slice(0, i));
-        for (var key in element.evaluations) {
-          var evaluation = element.evaluations[key];
-          if (evaluation.index != null) {
-            region.stack[i].context[key] = stencil.evaluations[evaluation.index].value;
-          } else if (evaluation.value) {
-            region.stack[i].context[key] = evaluation.value;
-          } else {
-            die(evaluation); 
-          }
-        }
-      });
+      stack.forEach(function (element, i) { assign(stencil, stack, i); });
 
       stack.reverse();
 
@@ -556,10 +575,13 @@
 
       function generate (error, template) {
         if (error) throw error;
-        region.stack[0].context[region.into] = table[region.unique.value];
-        region.stack[0].node = template.document.getElementById(region.node).cloneNode(true);
 
-      xmlify({}, region.url, region.stack, null, function (error, nodes, dirty) {
+        var descent = createDescent(stencil, { url: region.url });
+        descent.stack = stack;
+        stack[0].context[region.into] = table[region.unique.value];
+        stack[0].node = stencil.document.importNode(template.document.getElementById(region.node), true);
+
+      xmlify({}, descent, null, function (error, nodes, dirty) {
         if (error) throw error;
         // Somehow, I don't believe the counts will mismatch without this also
         // mismatching.
@@ -616,21 +638,22 @@
   function deserialize (document) { 
     var stencil = { comments: {}, registrations: [] };
     comments(stencil, document.documentElement);
+    stencil.document = document;
     stencil.base = base;
     stencil.node = document.documentElement;
     stencil.node.__stencil__ = stencilId++;
     stencils[stencil.node.__stencil__] = stencil;
-    var evaluations = stencil.evaluations.slice(0);
+    var dynamics = stencil.dynamics.slice(0);
 
     relink();
 
     function relink() {
-      if (!evaluations.length) return;
+      if (!dynamics.length) return;
 
-      var evaluation = evaluations.shift();
-      resolver(absolutize(stencil.base, evaluation.href), "text/javascript", function (error, module) {
+      var dynamic = dynamics.shift();
+      resolver(absolutize(stencil.base, dynamic.href), "text/javascript", function (error, module) {
         if (error) throw error;
-        var registration = module(false, x(stencil, evaluation, []));
+        var registration = module(false, x(stencil, dynamic, []));
         stencil.registrations.push(registration);
       });
     }
@@ -646,6 +669,18 @@
     delete stencils[node.__stencil__];
   }
 
+  // A structure that surrounds a DOM node, create a level in context stack.
+  function createDescent (stencil, descent, node, assignments) {
+    var key, actual = {};
+    extend(descent, { stack: [] });
+    descent.stack.unshift(createElement(node));
+    for (key in assignments) {
+      descent.stack[0].assignments[key] = { value: assignments[key] };
+    }
+    assign(stencil, descent.stack, 0);
+    return descent;
+  }
+
   function generate (url, callback) {
     url = normalize(url);
     fetch(url, check(callback, function (template) {
@@ -655,13 +690,15 @@
       var fragment = template.document.createDocumentFragment();
       fragment.appendChild(template.nodes.cloneNode(true));
 
-      // Start a stack.
-      var stack = [ wrap(fragment) ];
-
       // TODO: Actual file names may at times be named something other than
       // `foo.js`.
-      stack[0].context.source = { file: "foo.js", url: template.url };
-      stack[0].evaluations.source = { value: stack[0].context.source };
+
+      // Start a descent.
+      var descent = createDescent(stencil, { url: url }, fragment,
+      { source: { file: "foo.js", url: template.url }
+      });
+
+      //die(descent);
 
       // We can wrap everything in a closure to get rid of this object, or else
       // we go the other route and objectify everything. No! We need to get to
@@ -676,13 +713,13 @@
       { base: base
       , comments: {}
       , document: template.document
-      , evaluations: []
+      , dynamics: []
       , identifier: 0
       , snippets: {}
       , registrations: []
       };
 
-      xmlify(stencil, url, stack, null, check(callback, function () {
+      xmlify(stencil, descent, null, check(callback, function () {
         var node;
         // As noted above, template subsitutions can leave extra text in the
         // document root.
@@ -702,7 +739,7 @@
         if (Object.keys(stencil.snippets).length) {
           var serialize =
           { snippets: stencil.snippets
-          , evaluations: stencil.evaluations
+          , dynamics: stencil.dynamics
           };
           node.appendChild(node.ownerDocument.createComment('// Regions.\n' + JSON.stringify(serialize, null, 2)));
         }

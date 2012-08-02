@@ -98,6 +98,8 @@ Changes for each release.
 
 Released: Pending.
 
+ * Implement `validator` function template used in Strata. #27.
+ * Add `try/catch` to error handling wrapper `check`. #26.
  * No more element attached to `value`. #24.
  * Implement pull-to-push. #48. #40.
  * Use same relative URL on the browser as on the server. #47.
