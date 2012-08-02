@@ -85,10 +85,9 @@
     return snippet;
   }
 
-  // TODO: depth not used.
   // STEP: stack and caller are objects, where stack is this (rather self or callee).
-  function xmlify (stencil, url, stack, caller, depth, done) {
-    var elements, layoutNS = "", stop = stack.length - 1, returned, dirty = {};
+  function xmlify (stencil, url, stack, caller, done) {
+    var elements, stop = stack.length - 1, returned, dirty = {};
 
     var base = url.replace(/\/[^\/]+$/, '/');
 
@@ -109,7 +108,7 @@
           , result = evaluate(contextSnapshot(stack), source);
 
         if (result) {
-          xmlify(stencil, base, stack, stack, stack.length - 1, check(done, function (doc) {
+          xmlify(stencil, base, stack, stack, check(done, function (doc) {
             while (doc.firstChild) {
               node.parentNode.insertBefore(doc.firstChild, node); 
             }
@@ -142,7 +141,7 @@
 
           // TODO: I'm expecting base to always be a full url.
           function execute (id) {
-            xmlify(stencil, url, stack, stack, stack.length - 1, check(done, function (nodes, dirty) {
+            xmlify(stencil, url, stack, stack, check(done, function (nodes, dirty) {
               if (id != null) {
                 var snippet = rootObject(context[into],
                   { unique: { source: unique, value: id }
@@ -208,7 +207,7 @@
         }
         if (block) {
           caller.unshift(wrap(block));
-          xmlify(stencil, url, caller, stack, depth + 1, check(done, function (nodes) {
+          xmlify(stencil, url, caller, stack, check(done, function (nodes) {
             caller.shift();
             var child;
             record.node = { nextSibling: node.nextSibling };
@@ -291,19 +290,6 @@
       }));
     }
 
-    function layout (record) {
-      var attr = record.layout
-        , $ = /^[^:]+:(\w[\w\d]+)?(?:\(([^)]*)\))$/.exec(attr.nodeValue)
-        , name = $[1] || "!default"
-        , params = $[2] ? $[2].split(/\s*,\s*/) : []
-        , i, I
-        ;
-      for (i = 0, I = params.length; i < I; i++) {
-        record.context[params[i]] = get('attrs')[params[i]];
-      }
-      layoutNS = attr.nodeValue;
-    }
-
     function tagged (tag, record) {
       var node = record.node
         , href = normalize(node.namespaceURI.replace(/^[^:]+:/, ''))
@@ -316,7 +302,7 @@
       , attr: record.attrs
       };
       extend(callee, { namespaceURI: node.namespaceURI, contents: node });
-      xmlify(stencil, href, callee, stack, depth + 1, check(done, function (nodes) {
+      xmlify(stencil, href, callee, stack, check(done, function (nodes) {
         var child;
         record.node = { nextSibling: node.nextSibling };
         while (child = nodes.firstChild) {
@@ -324,29 +310,6 @@
           child.nextSibling = child.previousSibling = null;
           child = node.ownerDocument.importNode(child, true);
           node.parentNode.insertBefore(child, node);
-        }
-        node.parentNode.removeChild(node);
-        resume();
-      }));
-    }
-
-    // It appears that blocks are connectors that disappear, while layouts
-    // rewrite and replace themselves.
-    function block (record, node) {
-      var block = get("blocks")[node.localName].cloneNode(true);
-
-      // Here we need to re-enter the context of the caller.
-      caller.unshift(wrap(block));
-
-      xmlify(stencil, url, caller, stack, depth + 1, check(done, function (transformed) {
-        var child;
-        record.node = { nextSibling: node.nextSibling };
-        while (child = transformed.firstChild) {
-          child = transformed.removeChild(child);
-          child.nextSibling = child.previousSibling = null;
-          child = node.ownerDocument.importNode(child, true);
-          node.parentNode.insertBefore(child, node);
-          record.node = child;
         }
         node.parentNode.removeChild(node);
         resume();
@@ -362,11 +325,6 @@
         returned = true;
         done(null, record.node, dirty);
       }
-    }
-
-    function get (name) {
-      for (var i = stack.length - 1; i != -1; i--)
-        if (stack[i].context[name]) return stack[i].context[name];
     }
 
     function stackSnapshot (stack) {
@@ -415,7 +373,6 @@
               return tagged(tag, record);
             }
           }
-          /*return block(record, node);*/
         }
         for (attr in attrs) {
           node.setAttributeNS(null, attr, String(attrs[attr]));
@@ -599,7 +556,7 @@
         region.stack[0].context[region.into] = table[region.unique.value];
         region.stack[0].node = template.doc.getElementById(region.node).cloneNode(true);
 
-      xmlify({}, region.url, region.stack, null, 0, function (error, nodes, dirty) {
+      xmlify({}, region.url, region.stack, null, function (error, nodes, dirty) {
         if (error) throw error;
         // Somehow, I don't believe the counts will mismatch without this also
         // mismatching.
@@ -697,7 +654,7 @@
       var stencil = { snippets: {}, identifier: 0, comments: {}, registrations: [], evaluations: [] };
       stencil.doc = template.doc;
       stencil.base = base;
-      xmlify(stencil, url, stack, null, 0, check(callback, function () {
+      xmlify(stencil, url, stack, null, check(callback, function () {
         var node;
         while (frag.firstChild.nodeType != 1) frag.removeChild(frag.firstChild);
         stencil.node = node = frag.firstChild;
