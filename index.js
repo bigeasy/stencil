@@ -41,6 +41,7 @@
   // A structure that surrounds a DOM node, create a level in context stack.
   function wrap (node) {
     return  { node: node
+            , tags: {}
             , loading: 0
             , evaluations: {}
             , context: {}
@@ -84,6 +85,8 @@
     return snippet;
   }
 
+  // TODO: depth not used.
+  // STEP: stack and caller are objects, where stack is this (rather self or callee).
   function xmlify (stencil, url, stack, caller, depth, done) {
     var elements, layoutNS = "", stop = stack.length - 1, returned, dirty = {};
 
@@ -195,6 +198,44 @@
         record.node = text;
         resume();
       }
+    , include: function (record, node) {
+        for (var child = node.firstChild; child; child = child.nextSibling) {
+          if (child.nodeType == 1 && child.localName == "tag") {
+            caller[0].tags[caller.namespaceURI][child.getAttribute('name')] = child;
+          }
+        }
+        record.include = false;
+        record.node = { nextSibling: null };
+        resume();
+      }
+    , block: function (record, node) {
+        var name = node.getAttribute('name');
+        var block;
+        for (var child = stack.contents.firstChild; !block && child; child = child.nextSibling) {
+          if (child.namespaceURI == stack.namespaceURI && child.localName == name) {
+            block = child;
+          }
+        }
+        if (block) {
+          caller.unshift(wrap(block));
+          xmlify(stencil, url, caller, stack, depth + 1, check(done, function (nodes) {
+            caller.shift();
+            var child;
+            record.node = { nextSibling: node.nextSibling };
+            while (child = nodes.firstChild) {
+              child = nodes.removeChild(child);
+              child.nextSibling = child.previousSibling = null;
+              child = node.ownerDocument.importNode(child, true);
+              node.parentNode.insertBefore(child, node);
+              record.node = child;
+            }
+            node.parentNode.removeChild(node);
+            resume();
+          }));
+        } else {
+          die('not implemented');
+        }
+      }
     };
 
     if (children(stack[0].node.firstChild)) {
@@ -239,27 +280,19 @@
       href = normalize(base + href);
       fetch(absolutize(stencil.base, href), check(done, function (template) {
         var callee = [ wrap(template.doc.cloneNode(true)) ]
-          , blocks = record.node.getElementsByTagNameNS(attr.nodeValue, '*')
           , i, I
           ;
 
         callee[0].context =
         { source: { file: "foo.js", url: template.url }
-        , caller: record.node
-        , attrs: record.attrs
-        , blocks: {}
         };
+        record.tags[attr.nodeValue] = {};
 
-        for (i = 0, I = blocks.length; i < I; i++) {
-          callee[0].context.blocks[blocks[i].localName] = blocks[i];
-        }
+        extend(stack, { namespaceURI: attr.nodeValue });
 
-        xmlify(stencil, href, callee, stack, depth + 1, check(done, function (doc) {
-          doc = node.ownerDocument.importNode(doc, true);
-          node.parentNode.insertBefore(doc, node);
-          node.parentNode.removeChild(node);
-          record.node = doc;
-          resume();
+        xmlify(stencil, href, callee, stack, depth + 1, check(done, function () {
+          record.include = false;
+          if (visit(stack.shift())) resume();
         }));
       }));
     }
@@ -275,6 +308,32 @@
         record.context[params[i]] = get('attrs')[params[i]];
       }
       layoutNS = attr.nodeValue;
+    }
+
+    function tagged (tag, record) {
+      var node = record.node
+        , href = normalize(node.namespaceURI.replace(/^[^:]+:/, ''))
+        , callee = [ wrap(stencil.doc.importNode(tag, true)) ]
+        ;
+      href = normalize(base + href);
+      callee[0].context =
+      { source: { file: "foo.js", url: href }
+//      , caller: record.node
+      , attr: record.attrs
+      };
+      extend(callee, { namespaceURI: node.namespaceURI, contents: node });
+      xmlify(stencil, href, callee, stack, depth + 1, check(done, function (nodes) {
+        var child;
+        record.node = { nextSibling: node.nextSibling };
+        while (child = nodes.firstChild) {
+          child = nodes.removeChild(child);
+          child.nextSibling = child.previousSibling = null;
+          child = node.ownerDocument.importNode(child, true);
+          node.parentNode.insertBefore(child, node);
+        }
+        node.parentNode.removeChild(node);
+        resume();
+      }));
     }
 
     // It appears that blocks are connectors that disappear, while layouts
@@ -333,7 +392,7 @@
     }
 
     function visit (record) {
-      var node = record.node, completed, I, attr, attrs = record.attrs, protocol, blocks;
+      var node = record.node, completed, i, I, attr, attrs = record.attrs, protocol, blocks, tag;
       stack.unshift(record);
       if (node.nodeType == 1) {
         for (I = node.attributes.length; record.loading < I; record.loading++) {
@@ -343,7 +402,6 @@
             if (protocol = attr.nodeValue.split(/:/).shift()) {
               if (!"require".indexOf(protocol)) return requisite(attr);
               if (!"include".indexOf(protocol)) record.include = attr;
-              if (!"layout".indexOf(protocol)) record.layout = attr;
             }
             break;
           case "stencil":
@@ -355,13 +413,15 @@
         if (record.include) {
           return include(record);
         }
-        if (record.layout) {
-          layout(record);
-        }
-        if (node.namespaceURI == layoutNS) {
-          return block(record, node);
-        } else if ("stencil" == node.namespaceURI && elements[node.localName]) {
+        if ("stencil" == node.namespaceURI && elements[node.localName]) {
           return elements[node.localName](record, node); 
+        } else if (node.namespaceURI) {
+          for (i = 0, I = stack.length; i < I; i++) {
+            if (tag = stack[i].tags[node.namespaceURI][node.localName]) {
+              return tagged(tag, record);
+            }
+          }
+          /*return block(record, node);*/
         }
         for (attr in attrs) {
           node.setAttributeNS(null, attr, String(attrs[attr]));
@@ -641,9 +701,11 @@
       stack[0].context.source = { file: "foo.js", url: template.url };
       stack[0].evaluations.source = { value: stack[0].context.source };
       var stencil = { snippets: {}, identifier: 0, comments: {}, registrations: [], evaluations: [] };
+      stencil.doc = template.doc;
       stencil.base = base;
       xmlify(stencil, url, stack, null, 0, check(callback, function () {
         var node;
+        while (frag.firstChild.nodeType != 1) frag.removeChild(frag.firstChild);
         stencil.node = node = frag.firstChild;
         stencil.node.__stencil__ = stencilId++;
         stencils[stencil.node.__stencil__] = stencil;

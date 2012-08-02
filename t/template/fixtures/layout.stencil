@@ -1,10 +1,15 @@
-<html xmlns:s="stencil" xmlns:o="layout:(title)">
-<head>
-  <title><s:value select="title"/></title>
-  <o:head/>
-</head>
-<body>
-  <h1><s:value select="title"/></h1>
-  <o:body/>
-</body>
-</html>
+<s:include xmlns:s="stencil">
+  <s:tag name="document">
+    <html>
+    <head>
+      <title><s:value select="attr.title"/></title>
+      <s:block name="head"/>
+    </head>
+    <body>
+      <h1><s:value select="attr.title"/></h1>
+      <s:block name="body"/>
+    </body>
+    </html>
+  </s:tag>
+</s:include>
+
