@@ -1,7 +1,7 @@
 <html xmlns:s="stencil">
 <body>
 <s:each select="[ 0, 1, 2, 3 ]" into="number">
-  <s:value element="p" select="number"/> 
+  <p><s:value select="number"/></p>
 </s:each>
 </body>
 </html>

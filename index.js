@@ -187,12 +187,12 @@
     , value: function (record, node) {
         var source = node.getAttribute('select').trim()
           , result = evaluate(contextSnapshot(stack), source)
-          , e = node.ownerDocument.createElement(node.getAttribute("element"));
+          ;
         dirty[node.getAttribute('id')] = result;
-        e.appendChild(node.ownerDocument.createTextNode(result));
-        node.parentNode.insertBefore(e, node);
+        var text = node.ownerDocument.createTextNode(result)
+        node.parentNode.insertBefore(text, node);
         node.parentNode.removeChild(node);
-        record.node = e;
+        record.node = text;
         resume();
       }
     };

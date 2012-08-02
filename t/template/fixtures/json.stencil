@@ -2,7 +2,7 @@
 <body>
 <ul>
 <s:each select="watchers" into="watcher" limit="10" unique="watcher.id">
-  <s:value element="li" select="watcher.login[0]"/>
+  <li><s:value select="watcher.login[0]"/></li>
 </s:each>
 </ul>
 </body>

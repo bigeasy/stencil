@@ -1,5 +1,5 @@
 <html xmlns:s="stencil">
 <body>
-<s:value element="p" select="source.file"/>
+<p><s:value select="source.file"/></p>
 </body>
 </html>
