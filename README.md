@@ -93,7 +93,11 @@ Changes for each release.
 
 Released: Pending.
 
+ * No more element attached to `value`. #24.
+ * Implement pull-to-push. #48. #40.
+ * Use same relative URL on the browser as on the server. #47.
  * Update `t/sizes` to work with Bash 3, OS X. #46.
+ * Implement serialization. #42.
 
 ### Version 0.0.1
 
