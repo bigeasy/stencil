@@ -87,9 +87,8 @@
 
   // STEP: stack and caller are objects, where stack is this (rather self or callee).
   function xmlify (stencil, url, stack, caller, done) {
-    var elements, stop = stack.length - 1, returned, dirty = {};
-
-    var base = url.replace(/\/[^\/]+$/, '/');
+    var elements, stop = stack.length - 1, returned, dirty = {}
+      , base = url.replace(/\/[^\/]+$/, '/');
 
     function prune (node) {
       node.parentNode.removeChild(node);
@@ -108,9 +107,9 @@
           , result = evaluate(contextSnapshot(stack), source);
 
         if (result) {
-          xmlify(stencil, base, stack, stack, check(done, function (doc) {
-            while (doc.firstChild) {
-              node.parentNode.insertBefore(doc.firstChild, node); 
+          xmlify(stencil, base, stack, stack, check(done, function (nodes) {
+            while (nodes.firstChild) {
+              node.parentNode.insertBefore(nodes.firstChild, node); 
             }
             prune(node);
           }));
@@ -268,7 +267,7 @@
 
       href = normalize(base + href);
       fetch(absolutize(stencil.base, href), check(done, function (template) {
-        var root = template.doc.documentElement
+        var root = template.nodes
           , child
           ;
 
@@ -293,7 +292,7 @@
     function tagged (tag, record) {
       var node = record.node
         , href = normalize(node.namespaceURI.replace(/^[^:]+:/, ''))
-        , callee = [ wrap(stencil.doc.importNode(tag, true)) ]
+        , callee = [ wrap(stencil.document.importNode(tag, true)) ]
         ;
       href = normalize(base + href);
       callee[0].context =
@@ -465,14 +464,18 @@
   function fetch (url, callback) {
     url = normalize(url);
     if (templates[url]) callback(null, templates[url]);
-    else resolver(absolutize(base, url), "text/xml", check(callback, function (doc) {
+    else resolver(absolutize(base, url), "text/xml", check(callback, function (document) {
       // Give each Stencil element an `id` attribute that will be consistent on
       // the server and in the browser.
-      var i, I, each = doc.getElementsByTagNameNS(NS_STENCIL, '*'); 
+      var i, I, each = document.getElementsByTagNameNS(NS_STENCIL, '*'); 
       for (i = 0, I = each.length; i < I; i++) {
         each.item(i).setAttribute('id', String(i));
       }
-      callback(null,  templates[url] = { url: url, doc: doc });
+      callback(null,  templates[url] =
+      { url: url
+      , document: document
+      , nodes: document.documentElement
+      });
     }));
   }
 
@@ -554,7 +557,7 @@
       function generate (error, template) {
         if (error) throw error;
         region.stack[0].context[region.into] = table[region.unique.value];
-        region.stack[0].node = template.doc.getElementById(region.node).cloneNode(true);
+        region.stack[0].node = template.document.getElementById(region.node).cloneNode(true);
 
       xmlify({}, region.url, region.stack, null, function (error, nodes, dirty) {
         if (error) throw error;
@@ -610,11 +613,11 @@
 
   var stencils = {}, stencilId = 0;
   // STEP: NEEDS CALLBACK.
-  function deserialize (dom) { 
+  function deserialize (document) { 
     var stencil = { comments: {}, registrations: [] };
-    comments(stencil, dom.documentElement);
+    comments(stencil, document.documentElement);
     stencil.base = base;
-    stencil.node = dom.documentElement;
+    stencil.node = document.documentElement;
     stencil.node.__stencil__ = stencilId++;
     stencils[stencil.node.__stencil__] = stencil;
     var evaluations = stencil.evaluations.slice(0);
@@ -646,20 +649,56 @@
   function generate (url, callback) {
     url = normalize(url);
     fetch(url, check(callback, function (template) {
-      var frag = template.doc.createDocumentFragment();
-      frag.appendChild(template.doc.documentElement.cloneNode(true));
-      var stack = [ wrap(frag) ];
+      // We need a fragment because a document node can have only one element
+      // child and some operations will replace the root, prepending the new
+      // contents before the old root before removing it.
+      var fragment = template.document.createDocumentFragment();
+      fragment.appendChild(template.nodes.cloneNode(true));
+
+      // Start a stack.
+      var stack = [ wrap(fragment) ];
+
+      // TODO: Actual file names may at times be named something other than
+      // `foo.js`.
       stack[0].context.source = { file: "foo.js", url: template.url };
       stack[0].evaluations.source = { value: stack[0].context.source };
-      var stencil = { snippets: {}, identifier: 0, comments: {}, registrations: [], evaluations: [] };
-      stencil.doc = template.doc;
-      stencil.base = base;
+
+      // We can wrap everything in a closure to get rid of this object, or else
+      // we go the other route and objectify everything. No! We need to get to
+      // xmlify from both generate and the push end points.
+      // 
+      // In fact, serialization and closures together are tricky. This is less
+      // tricky, but objects &mdash; data and function wrapped up together
+      // &mdash; are also tricky, for the same reasons. I'm learning to avoid
+      // objects and just pass structures around, which is something that was
+      // becoming apparent to me in way back in Java with cassettes.
+      var stencil =
+      { base: base
+      , comments: {}
+      , document: template.document
+      , evaluations: []
+      , identifier: 0
+      , snippets: {}
+      , registrations: []
+      };
+
       xmlify(stencil, url, stack, null, check(callback, function () {
         var node;
-        while (frag.firstChild.nodeType != 1) frag.removeChild(frag.firstChild);
-        stencil.node = node = frag.firstChild;
+        // As noted above, template subsitutions can leave extra text in the
+        // document root.
+        while (fragment.firstChild.nodeType != 1)
+          fragment.removeChild(fragment.firstChild);
+
+        stencil.node = node = fragment.firstChild;
+
+        // We track outstanding documents using a application wide map, because
+        // we're going to return just the document in the future.
         stencil.node.__stencil__ = stencilId++;
         stencils[stencil.node.__stencil__] = stencil;
+
+        // If we have dynamic regions, we write out their definitions into a
+        // document comment. This could perhaps also be a placed in a script
+        // tag, but that would only work for HTML.
         if (Object.keys(stencil.snippets).length) {
           var serialize =
           { snippets: stencil.snippets
@@ -667,6 +706,7 @@
           };
           node.appendChild(node.ownerDocument.createComment('// Regions.\n' + JSON.stringify(serialize, null, 2)));
         }
+
         callback(null, stencil)
       }));
     }));
