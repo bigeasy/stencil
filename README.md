@@ -98,6 +98,8 @@ Changes for each release.
 
 Released: Pending.
 
+ * Implement programatic attributes. #53.
+ * A `null` return value eliminates an attribute. #32.
  * Implement `validator` function template used in Strata. #27.
  * Add `try/catch` to error handling wrapper `check`. #26.
  * No more element attached to `value`. #24.

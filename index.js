@@ -45,6 +45,7 @@
            , loading: 0
            , assignments: {}
            , context: {}
+           , unresolved: []
            , attrs: {}
            };
   }
@@ -207,26 +208,30 @@
         resume();
       }
     , include: function (record, node) {
-        record.node = { nextSibling: node.firstChild };
         var parentNode = node.parentNode;
         while (node.firstChild) parentNode.insertBefore(node.firstChild, node);
-        prune(node);
+        parentNode.removeChild(node);
+        if (children(parentNode.firstChild)) resume();
       }
     , tag: function (record, node) {
-        record.node = { nextSibling: node.firstChild };
         var parentNode = node.parentNode;
         while (node.firstChild) parentNode.insertBefore(node.firstChild, node);
-        prune(node);
+        parentNode.removeChild(node);
+        if (children(parentNode.firstChild)) resume();
+      }
+    , parameter: function (record, node) {
+        assignment(contextSnapshot(caller.stack), stack[1], record.attrs.select, record.attrs.name);
+        node.parentNode.removeChild(node);
+        resume();
       }
     , block: function (record, node) {
-        var name = node.getAttribute('name');
-        var block;
-        for (var child = descent.contents.firstChild; !block && child; child = child.nextSibling) {
+        var name = node.getAttribute('name'), child, block;
+        for (child = descent.contents.firstChild; !block && child; child = child.nextSibling) {
           if (child.namespaceURI == descent.namespaceURI && child.localName == name) {
             block = child;
           }
         }
-        if (block) {
+        if (name && block) {
           caller.stack.unshift(createElement(stencil.document.importNode(block, true)));
           xmlify(stencil, caller, descent, okay(function (nodes) {
             caller.stack.shift();
@@ -242,14 +247,42 @@
             node.parentNode.removeChild(node);
             resume();
           }));
-        } else {
-          die('not implemented');
+        } else if (!name) {
+          var contents = stencil.document.importNode(descent.contents, true);
+          caller.stack.unshift(createElement(contents));
+          caller.stack[0].includes[descent.namespaceURI] = { descent: descent, tags: {} };
+          for (child = node.firstChild; child; child = child.nextSibling) {
+            if (child.namespaceURI == "stencil") {
+              switch (child.localName) {
+              case "tag":
+                caller.stack[0].includes[descent.namespaceURI].tags[child.getAttribute('name')] = child;
+                break;
+              case "parameter":
+                contents.insertBefore(stencil.document.importNode(child, true), contents.firstChild);
+                break;
+              }
+            }
+          }
+          xmlify(stencil, caller, descent, okay(function (nodes) {
+            while (nodes.firstChild) {
+              node.parentNode.insertBefore(nodes.firstChild, node); 
+            }
+            var parentNode = node.parentNode;
+            node.parentNode.removeChild(node);
+            resume();
+          }));
         }
       }
     };
 
     if (children(stack[0].node.firstChild)) {
       done(null, stack[0].node, dirty);
+    }
+
+    // Adding a space makes it easier for me to jump to the assignment.
+    function assignment (context, record, select, into) {
+      record.assignments[into] = { select: select, type: "parameter" };
+      record.context[into] = evaluate(context, select);
     }
 
     function prune (node) {
@@ -308,7 +341,9 @@
           if (root.localName == 'include' && root.namespaceURI == NS_STENCIL) {
             for (child = root.firstChild; child; child = child.nextSibling) {
               if (child.localName == 'tag' && child.namespaceURI == NS_STENCIL) {
-                template.tags[child.getAttribute('name')] = child;
+                var nodes = stencil.document.importNode(root, false);
+                nodes.appendChild(stencil.document.importNode(child, true));
+                template.tags[child.getAttribute('name')] = nodes;
               }
             }
           }
@@ -325,13 +360,18 @@
       var node = record.node
         , href = normalize(base + normalize(node.namespaceURI.replace(/^[^:]+:/, '')))
         , fragment = stencil.document.createDocumentFragment()
-        , nodes = stencil.document.importNode(include.nodes, false)
         , callee
         ;
 
-      fragment.appendChild(nodes);
-      nodes.appendChild(stencil.document.importNode(tag, true));
+      fragment.appendChild(stencil.document.importNode(tag, true));
 
+      if (include.descent) {
+        callee = include.descent;
+        callee.stack.unshift(createElement(fragment));
+        // TODO: Also assignment.
+        callee.stack[0].context.attr = record.attrs;
+      } else {
+        // TODO: contents will be lost. Need to put it in stack.
       callee = createDescent( stencil
                             , { url: href
                               , namespaceURI: node.namespaceURI
@@ -342,6 +382,7 @@
                               , attr: record.attrs
                               }
                             );
+      }
 
       xmlify(stencil, callee, descent, okay(function (nodes) {
         var child;
@@ -384,6 +425,22 @@
       return true;
     }
 
+    function attribute () {
+      var record = stack.shift()
+        , node = record.node
+        , attr = record.unresolved.shift()
+        , isParameter = node.namespaceURI == 'stencil' && node.localName == 'parameter'
+        , result = evaluate(contextSnapshot(isParameter ? caller.stack : stack), attr.nodeValue.trim())
+        ;
+      node.removeAttributeNode(attr);
+      if (result != null) {
+        result = String(result);
+        node.setAttribute(attr.localName, result);
+        record.attrs[attr.localName] = result;
+      }
+      if (visit(record)) resume();
+    }
+
     function visit (record) {
       var node = record.node, completed, i, I, attr, attrs = record.attrs, protocol, tag, inc;
       stack.unshift(record);
@@ -398,10 +455,15 @@
             }
             break;
           case "stencil":
-            return attribute(attr);
+            record.unresolved.push(attr);
+            break;
           case 0:
             attrs[attr.localName] = attr.nodeValue;
+            break;
           }
+        }
+        if (record.unresolved.length) {
+          return attribute();
         }
         if (record.include) {
           return include(record);
