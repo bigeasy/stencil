@@ -37,7 +37,7 @@ function abend(e) {
   var stack = [], attrs = [], e = e.element, i;
   do {
     attrs.length = 0;
-    for (i = 0; i < e.attributes.length; i++) {
+    if (e.nodeType == 1) for (i = 0; i < e.attributes.length; i++) {
       attrs.push(name(e.attributes[i]) + '=' + e.attributes[i].nodeValue)
     }
     stack.unshift(name(e) + (attrs.length ? '[' + (attrs.join(' ')) + ']' : ''));
@@ -49,7 +49,7 @@ function compare (actual, expected) {
   if (typeof expected == "string") {
     expected = new (xmldom.DOMParser)().parseFromString(expected).documentElement;
   }
-  var e, a, aa, ea, name, at = [], et = [], remainder;
+  var e, a, aa, ea, an, en, name, at = [], et = [], remainder;
   actual = flatten(actual);
   expected = flatten(expected);
   a = actual.shift();
@@ -66,10 +66,10 @@ function compare (actual, expected) {
       if (a.start != e.start) return abend(e);
       if (at.join("").trim() != et.join("").trim()) return abend(e);
       if (a.nodeType == 1) {
-        a = a.element;
-        e = e.element;
-        aa = attributes(a);
-        ea = attributes(e);
+        an = a.element;
+        en = e.element;
+        aa = attributes(an);
+        ea = attributes(en);
         for (name in ea) {
           if (!aa[name]) return abend(e);
           if (ea[name].nodeValue != aa[name].nodeValue) return abend(e);
