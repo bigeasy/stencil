@@ -98,6 +98,7 @@ Changes for each release.
 
 Released: Pending.
 
+ * Implement tag libraries. #38.
  * Implement programatic attributes. #53.
  * A `null` return value eliminates an attribute. #32.
  * Implement `validator` function template used in Strata. #27.
