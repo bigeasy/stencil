@@ -1,0 +1,11 @@
+<s:include xmlns:s="stencil" xmlns:watchers="req:watchers.js">
+  <s:tag name="watchers">
+    <s:each select="watchers" into="watcher" s:limit="attr.limit | 10" unique="watcher.id">
+      <s:block>
+        <s:tag name="login"><s:value select="watcher.login"/></s:tag>
+        <s:tag name="id"><s:value select="watcher.id"/></s:tag>
+        <s:parameter s:name="(attr.into || 'watcher')" select="watcher"/>
+      </s:block>
+    </s:each> 
+  </s:tag>
+</s:include>

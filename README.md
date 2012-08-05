@@ -16,25 +16,30 @@ Thoughts on Stencil? Join the
 Layouts.
 
 ```xml
-<html xmlns:s="stencil" xmlns:o="layout:(title)">
-<head>
-  <s:value select="title" element="title"/>
-  <o:head/>
-</head>
-<body>
-  <s:value select="title" element="h1"/>
-  <o:body/>
-</body>
-</html>
+<s:include xmlns:s="stencil">
+  <s:tag name="document">
+    <html>
+    <head>
+      <title><s:value select="attr.title"/></title>
+      <s:block name="head"/>
+    </head>
+    <body>
+      <h1><s:value select="attr.title"/></h1>
+      <s:block name="body"/>
+    </body>
+    </html>
+  </s:tag>
+</s:include>
+
 ```
 
 Pages laid out.
 
 ```xml
-<div xmlns:s="stencil" xmlns:o="inc:fixtures/layout.stencil" title="Hello, World!">
+<o:document xmlns:s="stencil" xmlns:o="inc:layout.stencil" title="Hello, World!">
   <o:head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></o:head>
   <o:body><p>Hello, World!</p></o:body>
-</div>
+</o:document>
 ```
 
 The same templates run on the browser and in Node.js, so you can use the same
@@ -93,6 +98,11 @@ Changes for each release.
 
 Released: Pending.
 
+ * Implement tag libraries. #38.
+ * Implement programatic attributes. #53.
+ * A `null` return value eliminates an attribute. #32.
+ * Implement `validator` function template used in Strata. #27.
+ * Add `try/catch` to error handling wrapper `check`. #26.
  * No more element attached to `value`. #24.
  * Implement pull-to-push. #48. #40.
  * Use same relative URL on the browser as on the server. #47.

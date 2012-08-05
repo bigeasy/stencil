@@ -1,0 +1,9 @@
+<html xmlns:s="stencil" xmlns:w="inc:watchers.stencil">
+<body>
+<ul>
+<w:watchers>
+  <li><w:login/></li>
+</w:watchers>
+</ul>
+</body>
+</html>
