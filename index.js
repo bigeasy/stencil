@@ -1,3 +1,6 @@
+// 1. Write down the problem.
+// 2. Think very hard. 
+// 3. Write down the answer.
 !function (definition) {
   if (typeof module == "object" && module.exports) module.exports = definition();
   else if (typeof define == "function" && typeof define.amd == "object") define(definition);
@@ -106,7 +109,7 @@
   }
 
   // STEP: stack and caller are objects, where stack is this (rather self or callee).
-  function xmlify (stencil, descent, caller, done) {
+  function xmlify (stencil, descent, done) {
     var stack = descent.stack
       , stop = stack.length - 1, returned
       , base = descent.url.replace(/\/[^\/]+$/, '/')
@@ -115,10 +118,10 @@
       , elements =
     { if: function (record, node) {
         var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(stack), source);
+          , result = evaluate(contextSnapshot(descent), source);
 
         if (result) {
-          xmlify(stencil, descent, caller, okay(function (nodes) {
+          xmlify(stencil, descent, okay(function (nodes) {
             while (nodes.firstChild) {
               node.parentNode.insertBefore(nodes.firstChild, node); 
             }
@@ -130,7 +133,7 @@
       }
     , each: function (record, node) {
         var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(stack), source);
+          , result = evaluate(contextSnapshot(descent), source);
         // Need to callback result if it is dynamic.
 
         replace(result);
@@ -151,7 +154,7 @@
 
           // TODO: I'm expecting base to always be a full url.
           function execute (id) {
-            xmlify(stencil, descent, caller, okay(function (nodes, dirty) {
+            xmlify(stencil, descent, okay(function (nodes, dirty) {
               if (id != null) {
                 var snippet = rootObject(context[into],
                   { unique: { source: unique, value: id }
@@ -166,7 +169,7 @@
                 stack.forEach(function (element) {
                   for (var key in element.assignments) {
                     var assignment = element.assignments[key];
-                    if (assignment.index != null) {
+                    if (assignment.collection == 'dynamics') {
                       stencil.dynamics[assignment.index].dependencies.push(snippet.identifier);
                     }
                   }
@@ -184,7 +187,7 @@
             if (i < limit) {
               stack.unshift(createElement(stencil.document.importNode(node, true)));
               stack[0].context[into] = result[i++]; 
-              context = contextSnapshot(stack);
+              context = contextSnapshot(descent);
               if (unique) {
                 execute(evaluate(context, unique));
               } else {
@@ -198,7 +201,7 @@
       }
     , value: function (record, node) {
         var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(stack), source)
+          , result = evaluate(contextSnapshot(descent), source)
           ;
         dirty[node.getAttribute('id')] = result;
         var text = node.ownerDocument.createTextNode(result)
@@ -220,12 +223,12 @@
         if (children(parentNode.firstChild)) resume();
       }
     , parameter: function (record, node) {
-        assignment(contextSnapshot(caller.stack), stack[1], record.attrs.select, record.attrs.name);
+        assignment(contextSnapshot(descent.caller), stack[1], record.attrs.select, record.attrs.name);
         node.parentNode.removeChild(node);
         resume();
       }
     , block: function (record, node) {
-        var name = node.getAttribute('name'), child, block;
+        var name = node.getAttribute('name'), child, block, caller = descent.caller, callee;
         for (child = descent.contents.firstChild; !block && child; child = child.nextSibling) {
           if (child.namespaceURI == descent.namespaceURI && child.localName == name) {
             block = child;
@@ -233,7 +236,7 @@
         }
         if (name && block) {
           caller.stack.unshift(createElement(stencil.document.importNode(block, true)));
-          xmlify(stencil, caller, descent, okay(function (nodes) {
+          xmlify(stencil, caller, okay(function (nodes) {
             caller.stack.shift();
             var child;
             record.node = { nextSibling: node.nextSibling };
@@ -249,13 +252,20 @@
           }));
         } else if (!name) {
           var contents = stencil.document.importNode(descent.contents, true);
-          caller.stack.unshift(createElement(contents));
-          caller.stack[0].includes[descent.namespaceURI] = { descent: descent, tags: {} };
+          callee = createDescent( stencil
+                                , { url: caller.url
+                                  , namespaceURI: caller.namespaceURI
+                                  }
+                                , contents
+                                , { }
+                                );
+          callee.caller = descent;
+          callee.stack[0].includes[descent.namespaceURI] = { descent: descent, tags: {} };
           for (child = node.firstChild; child; child = child.nextSibling) {
             if (child.namespaceURI == "stencil") {
               switch (child.localName) {
               case "tag":
-                caller.stack[0].includes[descent.namespaceURI].tags[child.getAttribute('name')] = child;
+                callee.stack[0].includes[descent.namespaceURI].tags[child.getAttribute('name')] = child;
                 break;
               case "parameter":
                 contents.insertBefore(stencil.document.importNode(child, true), contents.firstChild);
@@ -263,7 +273,8 @@
               }
             }
           }
-          xmlify(stencil, caller, descent, okay(function (nodes) {
+          xmlify(stencil, callee, okay(function (nodes, subdirty) {
+            extend(dirty, subdirty);
             while (nodes.firstChild) {
               node.parentNode.insertBefore(nodes.firstChild, node); 
             }
@@ -291,8 +302,7 @@
     }
 
     function rootObject (context, object) {
-      object.context = contextSnapshot(stack);
-      object.stack = stackSnapshot(stack);
+      object.descent = descentSnapshot(descent);
       return object;
     }
 
@@ -306,10 +316,10 @@
       href = normalize(base + href);
       resolver(absolutize(stencil.base, href), "text/javascript", check(done, function (module) {
         if (typeof module == 'function' && module.name == 'dynamic') {
-          var snapshot = stackSnapshot(stack, record);
+          var snapshot = descentSnapshot(descent, record);
           var registration = module(true, x(stencil, { dependencies: [], href: href }, snapshot, function (dynamic) {
             record.context[into] = dynamic.value;
-            record.assignments[into] = { index: dynamic.index };
+            record.assignments[into] = { index: dynamic.index, collection: 'dynamics' };
             record.loading++;
             if (visit(record)) resume();
           }));
@@ -324,14 +334,13 @@
       return false;
     }
 
-
     function include (record) {
       var node = record.node
         , attr = record.include
         , href = normalize(base + attr.nodeValue.replace(/^[^:]+:/, ''))
         ;
 
-      fetch(absolutize(stencil.base, href), okay(function (template) {
+      fetch(stencil.base, href, okay(function (template) {
         var root = template.nodes
           , child
           ;
@@ -366,34 +375,41 @@
       fragment.appendChild(stencil.document.importNode(tag, true));
 
       if (include.descent) {
-        callee = include.descent;
-        callee.stack.unshift(createElement(fragment));
+        callee = createDescent( stencil
+                              , { url: href
+                                , namespaceURI: node.namespaceURI
+                                }
+                              , fragment
+                              , {} );
         // TODO: Also assignment.
         callee.stack[0].context.attr = record.attrs;
       } else {
-        // TODO: contents will be lost. Need to put it in stack.
-      callee = createDescent( stencil
-                            , { url: href
-                              , namespaceURI: node.namespaceURI
-                              , contents: node
-                              }
-                            , fragment
-                            , { source: { file: "foo.js", url: href }
-                              , attr: record.attrs
-                              }
-                            );
+        callee = createDescent( stencil
+                              , { url: href
+                                , namespaceURI: node.namespaceURI
+                                , contents: node
+                                }
+                              , fragment
+                              , { source: { file: "foo.js", url: href }
+                                , attr: record.attrs
+                                }
+                              );
       }
 
-      xmlify(stencil, callee, descent, okay(function (nodes) {
-        var child;
+      callee.caller = descent;
+
+      xmlify(stencil, callee, okay(function (nodes, subdirty) {
+        extend(dirty, subdirty);
+        var child, parentNode = node.parentNode;
         record.node = { nextSibling: node.nextSibling };
         while (child = nodes.firstChild) {
           child = nodes.removeChild(child);
           child.nextSibling = child.previousSibling = null;
           child = node.ownerDocument.importNode(child, true);
-          node.parentNode.insertBefore(child, node);
+          parentNode.insertBefore(child, node);
         }
-        node.parentNode.removeChild(node);
+        parentNode.removeChild(node);
+        comments(stencil, parentNode);
         resume();
       }));
     }
@@ -409,11 +425,29 @@
       }
     }
 
-    function stackSnapshot (stack) {
-      var vargs = stack.slice(0).reverse().concat(slice.call(arguments, 1))
-        , snapshot = [], i, I, name;
-      for (i = 0, I = vargs.length; i < I; i++) {
-        snapshot.push({ assignments: extend({}, vargs[i].assignments) });
+    function descentSnapshot (descent) {
+      var vargs = descent.stack.slice(0).reverse().concat(slice.call(arguments, 1))
+        , snapshot = { stack: [], url: descent.url, namespaceURI: descent.namespaceURI }
+        , i, I, include, tag, includes
+        ;
+      for (;;) {
+        if (descent.contents) {
+          snapshot.contents = descent.contents.getAttribute('id');
+        }
+        for (i = 0, I = vargs.length; i < I; i++) {
+          includes = {};
+          for (include in vargs[i].includes) {
+            includes[include] = { tags: {} };
+            for (tag in vargs[i].includes[include].tags) {
+              includes[include].tags[tag] = vargs[i].includes[include].tags[tag].getAttribute('id');
+            }
+          }
+          snapshot.stack.push({ assignments: extend({}, vargs[i].assignments), includes: includes });
+        }
+        if (!descent.caller) break;
+        descent = descent.caller;
+        vargs = descent.stack.slice(0).reverse();
+        snapshot = { callee: snapshot, stack: [], url: descent.url, namespaceURI: descent.namespaceURI };
       }
       return snapshot;
     }
@@ -430,7 +464,7 @@
         , node = record.node
         , attr = record.unresolved.shift()
         , isParameter = node.namespaceURI == 'stencil' && node.localName == 'parameter'
-        , result = evaluate(contextSnapshot(isParameter ? caller.stack : stack), attr.nodeValue.trim())
+        , result = evaluate(contextSnapshot(isParameter ? descent.caller : descent), attr.nodeValue.trim())
         ;
       node.removeAttributeNode(attr);
       if (result != null) {
@@ -558,15 +592,27 @@
     return normal.join('/');
   }
 
-  function fetch (url, callback) {
-    url = normalize(url);
+  function fetch (base, url, callback) {
     if (templates[url]) callback(null, templates[url]);
     else resolver(absolutize(base, url), "text/xml", check(callback, function (document) {
       // Give each Stencil element an `id` attribute that will be consistent on
       // the server and in the browser.
-      var i, I, each = document.getElementsByTagNameNS(NS_STENCIL, '*'); 
+      var each = document.getElementsByTagName('*')
+        , namespaces = { stencil: true }
+        , id = 0
+        , element, i, I, j, attribute, protocol;
       for (i = 0, I = each.length; i < I; i++) {
-        each.item(i).setAttribute('id', String(i));
+        element = each.item(i);
+        for (j = element.attributes.length - 1; j != -1; j--) {
+          if (element.attributes[j].namespaceURI == XMLNS
+          && (protocol = element.attributes[j].nodeValue.split(/:/).shift())
+          && (!"include".indexOf(protocol))) {
+              namespaces[element.attributes[j].nodeValue] = true;
+          }
+        }
+        if (namespaces[element.namespaceURI])  {
+          element.setAttribute('id', url + '#' + (id++));
+        }
       }
       callback(null,  templates[url] =
       { url: url
@@ -608,9 +654,9 @@
     }
   }
 
-  function assign (stencil, stack, i) {
+  function assign (stencil, descent, i) {
     stack[i].context = {};
-    var context = contextSnapshot(stack.slice(0, i));
+    var context = contextSnapshot(descent, i);
     for (var key in stack[i].assignments) {
       var assignment = stack[i].assignments[key];
       if (assignment.index != null) {
@@ -624,7 +670,7 @@
   }
 
   function update (stencil, dependencies) {
-    var regions = {}, templates = {};
+    var regions = {}, tables = {};
 
     step();
 
@@ -633,35 +679,101 @@
     function step () {
       if (!dependencies.length) return;
 
-      var region = stencil.snippets[dependencies.shift()];
+      var region = stencil.snippets[dependencies.shift()]
+        , descent = region.descent, includes = {}
+        , reversed, contexts = {}, context, entry
+        , include, tag, i, I;
 
-      var stack = region.stack.slice(0);
-      stack.forEach(function (element, i) { assign(stencil, stack, i); });
+      while (descent) {
+        context = contexts[descent.url] = contexts[descent.url] || {};
+        reversed = { caller: reversed
+                   , stack: []
+                   , contents: descent.contents
+                   , url: descent.url
+                   , namespaceURI: descent.namespaceURI
+                   , includes: descent.includes
+                   };
+        for (i = 0, I = descent.stack.length; i < I; i++) {
+          var entry = descent.stack[i];
+          for (include in entry.includes) {
+            for (tag in entry.includes[include].tags) {
+              includes[entry.includes[include].tags[tag].replace(/\#\d+$/, '')] = true;
+            }
+          }
+          reversed.stack[i] = { context: {}, includes: entry.includes, assignments: entry.assignments };
+          for (var key in descent.stack[i].assignments) {
+            var assignment = descent.stack[i].assignments[key];
+            if (assignment.index != null) {
+              context[key] = reversed.stack[i].context[key] = stencil[assignment.collection][assignment.index].value;
+            } else {
+              die(assignment); 
+            }
+          }
+        }
+        reversed.stack.reverse();
+        descent = descent.callee;
+      }
 
-      stack.reverse();
-
-      var context = contextSnapshot(stack)
+      var context = contexts[region.url]
         , key = region.url + '#' + region.identifier, table;
 
-      if (!(table = templates[key])) {
-        table = templates[key] = {}; 
+      if (!(table = tables[key])) {
+        table = tables[key] = {}; 
         evaluate(context, region.source).forEach(function (record) {
           context[region.into] = record;
           table[evaluate(context, region.unique.source)] = record;
         });
       }
 
-      fetch(absolutize(stencil.base, region.url), generate);
+      includes = Object.keys(includes);
+
+      getIncludes();
+
+      function getIncludes (error, template) {
+        var iterator, i, I, include, element, tag, id;
+        if (error) throw error;
+        if (includes.length) fetch(stencil.base, includes.shift(), getIncludes);
+        else {
+          iterator = reversed;
+          while (iterator) {
+            for (i = iterator.stack.length - 1; i != -1; i--) {
+              for (include in iterator.stack[i].includes) {
+                for (tag in iterator.stack[i].includes[include].tags) {
+                  id = iterator.stack[i].includes[include].tags[tag]
+                  element = templates[id.replace(/#\d+$/, '')].document.getElementById(id);
+                  iterator.stack[i].includes[include].tags[tag] = element;
+                }
+              }
+            }
+            iterator = iterator.caller;
+          }
+          if (reversed.contents) {
+            fetch(stencil.base, reversed.contents.replace(/#\d+$/, ''), getTemplate);
+          } else {
+            getTemplate();
+          }
+        }
+      }
+
+      function getTemplate (error, contents) {
+        if (error) throw error;
+        if (contents) {
+          reversed.contents = contents.document.getElementById(reversed.contents);
+        }
+        fetch(stencil.base, region.url, generate);
+      }
 
       function generate (error, template) {
         if (error) throw error;
 
-        var descent = createDescent(stencil, { url: region.url });
-        descent.stack = stack;
-        stack[0].context[region.into] = table[region.unique.value];
-        stack[0].node = stencil.document.importNode(template.document.getElementById(region.node), true);
+        //var descent = createDescent(stencil, { url: region.url });
+        //descent.stack = stack;
+        reversed.stack[0].context[region.into] = table[region.unique.value];
+        reversed.stack[0].node = stencil.document.importNode(template.document.getElementById(region.node), true);
+        reversed.url = region.url;
 
-      xmlify({}, descent, null, function (error, nodes, dirty) {
+      // TODO INDENT
+      xmlify(stencil, reversed, function (error, nodes, dirty) {
         if (error) throw error;
         // Somehow, I don't believe the counts will mismatch without this also
         // mismatching.
@@ -703,11 +815,19 @@
     }
   }
 
-  function contextSnapshot (source) {
-    var context = {}, i, I, name, source = source || stack;
-    for (i = 0, I = source.length; i < I; i++) {
-      for (name in source[i].context) {
-        if (name[0] != '!') context[name] = source[i].context[name];
+  // TODO: Cache it. Set it to `null` on assignment.
+  function contextSnapshot (descent) {
+    var stackStack = [], url = descent.url, context = [], stack, name, i;
+    while (descent) {
+      if (descent.url == url) stackStack.push(descent);
+      descent = descent.caller;
+    }
+    while (stackStack.length) {
+      stack = stackStack.pop().stack;
+      for (i = stack.length - 1; i != -1; i--) {
+        for (name in stack[i].context) {
+          context[name] = stack[i].context[name];
+        }
       }
     }
     return context;
@@ -755,28 +875,22 @@
     extend(descent, { stack: [] });
     descent.stack.unshift(createElement(node));
     for (key in assignments) {
-      descent.stack[0].assignments[key] = { value: assignments[key] };
+      stencil.statics.push({ value: assignments[key] });
+      descent.stack[0].assignments[key] = { index: stencil.statics.length - 1, collection: 'statics' };
+      descent.stack[0].context[key] = assignments[key];
     }
-    assign(stencil, descent.stack, 0);
+// TODO:    assign(stencil, descent, 0);
     return descent;
   }
 
   function generate (url, callback) {
     url = normalize(url);
-    fetch(url, check(callback, function (template) {
+    fetch(base, url, check(callback, function (template) {
       // We need a fragment because a document node can have only one element
       // child and some operations will replace the root, prepending the new
       // contents before the old root before removing it.
       var fragment = template.document.createDocumentFragment();
       fragment.appendChild(template.nodes.cloneNode(true));
-
-      // TODO: Actual file names may at times be named something other than
-      // `foo.js`.
-
-      // Start a descent.
-      var descent = createDescent(stencil, { url: url }, fragment,
-      { source: { file: "foo.js", url: template.url }
-      });
 
       //die(descent);
 
@@ -794,12 +908,22 @@
       , comments: {}
       , document: template.document
       , dynamics: []
+      , statics: []
       , identifier: 0
       , snippets: {}
       , registrations: []
       };
 
-      xmlify(stencil, descent, null, check(callback, function () {
+      // TODO: Actual file names may at times be named something other than
+      // `foo.js`.
+
+      // Start a descent.
+      var descent = createDescent(stencil, { url: url }, fragment,
+      // TODO: Still gets copied everywhere. Need to put in statics.
+      { source: { file: "foo.js", url: template.url }
+      });
+
+      xmlify(stencil, descent, check(callback, function () {
         var node;
         // As noted above, template subsitutions can leave extra text in the
         // document root.
@@ -820,6 +944,7 @@
           var serialize =
           { snippets: stencil.snippets
           , dynamics: stencil.dynamics
+          , statics: stencil.statics
           };
           node.appendChild(node.ownerDocument.createComment('// Regions.\n' + JSON.stringify(serialize, null, 2)));
         }

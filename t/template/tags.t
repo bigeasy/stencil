@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(1, function (async) {
+require('./proof')(2, function (async) {
   var context, fs = require('fs');
 
   async(function (stencil, resolver) {
@@ -13,17 +13,13 @@ require('./proof')(1, function (async) {
     fixture('fixtures/tags.xml', async());
 
   }, function (expected, actual, ok, compare) {
-
     ok(compare(actual.node, expected), 'called');
-
-    async(); // Exit for now.
-  }, function () {
 
     var watchers = require('./fixtures/watchers');
     // STEP: Errors are getting hard.
     watchers.emitter.emit('update', null, watchers.watchers2);
   }, function (fixture) {
-    fixture('fixtures/json-2.xml', async());
+    fixture('fixtures/tags-after.xml', async());
   }, function (expected, actual, ok, compare) {
     ok(compare(actual.node, expected), 'updated');
   });
