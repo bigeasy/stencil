@@ -1,0 +1,11 @@
+<s:include xmlns:s="stencil" xmlns:r="inc:recurse.stencil" xmlns:watchers="req:watchers.js">
+  <s:tag name="descend">
+    <s:each select="attr.items" into="item">
+      <s:block>
+        <s:tag name="name"><s:value s:select="item.name"/></s:tag>
+        <s:parameter s:name="(attr.into || 'watcher')" select="name"/>
+      </s:block>
+      <r:descend items="item.children"/>
+    </s:each>
+  </s:tag>
+</s:include>
