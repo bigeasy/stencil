@@ -286,6 +286,8 @@
       }
     };
 
+    if (!~base.indexOf('/')) base = './';
+
     if (children(stack[0].node.firstChild)) {
       done(null, stack[0].node, dirty);
     }
