@@ -90,6 +90,8 @@
     return snippet;
   }
 
+  // TODO: I'd prefer to see this up at the top of the module, underneath say
+  // and die.
   function validator (callback) {
     return function (forward) { return check(callback, forward) }
   }
@@ -107,6 +109,11 @@
       }
     }
   }
+
+  // What follows is `xmlify`. This is a great big function that encapsulates
+  // the state of a frame in a call stack. The stack is within the `decent`
+  // object. The `stencil` parameter is the globalesque stencil object. `done`
+  // is the callback function to call when the method completes.
 
   // STEP: stack and caller are objects, where stack is this (rather self or callee).
   function xmlify (stencil, descent, done) {
@@ -774,45 +781,45 @@
         reversed.stack[0].node = stencil.document.importNode(template.document.getElementById(region.node), true);
         reversed.url = region.url;
 
-      // TODO INDENT
-      xmlify(stencil, reversed, function (error, nodes, dirty) {
-        if (error) throw error;
-        // Somehow, I don't believe the counts will mismatch without this also
-        // mismatching.
-        var count = 0;
-        for (var key in dirty) {
-          if (region.dirty[key] === dirty[key]) {
-            count++;
+        // TODO INDENT
+        xmlify(stencil, reversed, function (error, nodes, dirty) {
+          if (error) throw error;
+          // Somehow, I don't believe the counts will mismatch without this also
+          // mismatching.
+          var count = 0;
+          for (var key in dirty) {
+            if (region.dirty[key] === dirty[key]) {
+              count++;
+            }
           }
-        }
-        if (Object.keys(region.dirty).length != count) {
-          var comment = stencil.comments[region.comment]
-            , parentNode = comment.parentNode
-            , factory = comment.ownerDocument
-            , count, removed, chars
-            ;
-          for (count = region.elements; count; count--) {
-            while (parentNode.removeChild(comment.nextSibling).nodeType != 1);
+          if (Object.keys(region.dirty).length != count) {
+            var comment = stencil.comments[region.comment]
+              , parentNode = comment.parentNode
+              , factory = comment.ownerDocument
+              , count, removed, chars
+              ;
+            for (count = region.elements; count; count--) {
+              while (parentNode.removeChild(comment.nextSibling).nodeType != 1);
+            }
+            var length;
+            for (count = region.characters; count;) {
+              removed = parentNode.removeChild(comment.nextSibling)
+              count -= (length = Math.min(count, removed.nodeValue.length));
+            }
+            if (length < removed.nodeValue.length) {
+              var text = removed.nodeValue.slice(length);
+              parentNode.insertBefore(removed, comment.nextSibling);
+              removed.splitText(length);
+              parentNode.removeChild(removed.nextSibling);
+            }
+            stencil.comments[region.comment] = parentNode.insertBefore(parentNode.ownerDocument.createComment(comment.nodeValue), comment);
+            while (nodes.firstChild) {
+              parentNode.insertBefore(nodes.firstChild, comment);
+            }
+            parentNode.removeChild(comment);
           }
-          var length;
-          for (count = region.characters; count;) {
-            removed = parentNode.removeChild(comment.nextSibling)
-            count -= (length = Math.min(count, removed.nodeValue.length));
-          }
-          if (length < removed.nodeValue.length) {
-            var text = removed.nodeValue.slice(length);
-            parentNode.insertBefore(removed, comment.nextSibling);
-            removed.splitText(length);
-            parentNode.removeChild(removed.nextSibling);
-          }
-          stencil.comments[region.comment] = parentNode.insertBefore(parentNode.ownerDocument.createComment(comment.nodeValue), comment);
-          while (nodes.firstChild) {
-            parentNode.insertBefore(nodes.firstChild, comment);
-          }
-          parentNode.removeChild(comment);
-        }
-        step();
-      });
+          step();
+        });
       }
     }
   }
@@ -922,6 +929,8 @@
       // Start a descent.
       var descent = createDescent(stencil, { url: url }, fragment,
       // TODO: Still gets copied everywhere. Need to put in statics.
+      // TODO: Hey! Put the requested URL in dynamics. Make it so that a change
+      // to this one dynamic will propagate throughout the document.
       { source: { file: "foo.js", url: template.url }
       });
 
