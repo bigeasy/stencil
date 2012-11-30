@@ -61,17 +61,129 @@
   var NS_STENCIL = "stencil",
       XMLNS = "http://www.w3.org/2000/xmlns/";
 
-  var handers = {
-    value: function (directive, element, next) {
-    }
-  };
+  // We cache expressions compiled into functions by their trimmed source. We
+  // use the variables in scope the first time the function is encountered. If
+  // it works at all, then it supposed to work for every occurrence of the
+  // function.
+  //
+  // A branch in the function may mean that in a subsequent call may references
+  // a variable not in the parameter list, because the variable was not in scope
+  // the first time the function was compiled. This is going to be an
+  // *unfortunate* error and potentially very confusing, how can it not be in
+  // scope, when I see it right *there*.
+  //
+  // If it's a problem, don't go thinking you can add a `try/catch` to recompile
+  // the function on an error, because that might have side effects, creating
+  // spooky, silent erroneous behavior.
+  //
+  // The nature of Stencils is such that the do not have much logic in their
+  // expressions. Maybe our economies in assignment will survive application.
 
-  function descend (directives) {
-    var directive = directives.shift(),
-        element = template.document.getElementById(directive.id),
-        handler = handlers[element.localName]; 
-    handler(template, directive, function () { descend(directives) }); 
+  //
+  var functions = {};
+
+  //
+  function evaluate (source, context) {
+    var parameters = [], values = [], callbacks = 0,
+        i, I, name, result, compiled;
+    source = source.trim();
+    compiled = functions[source];
+    if (!compiled) {
+      for (name in context) parameters.push(name);
+      functions[source] = compiled = {
+        parameters: parameters,
+        expression: Function.apply(Function, parameters.concat([ "return " + source ]))
+      }
+    } else {
+      parameters = compiled.parameters;
+    }
+    for (i = 0, I = parameters.length; i < I; i++) {
+      values.push(context[parameters[i]]);
+    }
+    return compiled.expression.apply(this, values);
   }
+
+  function mark (id, reference) {
+    var document = reference.ownerDocument,
+        comment = document.createComment("(Stencil[" + id + "])");
+    return reference.parentNode.insertBefore(comment, reference);
+  }
+
+  function unmark (marker, instance) {
+    var i, removed, parentNode = marker.parentNode;
+    for (i = instance.elements; i; i--) {
+      parentNode.removeChild(marker.nextSibling);
+    }
+    for (i = instance.characters; i > 0; i -= removed.nodeValue.length) {
+      removed = parentNode.removeChild(marker.nextSibling)
+    }
+    if (i < 0) {
+      parentNode.insertBefore(removed, marker.nextSibling); 
+      removed.splitText(removed.nodeValue.length + i);
+      parentNode.removeChild(marker.nextSibling);
+    }
+    parentNode.removeChild(marker);
+  }
+
+  function abracadabra (template, document, parameters, callback) {
+    var context;
+
+    var handlers = {
+      // The value directive replaces a value element with text from the current
+      // context.
+      value: function (directive, element, context, callback) {
+        var source = element.getAttribute("select").trim(),
+            value = evaluate(source, context),
+            instance = template.instances[directive.id][0],
+            marker = template.markers[instance.id];
+
+        // Mark the new insert.
+        template.markers[instance.id] = mark(directive.id, marker);
+
+        // Insert the text value.
+        var text = document.createTextNode(value);
+        marker.parentNode.insertBefore(text, marker);
+
+        // Remove the old marker.
+        unmark(marker, instance);
+
+        // Record the instance.
+        instance.characters = value.length;
+        instance.elements = 0;
+
+        callback();
+      }
+    }
+
+    next({ directives: template.directives.slice(0), context: parameters }, callback);
+
+    function next (descent, callback) {
+      if (descent.directives.length) descend(descent, callback);
+      else if (descent.parent) next(descent.parent, callback);
+      else callback();
+    }
+
+    function descend (descent, callback) {
+      var directive = descent.directives.shift(),
+          element = template.document.getElementById(directive.id),
+          handler = handlers[element.localName],
+          stack = [], i;
+
+      // Create an evaluation context.
+      context = {};
+      for (i = descent; i; i = i.parent) stack.push(i);
+      for (i = stack.length - 1; i != -1; i--) {
+        for (var key in stack[i].context) {
+          context[key] = stack[i].context[key];
+        }
+      }
+
+      handler(directive, element, context, function () {
+        next({ parent: descent, directives: directive.children.slice(0), context: {} }, callback);
+      });
+    }
+  }
+
 
   function fetch (base, url, callback) {
     var okay = validator(callback);
@@ -152,6 +264,17 @@
     });
   }
 
+  function regenerate (instance, parameters, callback) {
+    if (typeof parameters == "function") {
+      callback = parameters;
+      parameters = {};
+    }
+
+    abracadabra(instance._template, instance.document, parameters, function () {
+      callback(null, instance);
+    });
+  }
+
   function generate (url, parameters, callback) {
     if (typeof parameters == "function") {
       callback = parameters;
@@ -167,7 +290,8 @@
         url: template.url,
         directives: JSON.parse(JSON.stringify(template.directives)),
         instanceId: 0,
-        instances: {}
+        instances: {},
+        markers: {}
       }
     }
 
@@ -187,19 +311,25 @@
       template = instanciate(template);
       var document = template.document.implementation.createDocument();
       document.appendChild(document.importNode(template.document.documentElement, true));
+
+      // Take the instanciated template and insert placeholder instances that
+      // use the directive elements as markers.
       inorder(template.directives, function (directive) {
         var instanceId = template.instanceId++;
-        template.instances[instanceId] = {
-          id: directive.id,
-          element: document.getElementById(directive.id),
+        template.instances[directive.id] = [{
+          id: instanceId,
           elements: 0,
           characters: 0
-        };
+        }];
+        template.markers[instanceId] = document.getElementById(directive.id);
       });
 
-      descend(template);
+      // Evaluate the template.
+      abracadabra(template, document, parameters, function () {
+        callback(null, { document: document, _template: template });
+      });
     }
   }
 
-  return { generate: generate }
+  return { generate: generate, regenerate: regenerate }
 }});
