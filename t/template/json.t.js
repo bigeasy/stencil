@@ -6,7 +6,7 @@ require('./proof')(2, function (async) {
   async(function (stencil, resolver) {
 
     context = stencil.create(__dirname + '/', resolver.create());
-    context.generate('fixtures/json.stencil', async());
+    context.generate('fixtures/json.stencil', { request: { url: "/watchers/0" } }, async());
 
   }, function (actual, fixture) {
 
@@ -17,6 +17,7 @@ require('./proof')(2, function (async) {
     ok(compare(actual.node, expected), 'called');
 
     var watchers = require('./fixtures/watchers');
+    // FIXME: Update goes here.
     // STEP: Errors are getting hard.
     watchers.emitter.emit('update', null, watchers.watchers2);
   }, function (fixture) {
