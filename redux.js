@@ -128,6 +128,36 @@
   function abracadabra (template, document, parameters, callback) {
     var context;
 
+    var ops = {
+      attribute: function (bouquet, operation) {
+        var value = evaluate(operation.value, context);
+        if (value == null) {
+          bouquet.element.removeAttribute(operation.name);
+        } else {
+          bouquet.element.setAttribute(operation.name, value);
+        }
+        operate(bouquet);
+      }
+    };
+
+    function operate (bouquet) {
+      if (bouquet.operations.length) {
+        var operation = bouquet.operations.shift();
+        ops[operation.type](bouquet, operation);
+      } else {
+        bouquet.callback();
+      }
+    }
+
+    function operations (directive, element, callback) {
+      operate({
+        operations: directive.operations.slice(0),
+        directive: directive,
+        element: element,
+        callback: callback
+      });
+    }
+
     var handlers = {
       // The value directive replaces a value element with text from the current
       // context.
@@ -152,6 +182,20 @@
         instance.elements = 0;
 
         callback();
+      },
+      marker: function (directive, element, context, callback) {
+        var instance = template.instances[directive.id][0],
+            marker = template.markers[instance.id],
+            marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling;
+
+        // If the element marker it still in place, replace with a comment
+        // marker for the duration. It never needs to be recalculated.
+        if (marker.nodeType == 1) {
+          unmark(marker, instance);
+          template.markers[instance.id] = mark(directive.id, marked);
+        }
+
+        operations(directive, marked, callback);
       }
     }
 
@@ -184,75 +228,131 @@
     }
   }
 
-
+  // Compile the template at the given url and send it to the given callback.
   function fetch (base, url, callback) {
-    var okay = validator(callback);
+    var okay = validator(callback), identifier = 0;
 
+    // Send an pre-compiled template if we have one, otherwise compile the
+    // template and cache it.
     if (templates[url]) callback(null, templates[url]);
-    else resolver(absolutize(base, url), "text/xml", okay(attribute));
+    else resolver(absolutize(base, url), "text/xml", okay(compile));
 
-    // Prepare a newly loaded template for used by the engine.
+    // We compile the URL into a parallel tree of directives. The directives
+    // identify the elements that define them in the document using an
+    // automatically generated id.
+    // 
+    // Some directives are directive attributes that can be applied to any
+    // element, not just a Stencil attribute. Directive attributes include
+    // include object constructors, template includes, and dynamic attributes. 
+    // When they are applied to an element that is not in the Stencil namespace,
+    // we add a marker element as the elmeent's first child, to mark the user
+    // element in the template document, without abusing the id of the user
+    // element, which would be visible in the output.
+    //
+    // With the markers in place, all of the element participants in the
+    // template can have a unique id, without overriding, or stepping around,
+    // any user specified ids on user elements. The user could still choose to
+    // use an id in her markup that collides with the auto generated ids, but
+    // that is a collision that is easy to avoid. The generated ids are a
+    // catenation of Stencil path and sequence number, unlikely to conincide
+    // with a desirable name for a section of web page.
+    //
+    // There is no need for a namespace stack, because we're emitting HTML5,
+    // which does not support namespaces. All namespaces will be stripped before
+    // serialization. The namespace declarations are removed from the template
+    // at they are encountered.
+    // 
+    // We are using namespaces as part of the mechanics of the template
+    // language, of course, but we don't need to track namespace mappings. We're
+    // only using the namespace URLs as to locate our objects and templates.
+    // We're not actually using the namespace created in the document.
+    //
+    // Finally, note that we're not stripping namespaces if they are not special
+    // to stencil, so namespaces can be used in the document, but their might be
+    // problems with serialization if the document. We'll cross this bridge when
+    // we get to it.
+    //
+    // There are some applications of HTML5 that use XHTML5, so it may be
+    // crossed by people who adopt the library. Let me know if you care about
+    // XHTML5 and we'll talk.
 
-    // First, iterate through the document looking for attribute variables,
-    // removing them, then adding attribute definition elements.
-    function attribute (document) {
-      var each = document.getElementsByTagName('*'), i, I, j;
-      for (i = 0, I = each.length; i < I; i++) {
-        // TODO
-      }
-      identify (document);
-    }
-
-    // Now that all of the Stencil directives are elements, give each Stencil
-    // element an `id` attribute that will be consistent on the server and in
-    // the browser. This will obliterate any id attibute in assigned to the
-    // Stencil element by the user, but that is okay, because they're never
-    // going to to see the Stencil namespace in an output document.
-    function identify (document) {
-      var each = document.getElementsByTagName('*'),
-          namespaces = { stencil: true },
-          id = 0, element, i, I, j, attribute, protocol;
-      // Note that you do not need to maintain a namespace stack to track the
-      // namespace aliases. If we see a tag library included using the include
-      // protocol we know that the namespace URI is a tag library URI.
-      // Reassignment or unassigment of an alias will so that a namespace thatbb
-      // is redefined
-      for (i = 0, I = each.length; i < I; i++) {
-        element = each.item(i);
-        for (j = element.attributes.length - 1; j != -1; j--) {
-          if (element.attributes[j].namespaceURI == XMLNS
-          && (protocol = element.attributes[j].nodeValue.split(/:/).shift())
-          && (!"include".indexOf(protocol))) {
-              namespaces[element.attributes[j].nodeValue] = true;
-          }
-        }
-        if (namespaces[element.namespaceURI])  {
-          element.setAttribute('id', url + '#' + (id++));
-        }
-      }
-
-      compile(document);
-    }
-
-    // Finally, we locate all of our elements and create a tree of them.
+    // Locate all of our directive elements and create a tree of them.
     function compile (document) {
-      var directives = [];
-      visit(directives, document.documentElement);
+      // Our directives and a temporary list of user elements with Stencil
+      // directive attributes.
+      var directives = [], unmarked = [];
 
-      templates[url] = { url: url, document: document, directives: directives, inorder: inorder };
+      // Visit all the nodes creating a tree of directives.
+      visit(unmarked, directives, document.documentElement);
 
+      // Some of the elements are not in the Stencil namespace, so we need to
+      // insert a marker child element. We do this after we traverse the tree so
+      // we don't need special logic to exclude elements we've just inserted.
+      unmarked.forEach(function (unmarked) {
+        var node = unmarked.node, marker = document.createElementNS("stencil", "marker");
+        marker.setAttribute("id", unmarked.id);
+        node.insertBefore(marker, node.firstChild);
+      });
+
+      // Create our template.
+      templates[url] = { url: url, document: document, directives: directives };
+
+      // Send the template to our caller.
       callback(null, templates[url]);
     }
+
+    // Create a directive structure from the node, if the node is a directive.
+    function directivize (unmarked, node) {
+      // Only elements can be directives.
+      if (node.nodeType != 1) return;
+
+      // Gather object constructors, template includes and dynamic attributes
+      // into our array of operations.
+      var operations = [];
+      for (var i = 0, I = node.attributes.length; i < I; i++) {
+        var attr = node.attributes.item(i), protocol;
+        switch (attr.namespaceURI) {
+        case "http://www.w3.org/2000/xmlns/":
+          if (protocol = attr.nodeValue.split(/:/).shift()) {
+            var href = attr.nodeValue.substring(protocol.length + 1)
+            if (!"object".indexOf(protocol)) operations.unshift({ type: "object", href: href });
+            else if (!"include".indexOf(protocol)) operations.unshift({ type: "include", href: href });
+          }
+          break;
+        case "stencil":
+          operations.push({ type: "attribute", name: attr.localName, value: attr.nodeValue });
+          break;
+        }
+      }
+
+      operations.forEach(function (operation) {
+        if (operation.type == "attribute") {
+          node.removeAttributeNS("stencil", operation.name);
+        }
+      });
+
+      // We have a directive if the namespace is the Stencil namespace, or we've
+      // discovered operaitons. If we're not a Stencil directive, we insert a
+      // placeholder marker as a child of the element.
+      if (node.namespaceURI == "stencil" || operations.length) {
+        var id = url + "#" + (identifier++);
+        if (node.namespaceURI != "stencil") {
+          unmarked.push({ node: node, id: id });
+        } else {
+          node.setAttribute("id", id);
+        }
+        return { id: id, operations: operations, children: []};
+      }
+    }
   
-    function visit (children, node) {
-      var record, child;
-      if (node.nodeType == 1 && node.namespaceURI == NS_STENCIL) {
-        record = { id: node.getAttribute('id'), children: [] };
-        children.push(record);
-        children = record.children;
+    function visit (unmarked, children, node) {
+      var directive, child;
+      if (directive = directivize(unmarked, node)) {
+        children.push(directive);
+        children = directive.children;
       }
       for (child = node.firstChild; child; child = child.nextSibling) {
-        visit(children, child);
+        visit(unmarked, children, child);
       }
     }
   }
