@@ -1,0 +1,5 @@
+<html xmlns:s="stencil">
+<body>
+<img s:src="src" s:alt="alt">
+</body>
+</html>
