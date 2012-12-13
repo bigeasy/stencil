@@ -9,6 +9,8 @@ require('./proof')(2, function (async, ok, compare) {
     fixture('fixtures/value-generate.xml', async());
   }, function (expected, actual) {
     ok(compare(actual.document, expected), 'generate');
+    context.reconstitute(actual.document, async());
+  }, function (actual) {
     context.regenerate(actual, { greeting: "Hello, Nurse!" }, async());
   }, function (actual, fixture) {
     fixture('fixtures/value-regenerate.xml', async());
