@@ -125,6 +125,55 @@
     parentNode.removeChild(marker);
   }
 
+  function comments (markers, child) {
+    var $;
+    for (;child;child = child.nextSibling) {
+      if (child.nodeType == 8) {
+      if (child.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(child.nodeValue))) {
+        markers[$[1]] = child;
+      }
+      }
+      comments(markers, child.firstChild);
+    }
+  }
+
+  function instanciate (template) {
+    return {
+      document: template.document,
+      url: template.url,
+      directives: JSON.parse(JSON.stringify(template.directives)),
+      instanceId: 0,
+      instances: {},
+      markers: {}
+    }
+  }
+
+  function reconstitute (document, callback) {
+    var stasis, okay = validator(callback);
+    stasis = (function () {
+      for (var child = document.documentElement.firstChild; child; child = child.nextSibling) {
+        if (child.nodeType == 8) {
+          var json = child.nodeValue.replace(/^Stencil\/Stasis:/, '');
+          if (json.length != child.nodeValue.length) {
+            return JSON.parse(json); 
+          }
+        }
+      }
+    })();
+
+    fetch(stasis.stencil, okay(fetched));
+
+    function fetched (template) {
+      template = instanciate(template); 
+      template.instances = stasis.instances;
+      template.instanceId = stasis.instanceId;
+
+      comments(template.markers, document);
+
+      callback(null, { document: document, _template: template });
+    }
+  }
+
   function abracadabra (template, document, parameters, callback) {
     var context;
 
@@ -165,10 +214,10 @@
         var source = element.getAttribute("select").trim(),
             value = evaluate(source, context),
             instance = template.instances[directive.id][0],
-            marker = template.markers[instance.id];
+            marker = template.markers[directive.id];
 
         // Mark the new insert.
-        template.markers[instance.id] = mark(directive.id, marker);
+        template.markers[directive.id] = mark(directive.id, marker);
 
         // Insert the text value.
         var text = document.createTextNode(value);
@@ -185,14 +234,14 @@
       },
       marker: function (directive, element, context, callback) {
         var instance = template.instances[directive.id][0],
-            marker = template.markers[instance.id],
+            marker = template.markers[directive.id],
             marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling;
 
         // If the element marker it still in place, replace with a comment
         // marker for the duration. It never needs to be recalculated.
         if (marker.nodeType == 1) {
           unmark(marker, instance);
-          template.markers[instance.id] = mark(directive.id, marked);
+          template.markers[directive.id] = mark(directive.id, marked);
         }
 
         operations(directive, marked, callback);
@@ -229,7 +278,7 @@
   }
 
   // Compile the template at the given url and send it to the given callback.
-  function fetch (base, url, callback) {
+  function fetch (url, callback) {
     var okay = validator(callback), identifier = 0;
 
     // Send an pre-compiled template if we have one, otherwise compile the
@@ -357,10 +406,11 @@
     }
   }
 
-  function inorder (directives, callback) {
-    directives.forEach(function (directive) {
-      callback(directive);
-      inorder(directive.children, callback);
+  function inorder (parent, path, callback) {
+    (parent.directives || []).forEach(function (directive) {
+      var subPath = path.concat(directive.id);
+      callback(parent, subPath.join(":"), directive);
+      inorder(directive, subPath, callback);
     });
   }
 
@@ -382,7 +432,7 @@
     }
 
     url = normalize(url);
-    fetch(base, url, check(callback, interpret));
+    fetch(url, check(callback, interpret));
 
     function instanciate (template) {
       return {
@@ -414,22 +464,21 @@
 
       // Take the instanciated template and insert placeholder instances that
       // use the directive elements as markers.
-      inorder(template.directives, function (directive) {
-        var instanceId = template.instanceId++;
-        template.instances[directive.id] = [{
-          id: instanceId,
-          elements: 0,
-          characters: 0
-        }];
-        template.markers[instanceId] = document.getElementById(directive.id);
+      inorder(template, [], function (parent, path, directive) {
+        if (!parent.instances) parent.instances = {};
+        parent.instances[directive.id] = [{ elements: 0, characters: 0 }];
+        template.markers[path] = document.getElementById(directive.id);
       });
 
       // Evaluate the template.
       abracadabra(template, document, parameters, function () {
+        var stasis = { stencil: url, instances: template.instances, instanceId: template.instanceId };
+        var comment = document.createComment("Stencil/Stasis:" + JSON.stringify(stasis, null, 2));
+        document.documentElement.insertBefore(comment, document.documentElement.firstChild);
         callback(null, { document: document, _template: template });
       });
     }
   }
 
-  return { generate: generate, regenerate: regenerate }
+  return { generate: generate, regenerate: regenerate, reconstitute: reconstitute }
 }});
