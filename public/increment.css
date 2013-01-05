@@ -1,0 +1,42 @@
+body {
+  font-family: Baskerville, Georgia;
+  text-align: center;
+}
+
+#container {
+  margin: auto auto;
+  width: 900px;
+}
+
+#number {
+  font-size: 400px;
+  width: 500px;
+  margin: 0px;
+  float: left;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+#forward {
+  display: block;
+  float: left;
+  margin-top: 150px;
+  font-size: 100px;
+  width: 200px;
+}
+
+#back {
+  display: block;
+  width: 200px;
+  margin-top: 150px;
+  font-size: 100px;
+  float: left;
+}
+
+.clearfix {
+  overflow: auto;
+  width: 100%;
+}

@@ -1,0 +1,13 @@
+<html xmlns:s="stencil">
+<head>
+<script data-main="/scripts/main.js" src="/scripts/require.js"></script>
+<link rel="stylesheet" type="text/css" href="/increment.css"/>
+</head>
+<body>
+<div id="container" class="clearfix">
+<a id="back" s:href="'/number/' + (+(pathInfo.substring(1)) - 1)">&#171;</a>
+<p id="number"><s:value select="pathInfo.substring(1)"/></p>
+<a id="forward" s:href="'/number/' + (+(pathInfo.substring(1)) + 1)">&#187;</a>
+</div>
+</body>
+</html>

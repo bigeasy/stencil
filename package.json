@@ -1,0 +1,29 @@
+{ "name": "stencil"
+, "description": "Asynchronous HTML5 and XML templates for Node.js and the browser."
+, "author": "Alan Gutierrez"
+, "version": "0.0.1"
+, "keywords": [ "template", "html", "xml", "text", "xhtml", "async", "asynchronous" ]
+, "licenses": [
+  { "type": "MIT"
+  , "url": "http://github.com/bigeasy/stencil/raw/master/LICENSE"
+  }]
+, "homepage": "https://github.com/bigeasy/stencil"
+, "main": "redux.js"
+, "repository":
+  { "type": "git"
+  , "url": "http://github.com/bigeasy/stencil.git"
+  }
+, "scripts" : { "test": "proof platform win32 && proof t/*/*.t.js || t/test" }
+, "devDependencies":
+  { "proof": "0.0.14"
+  , "uglify-js": "~1.3"
+  }
+, "dependencies":
+  { "xmldom": "git://github.com/jindw/xmldom.git#8417be2f5be412cc531d299c9fa9a13564b073f5"
+  , "stencil": "git://github.com/bigeasy/stencil.git#38549eeb5af08eaa102613373d1c5cb1182ccd8b"
+  , "reactor": "0.0.4"
+  , "connect": "~2"
+  , "connect-npm": ">=0"
+  , "send": "~0"
+  }
+}
