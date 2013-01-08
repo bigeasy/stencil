@@ -83,7 +83,7 @@
   var functions = {};
 
   //
-  function evaluate (source, context) {
+  function evaluate (source, context, callback) {
     var parameters = [], values = [], callbacks = 0,
         i, I, name, result, compiled;
     source = source.trim();
@@ -100,7 +100,19 @@
     for (i = 0, I = parameters.length; i < I; i++) {
       values.push(context[parameters[i]]);
     }
-    return compiled.expression.apply(this, values);
+    invoke(compiled.expression.apply(this, values), context, callback);
+  }
+
+  function invoke (result, context, callback) {
+    try {
+      if (typeof result == "function") {
+        result(context, callback); 
+      } else {
+        callback(null, result);
+      }
+    } catch (e) {
+      callback(e);
+    }
   }
 
   function mark (id, reference) {
@@ -175,67 +187,39 @@
   }
 
   function abracadabra (template, document, parameters, callback) {
-    var context;
-
-    var ops = {
-      attribute: function (bouquet, operation) {
-        var value = evaluate(operation.value, context);
-        if (value == null) {
-          bouquet.element.removeAttribute(operation.name);
-        } else {
-          bouquet.element.setAttribute(operation.name, value);
-        }
-        operate(bouquet);
-      }
-    };
-
-    function operate (bouquet) {
-      if (bouquet.operations.length) {
-        var operation = bouquet.operations.shift();
-        ops[operation.type](bouquet, operation);
-      } else {
-        bouquet.callback();
-      }
-    }
-
-    function operations (directive, element, callback) {
-      operate({
-        operations: directive.operations.slice(0),
-        directive: directive,
-        element: element,
-        callback: callback
-      });
-    }
+    var context, okay = validator(callback), path = [];
 
     var handlers = {
       // The value directive replaces a value element with text from the current
       // context.
-      value: function (directive, element, context, callback) {
+      value: function (directive, element, context, path, callback) {
         var source = element.getAttribute("select").trim(),
-            value = evaluate(source, context),
-            instance = template.instances[directive.id][0],
-            marker = template.markers[directive.id];
+            instance = template.instances[path][0],
+            marker = template.markers[path];
 
-        // Mark the new insert.
-        template.markers[directive.id] = mark(directive.id, marker);
+        evaluate(source, context, okay(function (value) {
+          // Mark the new insert.
+          template.markers[directive.id] = mark(directive.id, marker);
 
-        // Insert the text value.
-        var text = document.createTextNode(value);
-        marker.parentNode.insertBefore(text, marker);
+          // Insert the text value.
+          var text = document.createTextNode(value);
+          marker.parentNode.insertBefore(text, marker);
 
-        // Remove the old marker.
-        unmark(marker, instance);
+          // Remove the old marker.
+          unmark(marker, instance);
 
-        // Record the instance.
-        instance.characters = value.length;
-        instance.elements = 0;
+          // Record the instance.
+          instance.characters = value.length;
+          instance.elements = 0;
 
-        callback();
+          callback();
+        }));
       },
-      marker: function (directive, element, context, callback) {
+      marker: function (directive, element, context, path, callback) {
         var instance = template.instances[directive.id][0],
             marker = template.markers[directive.id],
-            marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling;
+            marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling,
+            attributes = directive.attributes.slice(0);
 
         // If the element marker it still in place, replace with a comment
         // marker for the duration. It never needs to be recalculated.
@@ -244,22 +228,39 @@
           template.markers[directive.id] = mark(directive.id, marked);
         }
 
-        operations(directive, marked, callback);
+        rewrite();
+
+        function rewrite () {
+          var attribute; 
+          if (attribute = attributes.shift()) {
+            evaluate(attribute.value, context, okay(function (value) {
+              if (value == null) {
+                marked.removeAttribute(attribute.name);
+              } else {
+                marked.setAttribute(attribute.name, value);
+              }
+              rewrite();
+            }));
+          } else {
+            callback();
+          }
+        }
       }
     }
 
-    next({ directives: template.directives.slice(0), context: parameters }, callback);
+    // **TODO**: I don't believe I need to be passing the callback around.
+    next({ directives:  template.directives.slice(0), context: parameters });
 
-    function next (descent, callback) {
-      if (descent.directives.length) descend(descent, callback);
-      else if (descent.parent) next(descent.parent, callback);
+    function next (descent, path) {
+      if (descent.directives.length) descend(descent);
+      else if (descent.parent) next(descent.parent);
       else callback();
     }
 
-    function descend (descent, callback) {
-      var directive = descent.directives.shift(),
-          element = template.document.getElementById(directive.id),
-          handler = handlers[element.localName],
+    function descend (parent) {
+      var directive = parent.directives.shift(),
+          operations = directive.operations.slice(0),
+          descent = { directives: directive.directives.slice(0), parent: parent, context: {} },
           stack = [], i;
 
       // Create an evaluation context.
@@ -271,9 +272,37 @@
         }
       }
 
-      handler(directive, element, context, function () {
-        next({ parent: descent, directives: directive.children.slice(0), context: {} }, callback);
-      });
+      operate();
+
+      function operate () {
+        var operation = directive.operations.shift() || {};
+        switch (operation.type) {
+        case "require":
+          resolver(template.base + '/' + operation.href, "text/javascript", okay(function (module) {
+            invoke(module, context, okay(function (value) {
+              context[operation.name] = descent.context[operation.name] = value;
+              operate();
+            }));
+          }));
+          break;
+        default:
+          if (directive.id) rewrite();
+          else resume();
+          break; 
+        }
+      }
+
+      function rewrite () {
+        var element = template.document.getElementById(directive.id),
+            handler = handlers[element.localName],
+            path = [], i;
+        for (i = directive; i; i = i.parent) {
+          if (i.id) path.unshift(i.id);
+        }
+        handler(directive, element, context, path.join(":"), resume);
+      }
+
+      function resume () { next(descent) }
     }
   }
 
@@ -292,9 +321,9 @@
     // 
     // Some directives are directive attributes that can be applied to any
     // element, not just a Stencil attribute. Directive attributes include
-    // include object constructors, template includes, and dynamic attributes. 
+    // include object constructors, template includes, and dynamic attributes.
     // When they are applied to an element that is not in the Stencil namespace,
-    // we add a marker element as the elmeent's first child, to mark the user
+    // we add a marker element as the element's first child, to mark the user
     // element in the template document, without abusing the id of the user
     // element, which would be visible in the output.
     //
@@ -303,7 +332,7 @@
     // any user specified ids on user elements. The user could still choose to
     // use an id in her markup that collides with the auto generated ids, but
     // that is a collision that is easy to avoid. The generated ids are a
-    // catenation of Stencil path and sequence number, unlikely to conincide
+    // catenation of Stencil path and sequence number, unlikely to coincide
     // with a desirable name for a section of web page.
     //
     // There is no need for a namespace stack, because we're emitting HTML5,
@@ -344,7 +373,9 @@
       });
 
       // Create our template.
-      templates[url] = { url: url, document: document, directives: directives };
+      templates[url] = {
+        url: url, document: document, directives: directives,
+        base: absolutize(base, url).replace(/\/[^\/]+$/, '/') };
 
       // Send the template to our caller.
       callback(null, templates[url]);
@@ -357,87 +388,102 @@
 
       // Gather object constructors, template includes and dynamic attributes
       // into our array of operations.
-      var operations = [];
+      var operations = [], attributes = [];
       for (var i = 0, I = node.attributes.length; i < I; i++) {
         var attr = node.attributes.item(i), protocol;
         switch (attr.namespaceURI) {
         case "http://www.w3.org/2000/xmlns/":
           if (protocol = attr.nodeValue.split(/:/).shift()) {
-            var href = attr.nodeValue.substring(protocol.length + 1)
-            if (!"object".indexOf(protocol)) operations.unshift({ type: "object", href: href });
-            else if (!"include".indexOf(protocol)) operations.unshift({ type: "include", href: href });
+            var href = normalize(attr.nodeValue.substring(protocol.length + 1));
+            if (!"require".indexOf(protocol)) operations.unshift({ type: "require", href: href, name: attr.localName });
+            else if (!"include".indexOf(protocol)) operations.unshift({ type: "include", href: href, name: attr.localName });
           }
           break;
         case "stencil":
-          operations.push({ type: "attribute", name: attr.localName, value: attr.nodeValue });
+          attributes.push({ name: attr.localName, value: attr.nodeValue });
           break;
         }
       }
 
-      operations.forEach(function (operation) {
-        if (operation.type == "attribute") {
-          node.removeAttributeNS("stencil", operation.name);
-        }
+      // Clear out the calculated attribute declarations from the prototype.
+      attributes.forEach(function (attribute) {
+        node.removeAttributeNS("stencil", attribute.name);
       });
 
       // We have a directive if the namespace is the Stencil namespace, or we've
-      // discovered operaitons. If we're not a Stencil directive, we insert a
-      // placeholder marker as a child of the element.
-      if (node.namespaceURI == "stencil" || operations.length) {
+      // discovered calculated attributes. If we're not a Stencil directive, we
+      // insert a placeholder marker as a child of the element.
+      if (node.namespaceURI == "stencil" || attributes.length) {
         var id = url + "#" + (identifier++);
         if (node.namespaceURI != "stencil") {
           unmarked.push({ node: node, id: id });
         } else {
           node.setAttribute("id", id);
         }
-        return { id: id, operations: operations, children: []};
+        return { id: id, operations: operations, attributes: attributes, directives: []};
+      // Otherwise, we have operations that will alter the variable context, but
+      // no calculated attributes nor directives that rewrite the DOM.
+      } else if (operations.length) {
+        return { operations: operations, attributes: attributes, directives: []};
       }
     }
   
-    function visit (unmarked, children, node) {
+    function visit (unmarked, directives, node) {
       var directive, child;
       if (directive = directivize(unmarked, node)) {
-        children.push(directive);
-        children = directive.children;
+        directives.push(directive);
+        directives = directive.directives;
       }
       for (child = node.firstChild; child; child = child.nextSibling) {
-        visit(unmarked, children, child);
+        visit(unmarked, directives, child);
       }
     }
   }
 
   function inorder (parent, path, callback) {
-    (parent.directives || []).forEach(function (directive) {
-      var subPath = path.concat(directive.id);
+    // **TODO**: Use directives in both objects.
+    (parent.directives || parent.directives || []).forEach(function (directive) {
+      var subPath = directive.id ? path.concat(directive.id) : path;
       callback(parent, subPath.join(":"), directive);
       inorder(directive, subPath, callback);
     });
   }
 
   function regenerate (instance, parameters, callback) {
+    var okay = validator(callback);
+
     if (typeof parameters == "function") {
       callback = parameters;
       parameters = {};
     }
 
-    abracadabra(instance._template, instance.document, parameters, function () {
-      callback(null, instance);
-    });
+    var url = normalize(instance._template.url);
+    fetch(url, okay(rebase));
+
+    function rebase (template) {
+      instance._template.base = template.base;
+      abracadabra(instance._template, instance.document, parameters, okay(function () {
+        callback(null, instance);
+      }));
+    }
   }
 
   function generate (url, parameters, callback) {
+    var okay = validator(callback);
+
     if (typeof parameters == "function") {
       callback = parameters;
       parameters = {};
     }
 
     url = normalize(url);
-    fetch(url, check(callback, interpret));
+    fetch(url, okay(interpret));
 
     function instanciate (template) {
       return {
         document: template.document,
         url: template.url,
+        base: template.base,
         directives: JSON.parse(JSON.stringify(template.directives)),
         instanceId: 0,
         instances: {},
@@ -465,18 +511,23 @@
       // Take the instanciated template and insert placeholder instances that
       // use the directive elements as markers.
       inorder(template, [], function (parent, path, directive) {
-        if (!parent.instances) parent.instances = {};
-        parent.instances[directive.id] = [{ elements: 0, characters: 0 }];
-        template.markers[path] = document.getElementById(directive.id);
+        directive.context = {};
+        directive.parent = parent;
+        if (directive.id) {
+          template.instances[path] = [{ elements: 0, characters: 0 }];
+          template.markers[path] = document.getElementById(directive.id);
+        }
       });
 
       // Evaluate the template.
-      abracadabra(template, document, parameters, function () {
+      abracadabra(template, document, parameters, okay(result));
+      
+      function result () {
         var stasis = { stencil: url, instances: template.instances, instanceId: template.instanceId };
         var comment = document.createComment("Stencil/Stasis:" + JSON.stringify(stasis, null, 2));
         document.documentElement.insertBefore(comment, document.documentElement.firstChild);
         callback(null, { document: document, _template: template });
-      });
+      }
     }
   }
 

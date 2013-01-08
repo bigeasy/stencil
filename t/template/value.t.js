@@ -13,6 +13,7 @@ require('./proof')(2, function (async, ok, compare) {
   }, function (actual) {
     context.regenerate(actual, { greeting: "Hello, Nurse!" }, async());
   }, function (actual, fixture) {
+    console.log(actual.document.toString());
     fixture('fixtures/value-regenerate.xml', async());
   }, function (expected, actual) {
     ok(compare(actual.document, expected), 'regenerate');
