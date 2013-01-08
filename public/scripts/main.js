@@ -5,14 +5,14 @@ require([ 'jquery', '/npm/stencil.js', '/npm/reactor.js', 'text!/routes.json' ],
     }, mimeType.substring(mimeType.indexOf("/") + 1));
   });
   var reactor = reactor.createReactor();
-  JSON.parse(routes).forEach(function (route) {
-    reactor.get(route.route, function (params, request, response) {
-      var pathInfo = params.pathInfo ? '/' + params.pathInfo : '';
-      var stencil = context.reconstitute(document, function (error, stencil) {
-        if (error) throw error;
-        context.regenerate(stencil, { pathInfo: pathInfo }, function (error, stencil) {
-          if (error) throw error;
-        });
+  var stencil = context.reconstitute(document, function (error, stencil) {
+    if (error) throw error;
+    JSON.parse(routes).forEach(function (route) {
+      reactor.get(route.route, function (params, request, response) {
+        var pathInfo = params.pathInfo ? '/' + params.pathInfo : '';
+          context.regenerate(stencil, { pathInfo: pathInfo }, function (error, stencil) {
+            if (error) throw error;
+          });
       });
     });
   });
