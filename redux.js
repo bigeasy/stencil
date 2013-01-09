@@ -209,7 +209,7 @@
           unmark(marker, instance);
 
           // Record the instance.
-          instance.characters = value.length;
+          instance.characters = String(value).length;
           instance.elements = 0;
 
           callback();
