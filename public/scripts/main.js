@@ -1,8 +1,14 @@
 require([ 'jquery', '/npm/stencil.js', '/npm/reactor.js', 'text!/routes.json' ], function ($, stencil, reactor, routes) {
   var context = stencil.create('/stencils/', function (url, mimeType, callback) {
-    $.get(url, function (data) {
-      callback(null, data);
-    }, mimeType.substring(mimeType.indexOf("/") + 1));
+    if (mimeType == "text/javascript") {
+      require([ url ], function (module) {
+        callback(null, module);
+      });
+    } else {
+      $.get(url, function (data) {
+        callback(null, data);
+      }, mimeType.substring(mimeType.indexOf("/") + 1));
+    }
   });
   var reactor = reactor.createReactor();
   var stencil = context.reconstitute(document, function (error, stencil) {

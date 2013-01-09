@@ -20,7 +20,7 @@
   }
 , "dependencies":
   { "xmldom": "git://github.com/jindw/xmldom.git#8417be2f5be412cc531d299c9fa9a13564b073f5"
-  , "stencil": "git://github.com/bigeasy/stencil.git#38549eeb5af08eaa102613373d1c5cb1182ccd8b"
+  , "stencil": "git://github.com/bigeasy/stencil.git#3e61327227f84ac3812737afbdbe319e9f118bcc"
   , "reactor": "0.0.4"
   , "connect": "~2"
   , "connect-npm": ">=0"
