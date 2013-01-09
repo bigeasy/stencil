@@ -275,7 +275,7 @@
       operate();
 
       function operate () {
-        var operation = directive.operations.shift() || {};
+        var operation = operations.shift() || {};
         switch (operation.type) {
         case "require":
           resolver(template.base + '/' + operation.href, "text/javascript", okay(function (module) {
