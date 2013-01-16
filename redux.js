@@ -138,18 +138,18 @@
     parentNode.removeChild(marker);
   }
 
-  function comments (template, path, child) {
+  function comments (template, path, node) {
     var $, parts;
-    for (;child;child = child.nextSibling) {
-      if (child.nodeType == 8) {
-      if (child.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(child.nodeValue))) {
-        parts = $[1].split(/:/);
-        path = path + "/" + parts[0]
-        template.markers[path] = child;
-        template.instances[path] = [{ elements: +(parts[1]), characters: +(parts[2]) }];
-      }
-      }
-      comments(template, path, child.firstChild);
+    if (node.nodeType == 8) {
+    if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
+      parts = $[1].split(/:/);
+      path = path + "/" + parts[0]
+      template.markers[path] = node;
+      template.instances[path] = [{ elements: +(parts[1]), characters: +(parts[2]) }];
+    }
+    }
+    for (node = node.firstChild; node; node = node.nextSibling) {
+      comments(template, path, node);
     }
   }
 
@@ -188,7 +188,7 @@
   }
 
   function abracadabra (template, document, parameters, callback) {
-    var context, okay = validator(callback), path = [];
+    var context, okay = validator(callback);
 
     var handlers = {
       // The value directive replaces a value element with text from the current
@@ -252,7 +252,7 @@
     // **TODO**: I don't believe I need to be passing the callback around.
     next({ directives:  template.directives.slice(0), context: parameters });
 
-    function next (descent, path) {
+    function next (descent) {
       if (descent.directives.length) descend(descent);
       else if (descent.parent) next(descent.parent);
       else callback();
