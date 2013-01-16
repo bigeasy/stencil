@@ -115,9 +115,10 @@
     }
   }
 
-  function mark (id, reference) {
+  function mark (reference, directive, instance) {
     var document = reference.ownerDocument,
-        comment = document.createComment("(Stencil[" + id + "])");
+        key = [ directive.id, instance.elements, instance.characters ],
+        comment = document.createComment("(Stencil[" + key.join(":") + "])");
     return reference.parentNode.insertBefore(comment, reference);
   }
 
@@ -137,15 +138,18 @@
     parentNode.removeChild(marker);
   }
 
-  function comments (markers, child) {
-    var $;
+  function comments (template, path, child) {
+    var $, parts;
     for (;child;child = child.nextSibling) {
       if (child.nodeType == 8) {
       if (child.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(child.nodeValue))) {
-        markers[$[1]] = child;
+        parts = $[1].split(/:/);
+        path = path + "/" + parts[0]
+        template.markers[path] = child;
+        template.instances[path] = [{ elements: +(parts[1]), characters: +(parts[2]) }];
       }
       }
-      comments(markers, child.firstChild);
+      comments(template, path, child.firstChild);
     }
   }
 
@@ -161,26 +165,23 @@
   }
 
   function reconstitute (document, callback) {
-    var stasis, okay = validator(callback);
-    stasis = (function () {
+    var okay = validator(callback), url = (function () {
       for (var child = document.documentElement.firstChild; child; child = child.nextSibling) {
         if (child.nodeType == 8) {
-          var json = child.nodeValue.replace(/^Stencil\/Stasis:/, '');
-          if (json.length != child.nodeValue.length) {
-            return JSON.parse(json); 
+          var url = child.nodeValue.replace(/^Stencil\/Template:/, '');
+          if (url.length != child.nodeValue.length) {
+            return url;
           }
         }
       }
     })();
 
-    fetch(stasis.stencil, okay(fetched));
+    fetch(url, okay(fetched));
 
     function fetched (template) {
       template = instanciate(template); 
-      template.instances = stasis.instances;
-      template.instanceId = stasis.instanceId;
 
-      comments(template.markers, document);
+      comments(template, "", document);
 
       callback(null, { document: document, _template: template });
     }
@@ -198,9 +199,6 @@
             marker = template.markers[path];
 
         evaluate(source, context, okay(function (value) {
-          // Mark the new insert.
-          template.markers[path] = mark(directive.id, marker);
-
           // Insert the text value.
           var text = document.createTextNode(value);
           marker.parentNode.insertBefore(text, marker);
@@ -212,12 +210,15 @@
           instance.characters = String(value).length;
           instance.elements = 0;
 
+          // Mark the new insert.
+          template.markers[path] = mark(text, directive, instance);
+
           callback();
         }));
       },
       marker: function (directive, element, context, path, callback) {
-        var instance = template.instances[directive.id][0],
-            marker = template.markers[directive.id],
+        var instance = template.instances[path][0],
+            marker = template.markers[path],
             marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling,
             attributes = directive.attributes.slice(0);
 
@@ -225,7 +226,7 @@
         // marker for the duration. It never needs to be recalculated.
         if (marker.nodeType == 1) {
           unmark(marker, instance);
-          template.markers[path] = mark(directive.id, marked);
+          template.markers[path] = mark(marked, directive, instance);
         }
 
         rewrite();
@@ -299,7 +300,7 @@
         for (i = directive; i; i = i.parent) {
           if (i.id) path.unshift(i.id);
         }
-        handler(directive, element, context, path.join(":"), resume);
+        handler(directive, element, context, "/" + path.join("/"), resume);
       }
 
       function resume () { next(descent) }
@@ -443,8 +444,8 @@
   function inorder (parent, path, callback) {
     // **TODO**: Use directives in both objects.
     (parent.directives || parent.directives || []).forEach(function (directive) {
-      var subPath = directive.id ? path.concat(directive.id) : path;
-      callback(parent, subPath.join(":"), directive);
+      var subPath = directive.id ? path + "/" + directive.id : path;
+      callback(parent, subPath, directive);
       inorder(directive, subPath, callback);
     });
   }
@@ -510,7 +511,7 @@
 
       // Take the instanciated template and insert placeholder instances that
       // use the directive elements as markers.
-      inorder(template, [], function (parent, path, directive) {
+      inorder(template, "", function (parent, path, directive) {
         directive.context = {};
         directive.parent = parent;
         if (directive.id) {
@@ -523,8 +524,7 @@
       abracadabra(template, document, parameters, okay(result));
       
       function result () {
-        var stasis = { stencil: url, instances: template.instances, instanceId: template.instanceId };
-        var comment = document.createComment("Stencil/Stasis:" + JSON.stringify(stasis, null, 2));
+        var comment = document.createComment("Stencil/Template:" + url);
         document.documentElement.insertBefore(comment, document.documentElement.firstChild);
         callback(null, { document: document, _template: template });
       }
