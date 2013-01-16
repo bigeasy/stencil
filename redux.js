@@ -199,7 +199,7 @@
 
         evaluate(source, context, okay(function (value) {
           // Mark the new insert.
-          template.markers[directive.id] = mark(directive.id, marker);
+          template.markers[path] = mark(directive.id, marker);
 
           // Insert the text value.
           var text = document.createTextNode(value);
@@ -225,7 +225,7 @@
         // marker for the duration. It never needs to be recalculated.
         if (marker.nodeType == 1) {
           unmark(marker, instance);
-          template.markers[directive.id] = mark(directive.id, marked);
+          template.markers[path] = mark(directive.id, marked);
         }
 
         rewrite();
