@@ -115,10 +115,11 @@
     }
   }
 
-  function mark (reference, directive, instance) {
+  function mark (reference, directive, instance, depth) {
     var document = reference.ownerDocument,
-        key = [ directive.id, instance.elements, instance.characters ],
-        comment = document.createComment("(Stencil[" + key.join(":") + "])");
+        offsets = [ instance.elements, instance.characters ].join(":"),
+        key = [ directive.id, depth, offsets ].join(";"),
+        comment = document.createComment("(Stencil[" + key + "])");
     return reference.parentNode.insertBefore(comment, reference);
   }
 
@@ -138,18 +139,48 @@
     parentNode.removeChild(marker);
   }
 
-  function comments (template, path, node) {
-    var $, parts;
-    if (node.nodeType == 8) {
+  function comments (template, descent, node) {
+    var $, i, I, path, part, parts, offsets, children = {}, instance, contains;
     if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
-      parts = $[1].split(/:/);
-      path = path + "/" + parts[0]
+      parts = $[1].split(/;/);
+      offsets = parts[2].split(/:/);
+      offsets = { elements: +(offsets[0]), characters: +(offsets[1]) }
+      part = extend({ url: parts[0], depth: parts[1], id: parts[2] }, offsets);
+      path = [ part ];
+      for (i = 0, I = descent.length; i < I; i++) {
+        if (path[path.length - 1].depth != descent[i].depth) {
+          path.unshift(descent[i]);
+        }
+      }
+      descent.unshift(part);
+      // **TODO**: Nest for collections.
+      for (i = 0, I = path.length; i < I; i++) {
+        path[i] = path[i].url + ";" + path[i].depth;
+      }
+      path = "|" + path.join("|");
       template.markers[path] = node;
-      template.instances[path] = [{ elements: +(parts[1]), characters: +(parts[2]) }];
+      template.instances[path] = [offsets];
     }
-    }
+    contains = descent.length + 1;
     for (node = node.firstChild; node; node = node.nextSibling) {
-      comments(template, path, node);
+      comments(template, descent, node);
+      if (contains == descent.length) {
+        switch (node.nodeType) {
+        case 1:
+          descent[0].elements--;
+          break;
+        case 3:
+          if (!descent[0].elements) {
+            descent[0].characters -= node.nodeValue.length;
+          }
+          break;
+        }
+        if (descent[0].elements <= 0 && descent[0].characters <= 0) {
+          descent.shift();
+        }
+      } else if (contains < descent.length) {
+        throw new Error("cannot reconstitute");
+      }
     }
   }
 
@@ -165,6 +196,7 @@
   }
 
   function reconstitute (document, callback) {
+    // **TODO**: Loop with break instead of closure.
     var okay = validator(callback), url = (function () {
       for (var child = document.documentElement.firstChild; child; child = child.nextSibling) {
         if (child.nodeType == 8) {
@@ -181,13 +213,13 @@
     function fetched (template) {
       template = instanciate(template); 
 
-      comments(template, "", document);
+      comments(template, [], document);
 
       callback(null, { document: document, _template: template });
     }
   }
 
-  function abracadabra (template, document, parameters, callback) {
+  function abracadabra (template, document, parameters, path, depth, callback) {
     var context, okay = validator(callback);
 
     var handlers = {
@@ -211,7 +243,7 @@
           instance.elements = 0;
 
           // Mark the new insert.
-          template.markers[path] = mark(text, directive, instance);
+          template.markers[path] = mark(text, directive, instance, depth);
 
           callback();
         }));
@@ -226,7 +258,7 @@
         // marker for the duration. It never needs to be recalculated.
         if (marker.nodeType == 1) {
           unmark(marker, instance);
-          template.markers[path] = mark(marked, directive, instance);
+          template.markers[path] = mark(marked, directive, instance, depth);
         }
 
         rewrite();
@@ -295,12 +327,8 @@
 
       function rewrite () {
         var element = template.document.getElementById(directive.id),
-            handler = handlers[element.localName],
-            path = [], i;
-        for (i = directive; i; i = i.parent) {
-          if (i.id) path.unshift(i.id);
-        }
-        handler(directive, element, context, "/" + path.join("/"), resume);
+            handler = handlers[element.localName];
+        handler(directive, element, context, path + "|" + directive.id + ";" + depth, resume);
       }
 
       function resume () { next(descent) }
@@ -415,7 +443,7 @@
       // discovered calculated attributes. If we're not a Stencil directive, we
       // insert a placeholder marker as a child of the element.
       if (node.namespaceURI == "stencil" || attributes.length) {
-        var id = url + "#" + (identifier++);
+        var id = url + ":" + (identifier++);
         if (node.namespaceURI != "stencil") {
           unmarked.push({ node: node, id: id });
         } else {
@@ -441,12 +469,12 @@
     }
   }
 
-  function inorder (parent, path, callback) {
+  function inorder (parent, path, depth, callback) {
     // **TODO**: Use directives in both objects.
     (parent.directives || parent.directives || []).forEach(function (directive) {
-      var subPath = directive.id ? path + "/" + directive.id : path;
+      var subPath = directive.id ? path + "|" + directive.id + ";" + depth : path;
       callback(parent, subPath, directive);
-      inorder(directive, subPath, callback);
+      inorder(directive, subPath, depth, callback);
     });
   }
 
@@ -463,7 +491,7 @@
 
     function rebase (template) {
       instance._template.base = template.base;
-      abracadabra(instance._template, instance.document, parameters, okay(function () {
+      abracadabra(instance._template, instance.document, parameters, "", 0, okay(function () {
         callback(null, instance);
       }));
     }
@@ -511,7 +539,7 @@
 
       // Take the instanciated template and insert placeholder instances that
       // use the directive elements as markers.
-      inorder(template, "", function (parent, path, directive) {
+      inorder(template, "", 0, function (parent, path, directive) {
         directive.context = {};
         directive.parent = parent;
         if (directive.id) {
@@ -521,7 +549,7 @@
       });
 
       // Evaluate the template.
-      abracadabra(template, document, parameters, okay(result));
+      abracadabra(template, document, parameters, "", 0, okay(result));
       
       function result () {
         var comment = document.createComment("Stencil/Template:" + url);
