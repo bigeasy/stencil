@@ -17,15 +17,15 @@ if [ "$TRAVIS" = "true" ] || [ "$MINIFY" = "true" ]; then
   echo ""
   echo "minified"
   echo ""
-  default=$(cat index.js | uglifyjs | gzip -c | wc -c)
-  lift=$(cat index.js | uglifyjs --lift-vars | gzip -c | wc -c)
+  default=$(cat redux.js | uglifyjs | gzip -c | wc -c)
+  lift=$(cat redux.js | uglifyjs --lift-vars | gzip -c | wc -c)
 
   bak=index-$(date +'%FT%T').js
-  mv index.js $bak
+  mv redux.js $bak
   if [ $default -lt $lift ]; then
-    cat $bak | uglifyjs > index.js
+    cat $bak | uglifyjs > redux.js
   else
-    cat $bak | uglifyjs --lift-vars > index.js
+    cat $bak | uglifyjs --lift-vars > redux.js
   fi 
  
   (proof run t/*/*.t.js | tee .proof.out | proof progress) || (proof errors < .proof.out) || exit 1
