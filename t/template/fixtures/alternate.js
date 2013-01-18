@@ -1,30 +1,7 @@
 ! function (definition) {
-  if (typeof module == "object" && module.exports) definition(require, module.exports, module);
+  if (typeof module == "object" && module.exports) definition(require, exports, module);
   else if (typeof define == "function" && typeof define.amd == "object") define(definition);
 } (function (require, exports, module) {
-  var fs = require('fs')
-    , watchers1 = JSON.parse(fs.readFileSync(__dirname + '/watchers-1.json', 'utf8'))
-    , watchers2 = JSON.parse(fs.readFileSync(__dirname + '/watchers-2.json', 'utf8'))
-    , count = 0
-    ;
-  // STEP: If we don't want to expose both handles to the user, then we need to
-  // have this module pull in another module.
-  //
-  // We're going to need a package/module system for this framework. Don't build
-  // an IoC monster. All you need is a package/module system. Then you need to
-  // explain to people why you're not using the package/module system in a way
-  // that they expect you to use it.
-  var emitter = new (require('events').EventEmitter)();
-  var generator = function dynamic (immediate, callback) {
-    if (immediate) callback(null, watchers1);
-    emitter.on('update', callback);
-    return function () { emitter.removeListener('update', callback) }
-  }
-
-  generator.emitter = emitter;
-  generator.watchers2 = watchers2;
-
-  module.exports = generator;
   var watchers = [
     [
       {
@@ -75,8 +52,7 @@
     ]
   ];
 
-  module.exports = function (broker, callback) {
-    var request = broker.get("request"), index = +(/(\d+)$/.exec(request.url)[1]);
-    callback(null, watchers[index]);
-  }
+  var modeler = require("stencil/modeler").createModeler(exports);
+  modeler.dynamic("watchers", function (broker, callback) {
+  });
 });

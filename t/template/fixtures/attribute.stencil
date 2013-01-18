@@ -1,5 +1,5 @@
 <html xmlns:s="stencil">
 <body>
-<p>foo.js</p>
+<img s:src="src" s:alt="alt">
 </body>
 </html>
