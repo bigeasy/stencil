@@ -470,8 +470,7 @@
   }
 
   function inorder (parent, path, depth, callback) {
-    // **TODO**: Use directives in both objects.
-    (parent.directives || parent.directives || []).forEach(function (directive) {
+    (parent.directives || []).forEach(function (directive) {
       var subPath = directive.id ? path + "|" + directive.id + ";" + depth : path;
       callback(parent, subPath, directive);
       inorder(directive, subPath, depth, callback);
