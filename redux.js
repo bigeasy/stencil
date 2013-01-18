@@ -279,7 +279,6 @@
       }
     }
 
-    // **TODO**: I don't believe I need to be passing the callback around.
     next({ directives:  template.directives.slice(0), context: parameters });
 
     function next (descent) {
