@@ -196,17 +196,15 @@
   }
 
   function reconstitute (document, callback) {
-    // **TODO**: Loop with break instead of closure.
-    var okay = validator(callback), url = (function () {
-      for (var child = document.documentElement.firstChild; child; child = child.nextSibling) {
-        if (child.nodeType == 8) {
-          var url = child.nodeValue.replace(/^Stencil\/Template:/, '');
-          if (url.length != child.nodeValue.length) {
-            return url;
-          }
-        }
+    var okay = validator(callback), child, url;
+
+    for (child = document.documentElement.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType == 8) {
+        url = child.nodeValue.replace(/^Stencil\/Template:/, '');
+        if (url.length != child.nodeValue.length) break;
+        url = null;
       }
-    })();
+    }
 
     fetch(url, okay(fetched));
 
@@ -470,8 +468,7 @@
   }
 
   function inorder (parent, path, depth, callback) {
-    // **TODO**: Use directives in both objects.
-    (parent.directives || parent.directives || []).forEach(function (directive) {
+    (parent.directives || []).forEach(function (directive) {
       var subPath = directive.id ? path + "|" + directive.id + ";" + depth : path;
       callback(parent, subPath, directive);
       inorder(directive, subPath, depth, callback);
