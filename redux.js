@@ -160,8 +160,7 @@
         path[i] = path[i].url + ";" + path[i].depth;
       }
       path = "|" + path.join("|");
-      template.markers[path] = node;
-      template.instances[path] = offsets;
+      template.instances[path] = extend({ marker: node }, offsets);
     }
     contains = descent.length + 1;
     for (node = node.firstChild; node; node = node.nextSibling) {
@@ -192,8 +191,7 @@
       url: template.url,
       directives: JSON.parse(JSON.stringify(template.directives)),
       instanceId: 0,
-      instances: {},
-      markers: {}
+      instances: {}
     }
   }
 
@@ -228,7 +226,7 @@
       value: function (directive, element, context, path, callback) {
         var source = element.getAttribute("select").trim(),
             instance = template.instances[path],
-            marker = unmark(template.markers[path], instance);
+            marker = unmark(instance.marker, instance);
 
         evaluate(source, context, okay(function (value) {
           // Record the instance.
@@ -236,7 +234,7 @@
           instance.elements = 0;
 
           // Mark the new insert.
-          template.markers[path] = mark(marker, directive, instance, depth);
+          instance.marker = mark(marker, directive, instance, depth);
 
           // Insert the text value.
           marker.parentNode.insertBefore(document.createTextNode(value), marker.reference);
@@ -246,7 +244,7 @@
       },
       marker: function (directive, element, context, path, callback) {
         var instance = template.instances[path],
-            marker = template.markers[path],
+            marker = instance.marker,
             marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling,
             attributes = directive.attributes.slice(0);
 
@@ -254,7 +252,7 @@
         // marker for the duration. It never needs to be recalculated.
         if (marker.nodeType == 1) {
           unmark(marker, instance)
-          template.markers[path] = mark(marked, directive, instance, depth);
+          instance.marker = mark(marked, directive, instance, depth);
         }
 
         rewrite();
@@ -509,8 +507,7 @@
         base: template.base,
         directives: JSON.parse(JSON.stringify(template.directives)),
         instanceId: 0,
-        instances: {},
-        markers: {}
+        instances: {}
       }
     }
 
@@ -531,14 +528,17 @@
       var document = template.document.implementation.createDocument();
       document.appendChild(document.importNode(template.document.documentElement, true));
 
-      // Take the instanciated template and insert placeholder instances that
+      // Take the instantiated template and insert placeholder instances that
       // use the directive elements as markers.
       inorder(template, "", 0, function (parent, path, directive) {
         directive.context = {};
         directive.parent = parent;
         if (directive.id) {
-          template.instances[path] = { elements: 0, characters: 0 };
-          template.markers[path] = document.getElementById(directive.id);
+          template.instances[path] = {
+            elements: 0,
+            characters: 0,
+            marker: document.getElementById(directive.id)
+          };
         }
       });
 
