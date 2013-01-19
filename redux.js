@@ -161,7 +161,7 @@
       }
       path = "|" + path.join("|");
       template.markers[path] = node;
-      template.instances[path] = [offsets];
+      template.instances[path] = offsets;
     }
     contains = descent.length + 1;
     for (node = node.firstChild; node; node = node.nextSibling) {
@@ -227,7 +227,7 @@
       // context.
       value: function (directive, element, context, path, callback) {
         var source = element.getAttribute("select").trim(),
-            instance = template.instances[path][0],
+            instance = template.instances[path],
             marker = unmark(template.markers[path], instance);
 
         evaluate(source, context, okay(function (value) {
@@ -245,7 +245,7 @@
         }));
       },
       marker: function (directive, element, context, path, callback) {
-        var instance = template.instances[path][0],
+        var instance = template.instances[path],
             marker = template.markers[path],
             marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling,
             attributes = directive.attributes.slice(0);
@@ -277,7 +277,6 @@
       }
     }
 
-    // **TODO**: You need to pass in the directives, that's all.
     next({ directives:  template.directives.slice(0), context: parameters });
 
     function next (descent) {
@@ -538,7 +537,7 @@
         directive.context = {};
         directive.parent = parent;
         if (directive.id) {
-          template.instances[path] = [{ elements: 0, characters: 0 }];
+          template.instances[path] = { elements: 0, characters: 0 };
           template.markers[path] = document.getElementById(directive.id);
         }
       });
