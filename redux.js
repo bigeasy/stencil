@@ -115,12 +115,12 @@
     }
   }
 
-  function mark (reference, directive, instance, depth) {
-    var document = reference.ownerDocument,
+  function mark (marker, directive, instance, depth) {
+    var reference = marker.nodeType ? marker : marker.reference,
         offsets = [ instance.elements, instance.characters ].join(":"),
         key = [ directive.id, depth, offsets ].join(";"),
-        comment = document.createComment("(Stencil[" + key + "])");
-    return reference.parentNode.insertBefore(comment, reference);
+        comment = marker.parentNode.ownerDocument.createComment("(Stencil[" + key + "])");
+    return marker.parentNode.insertBefore(comment, reference);
   }
 
   function unmark (marker, instance) {
@@ -136,7 +136,9 @@
       removed.splitText(removed.nodeValue.length + i);
       parentNode.removeChild(marker.nextSibling);
     }
+    removed = { parentNode: parentNode, reference: marker.nextSibling };
     parentNode.removeChild(marker);
+    return removed;
   }
 
   function comments (template, descent, node) {
@@ -226,22 +228,18 @@
       value: function (directive, element, context, path, callback) {
         var source = element.getAttribute("select").trim(),
             instance = template.instances[path][0],
-            marker = template.markers[path];
+            marker = unmark(template.markers[path], instance);
 
         evaluate(source, context, okay(function (value) {
-          // Insert the text value.
-          var text = document.createTextNode(value);
-          marker.parentNode.insertBefore(text, marker);
-
-          // Remove the old marker.
-          unmark(marker, instance);
-
           // Record the instance.
           instance.characters = String(value).length;
           instance.elements = 0;
 
           // Mark the new insert.
-          template.markers[path] = mark(text, directive, instance, depth);
+          template.markers[path] = mark(marker, directive, instance, depth);
+
+          // Insert the text value.
+          marker.parentNode.insertBefore(document.createTextNode(value), marker.reference);
 
           callback();
         }));
@@ -255,7 +253,7 @@
         // If the element marker it still in place, replace with a comment
         // marker for the duration. It never needs to be recalculated.
         if (marker.nodeType == 1) {
-          unmark(marker, instance);
+          unmark(marker, instance)
           template.markers[path] = mark(marked, directive, instance, depth);
         }
 
@@ -279,6 +277,7 @@
       }
     }
 
+    // **TODO**: You need to pass in the directives, that's all.
     next({ directives:  template.directives.slice(0), context: parameters });
 
     function next (descent) {
