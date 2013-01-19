@@ -159,8 +159,7 @@
       for (i = 0, I = path.length; i < I; i++) {
         path[i] = path[i].url + ";" + path[i].depth;
       }
-      path = "|" + path.join("|");
-      template.instances[path] = extend({ marker: node }, offsets);
+      extend(follow(template, path), extend({ marker: node }, offsets));
     }
     contains = descent.length + 1;
     for (node = node.firstChild; node; node = node.nextSibling) {
@@ -225,7 +224,7 @@
       // context.
       value: function (directive, element, context, path, callback) {
         var source = element.getAttribute("select").trim(),
-            instance = template.instances[path],
+            instance = follow(template, path),
             marker = unmark(instance.marker, instance);
 
         evaluate(source, context, okay(function (value) {
@@ -243,7 +242,7 @@
         }));
       },
       marker: function (directive, element, context, path, callback) {
-        var instance = template.instances[path],
+        var instance = follow(template, path),
             marker = instance.marker,
             marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling,
             attributes = directive.attributes.slice(0);
@@ -321,7 +320,7 @@
       function rewrite () {
         var element = template.document.getElementById(directive.id),
             handler = handlers[element.localName];
-        handler(directive, element, context, path + "|" + directive.id + ";" + depth, resume);
+        handler(directive, element, context, path.concat(directive.id + ";" + depth), resume);
       }
 
       function resume () { next(descent) }
@@ -462,9 +461,19 @@
     }
   }
 
+  function follow(instance, path) {
+    for (var i = 0, I = path.length; i < I; i++) {
+      if (!instance.instances[path[i]]) {
+        instance.instances[path[i]] = { instances: {} };
+      }
+      instance = instance.instances[path[i]];
+    }
+    return instance;
+  }
+
   function inorder (parent, path, depth, callback) {
     (parent.directives || []).forEach(function (directive) {
-      var subPath = directive.id ? path + "|" + directive.id + ";" + depth : path;
+      var subPath = directive.id ? path.concat(directive.id + ";" + depth) : path;
       callback(parent, subPath, directive);
       inorder(directive, subPath, depth, callback);
     });
@@ -483,7 +492,7 @@
 
     function rebase (template) {
       instance._template.base = template.base;
-      abracadabra(instance._template, instance.document, parameters, "", 0, okay(function () {
+      abracadabra(instance._template, instance.document, parameters, [], 0, okay(function () {
         callback(null, instance);
       }));
     }
@@ -530,20 +539,23 @@
 
       // Take the instantiated template and insert placeholder instances that
       // use the directive elements as markers.
-      inorder(template, "", 0, function (parent, path, directive) {
+      //
+      // TODO: Come back and consider why you have an instance tree and a
+      // directive tree, which data belongs in which. (There is a need for both
+      // trees, but the data is getting confused.)
+      inorder(template, [], 0, function (parent, path, directive) {
         directive.context = {};
         directive.parent = parent;
-        if (directive.id) {
-          template.instances[path] = {
+        if (directive.id)
+          extend(follow(template, path), {
             elements: 0,
             characters: 0,
             marker: document.getElementById(directive.id)
-          };
-        }
+          });
       });
 
       // Evaluate the template.
-      abracadabra(template, document, parameters, "", 0, okay(result));
+      abracadabra(template, document, parameters, [], 0, okay(result));
       
       function result () {
         var comment = document.createComment("Stencil/Template:" + url);
