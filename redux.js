@@ -12,10 +12,13 @@
   function say () { return console.log.apply(console, slice.call(arguments, 0)) }
 
   function validator (callback) {
+    if (typeof callback != "function") throw new Error("no callback");
     return function (forward) { return check(callback, forward) }
   }
 
   function check (callback, forward) {
+    if (typeof callback != "function") throw new Error("no callback");
+    if (typeof forward != "function") throw new Error("no forward");
     return function (error) {
       if (error) {
         callback(error);
@@ -216,13 +219,13 @@
     }
   }
 
-  function abracadabra (template, document, parameters, path, depth, callback) {
+  function abracadabra (template, directives, document, parameters, path, depth, callback) {
     var context, okay = validator(callback);
 
     var handlers = {
       // The value directive replaces a value element with text from the current
       // context.
-      value: function (directive, element, context, path, callback) {
+      value: function (descent, directive, element, context, path, callback) {
         var source = element.getAttribute("select").trim(),
             instance = follow(template, path),
             marker = unmark(instance.marker, instance);
@@ -241,7 +244,7 @@
           callback();
         }));
       },
-      marker: function (directive, element, context, path, callback) {
+      marker: function (descent, directive, element, context, path, callback) {
         var instance = follow(template, path),
             marker = instance.marker,
             marked = marker.nodeType == 1 ? marker.parentNode : marker.nextSibling,
@@ -271,10 +274,32 @@
             callback();
           }
         }
+      },
+      if: function (descent, directive, element, context, path, callback) {
+        var source = element.getAttribute("select").trim(),
+            instance = follow(template, path),
+            marker = instance.marker;
+
+        evaluate(source, context, okay(function (value) {
+          // **TODO**: You actually don't need a new document if you've got
+          // elements and characters here, it means that the body of this if
+          // statement is present and correct, you can reuse it. No invasive DOM
+          // surgury causing the page the jitter.
+          if (!value) {
+            marker = unmark(marker, instance);
+            descent.directives.length = instance.characters = instance.elements = 0;
+            mark(marker, instance);
+          } else if (!(instance.elements || instance.characters)) {
+            // **TODO**: Copy a generated document, get the guts. Run it. Then
+            // copy the children of that element to this element. Recursion is
+            // much simpiler ecause you're not waking the tree.
+          }
+          callback();
+        }));
       }
     }
 
-    next({ directives:  template.directives.slice(0), context: parameters });
+    next({ directives:  directives, context: parameters });
 
     function next (descent) {
       if (descent.directives.length) descend(descent);
@@ -320,7 +345,7 @@
       function rewrite () {
         var element = template.document.getElementById(directive.id),
             handler = handlers[element.localName];
-        handler(directive, element, context, path.concat(directive.id + ";" + depth), resume);
+        handler(descent, directive, element, context, path.concat(directive.id + ";" + depth), resume);
       }
 
       function resume () { next(descent) }
@@ -473,7 +498,14 @@
 
   function inorder (parent, path, depth, callback) {
     (parent.directives || []).forEach(function (directive) {
-      var subPath = directive.id ? path.concat(directive.id + ";" + depth) : path;
+      var subPath = path.slice(0);
+      if (directive.id) {
+        if (subPath.length) {
+          subPath[subPath.length - 1] = directive.id + ";" + depth;
+        } else {
+          subPath.push(directive.id + ";" + depth);
+        }
+      }
       callback(parent, subPath, directive);
       inorder(directive, subPath, depth, callback);
     });
@@ -492,7 +524,7 @@
 
     function rebase (template) {
       instance._template.base = template.base;
-      abracadabra(instance._template, instance.document, parameters, [], 0, okay(function () {
+      abracadabra(instance._template, instance._template.directives.slice(0), instance.document, parameters, [], 0, okay(function () {
         callback(null, instance);
       }));
     }
@@ -546,16 +578,34 @@
       inorder(template, [], 0, function (parent, path, directive) {
         directive.context = {};
         directive.parent = parent;
-        if (directive.id)
-          extend(follow(template, path), {
-            elements: 0,
-            characters: 0,
-            marker: document.getElementById(directive.id)
+        if (directive.id) {
+          var marker = document.getElementById(directive.id), child,
+              elements = 0, characters = 0;
+          while (marker.lastChild) {
+            var child = marker.removeChild(marker.lastChild);
+            switch (child.nodeType) {
+            case 1:
+              characters = 0;
+              elements++;
+              break;
+            case 3:
+            case 4:
+              characters += child.nodeValue.length;
+              break;
+            }
+            marker.parentNode.insertBefore(child, marker.nextSibling);
+          }
+          var instance = extend(follow(template, path), {
+            elements: elements,
+            characters: characters
           });
+          instance.marker = mark(marker.localName == "marker" ? marker.parentNode : marker, directive, instance, 0);
+          marker.parentNode.removeChild(marker);
+        }
       });
 
       // Evaluate the template.
-      abracadabra(template, document, parameters, [], 0, okay(result));
+      abracadabra(template, template.directives.slice(0), document, parameters, [], 0, okay(result));
       
       function result () {
         var comment = document.createComment("Stencil/Template:" + url);
