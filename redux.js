@@ -149,7 +149,7 @@
     if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
       parts = $[1].split(/;/);
       offsets = parts[2].split(/:/);
-      offsets = { elements: +(offsets[0]), characters: +(offsets[1]) }
+      offsets = { elements: +(offsets[0]), characters: +(offsets[1]) };
       part = extend({ url: parts[0], depth: parts[1], id: parts[2] }, offsets);
       path = [ part ];
       for (i = 0, I = descent.length; i < I; i++) {
@@ -253,7 +253,7 @@
         // If the element marker it still in place, replace with a comment
         // marker for the duration. It never needs to be recalculated.
         if (marker.nodeType == 1) {
-          unmark(marker, instance)
+          unmark(marker, directive, instance, depth)
           instance.marker = mark(marked, directive, instance, depth);
         }
 
@@ -287,8 +287,8 @@
           // surgury causing the page the jitter.
           if (!value) {
             marker = unmark(marker, instance);
-            descent.directives.length = instance.characters = instance.elements = 0;
-            mark(marker, instance);
+            instance.instances.length = descent.directives.length = instance.characters = instance.elements = 0;
+            instance.marker = mark(marker, directive, instance, depth);
           } else if (!(instance.elements || instance.characters)) {
             // **TODO**: Copy a generated document, get the guts. Run it. Then
             // copy the children of that element to this element. Recursion is
