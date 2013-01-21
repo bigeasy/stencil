@@ -148,7 +148,7 @@
       fragment.appendChild(parentNode.removeChild(marker.nextSibling));
     }
     removed = { parentNode: parentNode, reference: marker.nextSibling };
-    parentNode.removeChild(marker);
+    fragment.insertBefore(parentNode.removeChild(marker), fragment.firstChild);
     return removed;
   }
 
@@ -223,6 +223,15 @@
 
       callback(null, page);
     }
+  }
+
+  function scavenge (scrap, path, document) {
+    var prototype = follow(scrap, path), fragment = scrap.document.createDocumentFragment(); 
+    var marker = unmark(prototype.marker, prototype, fragment);
+    var spares = document.importNode(fragment, true);
+    spares.removeChild(spares.firstChild);
+    marker.parentNode.insertBefore(fragment, marker.reference);
+    return { fragment: spares, instance: prototype };
   }
 
   function rewrite (page, directives, document, parameters, path, depth, callback) {
@@ -305,24 +314,10 @@
             // copy the children of that element to this element. Recursion is
             // much simpiler ecause you're not waking the tree.
             if (!spare) {
-              var document = page.template.document.implementation.createDocument(),
-                  spare = {
-                document: document,
-                template: page.template,
-                url: page.template.url,
-                base: page.template.base,
-                directives: JSON.parse(JSON.stringify(page.template.directives)),
-                instanceId: 0,
-                instances: {}
-              };
-              document.appendChild(document.importNode(page.template.document.documentElement, true));
+              var salvage = scavenge(page.template.page, path, page.document);
 
-              instantiate(spare, document, spare, [], 0);
-
-              var prototype = follow(spare, path), fragment = spare.document.createDocumentFragment(); 
-              unmark(prototype.marker, prototype, fragment);
-              instance.marker = mark(marker, directive, prototype, depth);
-              marker.parentNode.insertBefore(page.document.importNode(fragment, true), marker);
+              instance.marker = mark(marker, directive, salvage.instance, depth);
+              marker.parentNode.insertBefore(salvage.fragment, marker);
               unmark(marker, instance);
 
               // **TODO**: Oy!
@@ -462,10 +457,44 @@
         node.insertBefore(marker, node.firstChild);
       });
 
+      var scrap = document.implementation.createDocument();
+      scrap.appendChild(scrap.importNode(document.documentElement, true));
+      var page = { instances: {}, document: scrap };
+
+      // Take the instantiated template and insert placeholder instances that
+      // use the directive elements as markers.
+      inorder({ directives: directives }, [], 0, function (parent, path, directive) {
+        if (directive.id) {
+          var marker = scrap.getElementById(directive.id), child,
+              elements = 0, characters = 0;
+          while (marker.lastChild) {
+            var child = marker.removeChild(marker.lastChild);
+            switch (child.nodeType) {
+            case 1:
+              characters = 0;
+              elements++;
+              break;
+            case 3:
+            case 4:
+              characters += child.nodeValue.length;
+              break;
+            }
+            marker.parentNode.insertBefore(child, marker.nextSibling);
+          }
+          var instance = extend(follow(page, path), {
+            elements: elements,
+            characters: characters
+          });
+          instance.marker = mark(marker.localName == "marker" ? marker.parentNode : marker, directive, instance, 0);
+          marker.parentNode.removeChild(marker);
+        }
+      });
+
       // Create our template.
       templates[url] = {
-        url: url, document: document, directives: directives,
-        base: absolutize(base, url).replace(/\/[^\/]+$/, '/') };
+        url: url, page: page, document: document, directives: directives,
+        base: absolutize(base, url).replace(/\/[^\/]+$/, '/')
+      };
 
       // Send the template to our caller.
       callback(null, templates[url]);
@@ -540,6 +569,7 @@
     return instance;
   }
 
+  // **TODO**: Outgoing.
   function inorder (parent, path, depth, callback) {
     (parent.directives || []).forEach(function (directive) {
       var subPath = directive.id ? path.concat(directive.id + ";" + depth) : path;
@@ -568,40 +598,6 @@
   }
 
   function instantiate (page, document, directive, path, depth) {
-    // Take the instantiated template and insert placeholder instances that
-    // use the directive elements as markers.
-    //
-    // TODO: Come back and consider why you have an instance tree and a
-    // directive tree, which data belongs in which. (There is a need for both
-    // trees, but the data is getting confused.)
-    inorder(directive, path, 0, function (parent, path, directive) {
-      directive.context = {};
-      directive.parent = parent;
-      if (directive.id) {
-        var marker = document.getElementById(directive.id), child,
-            elements = 0, characters = 0;
-        while (marker.lastChild) {
-          var child = marker.removeChild(marker.lastChild);
-          switch (child.nodeType) {
-          case 1:
-            characters = 0;
-            elements++;
-            break;
-          case 3:
-          case 4:
-            characters += child.nodeValue.length;
-            break;
-          }
-          marker.parentNode.insertBefore(child, marker.nextSibling);
-        }
-        var instance = extend(follow(page, path), {
-          elements: elements,
-          characters: characters
-        });
-        instance.marker = mark(marker.localName == "marker" ? marker.parentNode : marker, directive, instance, 0);
-        marker.parentNode.removeChild(marker);
-      }
-    });
   }
 
   function generate (url, parameters, callback) {
@@ -638,9 +634,9 @@
         instanceId: 0,
         instances: {}
       };
-      document.appendChild(document.importNode(template.document.documentElement, true));
+      document.appendChild(document.importNode(template.page.document.documentElement, true));
 
-      instantiate(page, document, page, [], 0);
+      comments(page, [], document);
 
       // Evaluate the template.
       rewrite(page, page.directives.slice(0), page.document, parameters, [], 0, okay(result));
