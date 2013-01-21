@@ -225,7 +225,7 @@
     }
   }
 
-  function abracadabra (page, directives, document, parameters, path, depth, callback) {
+  function rewrite (page, directives, document, parameters, path, depth, callback) {
     var spare, context, okay = validator(callback);
 
     var handlers = {
@@ -561,7 +561,7 @@
 
     function rebase (template) {
       page.template.base = template.base;
-      abracadabra(page, page.directives.slice(0), page.document, parameters, [], 0, okay(function () {
+      rewrite(page, page.directives.slice(0), page.document, parameters, [], 0, okay(function () {
         callback(null, page);
       }));
     }
@@ -643,7 +643,7 @@
       instantiate(page, document, page, [], 0);
 
       // Evaluate the template.
-      abracadabra(page, page.directives.slice(0), page.document, parameters, [], 0, okay(result));
+      rewrite(page, page.directives.slice(0), page.document, parameters, [], 0, okay(result));
       
       function result () {
         var comment = page.document.createComment("Stencil/Template:" + url);
