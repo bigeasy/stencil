@@ -1,0 +1,6 @@
+<html xmlns:s="stencil">
+<body>
+<s:if select="value"><p>If: <s:value select="value"/></p></s:if>
+<s:else><p>Else: <s:value select="value"/></p></s:else>
+</body>
+</html>
