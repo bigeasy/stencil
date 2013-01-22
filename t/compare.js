@@ -34,7 +34,7 @@ function name (node) {
 }
 
 function abend(e) {
-  var stack = [], attrs = [], e = e.element, i;
+  var stack = [], attrs = [], e = e.nodeType == 1 ? e.element : e.parentNode, i;
   do {
     attrs.length = 0;
     if (e.nodeType == 1) for (i = 0; i < e.attributes.length; i++) {
