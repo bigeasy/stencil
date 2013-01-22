@@ -296,6 +296,7 @@
             marker = instance.marker;
 
         evaluate(source, context, okay(function (value) {
+          descent.parent.condition = !!value;
           // **TODO**: You actually don't need a new document if you've got
           // elements and characters here, it means that the body of this if
           // statement is present and correct, you can reuse it. No invasive DOM
@@ -334,6 +335,29 @@
             callback();
           }
         }));
+      },
+      else: function (descent, directive, element, context, path, callback) {
+        element.setAttribute("select", "true");
+        handlers.elseif(descent, directive, element, context, path, callback);
+      },
+      elseif: function (descent, directive, element, context, path, callback) {
+        var previous = element.previousSibling,
+            instance = follow(page, path),
+            marker = instance.marker;
+        while (previous && previous.nodeType != 1) {
+          previous = previous.previousSibling;
+        }
+        if ("stencil" == previous.namespaceURI && !/^if$/.test(previous.localName)) {
+          throw new Error("misplaced " + element.localName);
+        }
+        if (descent.parent.condition) {
+          marker = unmark(marker, instance);
+          instance.instances.length = descent.directives.length = instance.characters = instance.elements = 0;
+          instance.marker = mark(marker, directive, instance, depth);
+          callback();
+        } else {
+          handlers["if"](descent, directive, element, context, path, callback);
+        }
       }
     }
 
