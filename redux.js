@@ -361,7 +361,7 @@
       }
     }
 
-    next({ directives:  directives, context: parameters, path: [] });
+    next({ directives:  directives, context: parameters, path: path });
 
     function next (descent) {
       if (descent.directives.length) descend(descent);
