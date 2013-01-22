@@ -347,7 +347,7 @@
         while (previous && previous.nodeType != 1) {
           previous = previous.previousSibling;
         }
-        if ("stencil" == previous.namespaceURI && !/^if$/.test(previous.localName)) {
+        if ("stencil" == previous.namespaceURI && !/^(?:else)?if$/.test(previous.localName)) {
           throw new Error("misplaced " + element.localName);
         }
         if (descent.parent.condition) {
