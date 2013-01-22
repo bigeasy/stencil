@@ -29,23 +29,26 @@ function attributes (element) {
   return attrs;
 }
 
-function name (node) {
+function _name (node) {
   return node.localName + (node.namespaceURI ? '(' + node.namespaceURI + ')' : '');
 }
 
-function abend(e) {
-  var stack = [], attrs = [], e = e.nodeType == 1 ? e.element : e.parentNode, i;
-  do {
-    attrs.length = 0;
-    if (e.nodeType == 1) for (i = 0; i < e.attributes.length; i++) {
-      attrs.push(name(e.attributes[i]) + '=' + e.attributes[i].nodeValue)
-    }
-    stack.unshift(name(e) + (attrs.length ? '[' + (attrs.join(' ')) + ']' : ''));
-  } while ((e = e.parentNode) && e.nodeType == 1);
-  throw new Error(stack.join('/'));
-}
 
 function compare (actual, expected) {
+  var _actual = actual, _expected = expected;
+  function abend(e) {
+    console.log(_actual.toString());
+    console.log(_expected.toString());
+    var stack = [], attrs = [], e = e.nodeType == 1 ? e.element : e.parentNode, i;
+    do {
+      attrs.length = 0;
+      if (e.nodeType == 1) for (i = 0; i < e.attributes.length; i++) {
+        attrs.push(_name(e.attributes[i]) + '=' + e.attributes[i].nodeValue)
+      }
+      stack.unshift(_name(e) + (attrs.length ? '[' + (attrs.join(' ')) + ']' : ''));
+    } while ((e = e.parentNode) && e.nodeType == 1);
+    throw new Error(stack.join('/'));
+  }
   if (typeof expected == "string") {
     expected = new (xmldom.DOMParser)().parseFromString(expected).documentElement;
   }
