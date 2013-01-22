@@ -490,9 +490,9 @@
       inorder({ directives: directives }, [], 0, function (parent, path, directive) {
         if (directive.id) {
           var marker = scrap.getElementById(directive.id), child,
-              elements = 0, characters = 0;
+              elements = 0, characters = 0, before = marker.nextSibling;
           while (marker.lastChild) {
-            var child = marker.removeChild(marker.lastChild);
+            var child = marker.removeChild(marker.firstChild);
             switch (child.nodeType) {
             case 1:
               characters = 0;
@@ -503,7 +503,7 @@
               characters += child.nodeValue.length;
               break;
             }
-            marker.parentNode.insertBefore(child, marker.nextSibling);
+            before = marker.parentNode.insertBefore(child, before);
           }
           var instance = extend(follow(page, path), {
             elements: elements,
