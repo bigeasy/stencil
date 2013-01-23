@@ -118,10 +118,10 @@
     }
   }
 
-  function mark (marker, directive, instance, depth) {
+  function mark (marker, directive, instance) {
     var reference = marker.nodeType ? marker : marker.reference,
         offsets = [ instance.elements, instance.characters ].join(":"),
-        key = [ directive.id, depth, offsets ].join(";"),
+        key = [ directive.id, offsets ].join(";"),
         comment = marker.parentNode.ownerDocument.createComment("(Stencil[" + key + "])");
     return marker.parentNode.insertBefore(comment, reference);
   }
@@ -156,19 +156,17 @@
     var $, i, I, path, part, parts, offsets, children = {}, instance, contains;
     if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
       parts = $[1].split(/;/);
-      offsets = parts[2].split(/:/);
+      offsets = parts[1].split(/:/);
       offsets = { elements: +(offsets[0]), characters: +(offsets[1]) };
-      part = extend({ url: parts[0], depth: parts[1], id: parts[2] }, offsets);
+      part = extend({ url: parts[0], id: parts[2] }, offsets);
       path = [ part ];
       for (i = 0, I = descent.length; i < I; i++) {
-        if (true || path[path.length - 1].depth != descent[i].depth) {
-          path.unshift(descent[i]);
-        }
+        path.unshift(descent[i]);
       }
       descent.unshift(part);
       // **TODO**: Nest for collections.
       for (i = 0, I = path.length; i < I; i++) {
-        path[i] = path[i].url + ";" + path[i].depth;
+        path[i] = path[i].url;
       }
       extend(follow(page, path), extend({ marker: node }, offsets));
     }
@@ -234,7 +232,7 @@
     return { fragment: spares, instance: prototype };
   }
 
-  function rewrite (page, directives, document, parameters, path, depth, callback) {
+  function rewrite (page, directives, document, parameters, path, callback) {
     var spare, context, okay = validator(callback);
 
     var handlers = {
@@ -251,7 +249,7 @@
           instance.elements = 0;
 
           // Mark the new insert.
-          instance.marker = mark(marker, directive, instance, depth);
+          instance.marker = mark(marker, directive, instance);
 
           // Insert the text value.
           marker.parentNode.insertBefore(document.createTextNode(value), marker.reference);
@@ -268,8 +266,8 @@
         // If the element marker it still in place, replace with a comment
         // marker for the duration. It never needs to be recalculated.
         if (marker.nodeType == 1) {
-          unmark(marker, directive, instance, depth)
-          instance.marker = mark(marked, directive, instance, depth);
+          unmark(marker, directive, instance);
+          instance.marker = mark(marked, directive, instance);
         }
 
         rewrite();
@@ -304,7 +302,7 @@
           if (!value) {
             marker = unmark(marker, instance);
             instance.instances.length = descent.directives.length = instance.characters = instance.elements = 0;
-            instance.marker = mark(marker, directive, instance, depth);
+            instance.marker = mark(marker, directive, instance);
             callback();
           } else if (!(instance.elements || instance.characters)) {
             // **TODO**: Do not like how I'm inserting a stencil id into a user
@@ -317,14 +315,14 @@
             if (!spare) {
               var salvage = scavenge(page.template.page, path, page.document);
 
-              instance.marker = mark(marker, directive, salvage.instance, depth);
+              instance.marker = mark(marker, directive, salvage.instance);
               marker.parentNode.insertBefore(salvage.fragment, marker);
               unmark(marker, instance);
 
-              // **TODO**: Oy!
+              // **TODO**: Oy! Fix NOW.
               var x = path.slice(0, path.length - 1).map(function (part) {
                 var split = part.split(/;/);
-                return { url: split[0], depth: split[1] };
+                return { url: split[0] };
               });
 
               comments(page, x, instance.marker.parentNode, instance.marker);
@@ -353,7 +351,7 @@
         if (descent.parent.condition) {
           marker = unmark(marker, instance);
           instance.instances.length = descent.directives.length = instance.characters = instance.elements = 0;
-          instance.marker = mark(marker, directive, instance, depth);
+          instance.marker = mark(marker, directive, instance);
           callback();
         } else {
           handlers["if"](descent, directive, element, context, path, callback);
@@ -361,7 +359,7 @@
       }
     }
 
-    next({ directives:  directives, context: parameters, path: [] });
+    next({ directives:  directives, context: parameters, path: path });
 
     function next (descent) {
       if (descent.directives.length) descend(descent);
@@ -407,7 +405,7 @@
       function rewrite () {
         var element = page.template.document.getElementById(directive.id),
             handler = handlers[element.localName],
-            path = descent.path = descent.parent.path.concat(directive.id + ";" + depth);
+            path = descent.path = descent.parent.path.concat(directive.id);
         handler(descent, directive, element, context, path, resume);
       }
 
@@ -487,12 +485,12 @@
 
       // Take the instantiated template and insert placeholder instances that
       // use the directive elements as markers.
-      inorder({ directives: directives }, [], 0, function (parent, path, directive) {
+      inorder({ directives: directives }, [], function (parent, path, directive) {
         if (directive.id) {
           var marker = scrap.getElementById(directive.id), child,
-              elements = 0, characters = 0;
+              elements = 0, characters = 0, before = marker.nextSibling;
           while (marker.lastChild) {
-            var child = marker.removeChild(marker.lastChild);
+            var child = marker.removeChild(marker.firstChild);
             switch (child.nodeType) {
             case 1:
               characters = 0;
@@ -503,13 +501,13 @@
               characters += child.nodeValue.length;
               break;
             }
-            marker.parentNode.insertBefore(child, marker.nextSibling);
+            before = marker.parentNode.insertBefore(child, before);
           }
           var instance = extend(follow(page, path), {
             elements: elements,
             characters: characters
           });
-          instance.marker = mark(marker.localName == "marker" ? marker.parentNode : marker, directive, instance, 0);
+          instance.marker = mark(marker.localName == "marker" ? marker.parentNode : marker, directive, instance);
           marker.parentNode.removeChild(marker);
         }
       });
@@ -594,11 +592,11 @@
   }
 
   // **TODO**: Outgoing.
-  function inorder (parent, path, depth, callback) {
+  function inorder (parent, path, callback) {
     (parent.directives || []).forEach(function (directive) {
-      var subPath = directive.id ? path.concat(directive.id + ";" + depth) : path;
+      var subPath = directive.id ? path.concat(directive.id) : path;
       callback(parent, subPath, directive);
-      inorder(directive, subPath, depth, callback);
+      inorder(directive, subPath, callback);
     });
   }
 
@@ -615,13 +613,13 @@
 
     function rebase (template) {
       page.template.base = template.base;
-      rewrite(page, page.directives.slice(0), page.document, parameters, [], 0, okay(function () {
+      rewrite(page, page.directives.slice(0), page.document, parameters, [], okay(function () {
         callback(null, page);
       }));
     }
   }
 
-  function instantiate (page, document, directive, path, depth) {
+  function instantiate (page, document, directive, path) {
   }
 
   function generate (url, parameters, callback) {
@@ -663,7 +661,7 @@
       comments(page, [], document);
 
       // Evaluate the template.
-      rewrite(page, page.directives.slice(0), page.document, parameters, [], 0, okay(result));
+      rewrite(page, page.directives.slice(0), page.document, parameters, [], okay(result));
       
       function result () {
         var comment = page.document.createComment("Stencil/Template:" + url);
