@@ -222,7 +222,7 @@
   }
 
   function rewrite (page, directives, document, parameters, path, callback) {
-    var spare, context, okay = validator(callback);
+    var context, okay = validator(callback);
 
     var handlers = {
       // The value directive replaces a value element with text from the current
@@ -284,37 +284,25 @@
 
         evaluate(source, context, okay(function (value) {
           descent.parent.condition = !!value;
-          // **TODO**: You actually don't need a new document if you've got
-          // elements and characters here, it means that the body of this if
-          // statement is present and correct, you can reuse it. No invasive DOM
-          // surgury causing the page the jitter.
+          // If the directive body is already in the document, we have nothing
+          // to do, we continue and rewrite the body.
           if (!value) {
             marker = unmark(marker, instance);
             instance.instances.length = descent.directives.length = instance.characters = instance.elements = 0;
             instance.marker = mark(marker, directive, instance);
-            callback();
           } else if (!(instance.elements || instance.characters)) {
-            // **TODO**: Do not like how I'm inserting a stencil id into a user
-            // document, so maybe a prefix or maybe don't do it?
             var fragment = page.document.createDocumentFragment();
             fragment.appendChild(page.document.importNode(element, true));
-            // **TODO**: Copy a generated document, get the guts. Run it. Then
-            // copy the children of that element to this element. Recursion is
-            // much simpiler ecause you're not waking the tree.
-            if (!spare) {
-              var salvage = scavenge(page.template.page, path, page.document);
 
-              instance.marker = mark(marker, directive, salvage.instance);
-              marker.parentNode.insertBefore(salvage.fragment, marker);
-              unmark(marker, instance);
+            var salvage = scavenge(page.template.page, path, page.document);
 
-              comments({}, page, path.slice(0, path.length - 1), instance.marker.parentNode, instance.marker);
+            instance.marker = mark(marker, directive, salvage.instance);
+            marker.parentNode.insertBefore(salvage.fragment, marker);
+            unmark(marker, instance);
 
-              callback();
-            }
-          } else {
-            callback();
+            comments({}, page, path.slice(0, path.length - 1), instance.marker.parentNode, instance.marker);
           }
+          callback();
         }));
       },
       else: function (descent, directive, element, context, path, callback) {
