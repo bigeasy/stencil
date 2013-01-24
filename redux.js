@@ -161,9 +161,10 @@
       path.push(parts[0]);
       extend(follow(page, path), instance);
     }
+    i = path.length;
     for (node = startChild || node.firstChild; node; node = node.nextSibling) {
       comments(contents, page, path, node);
-      if (contents.marker) {
+      if (1 + i == path.length) {
         switch (node.nodeType) {
         case 1:
           contents.elements--;
@@ -179,6 +180,8 @@
           delete contents.marker;
           path.pop();
         }
+      } else if (1 + i < path.length) {
+        throw new Error("unable to reconstitute");
       }
     }
   }
