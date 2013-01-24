@@ -590,9 +590,6 @@
     }
   }
 
-  function instantiate (page, document, directive, path) {
-  }
-
   function generate (url, parameters, callback) {
     var okay = validator(callback);
 
