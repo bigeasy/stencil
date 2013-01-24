@@ -222,7 +222,7 @@
   }
 
   function rewrite (page, directives, document, parameters, path, callback) {
-    var context, okay = validator(callback);
+    var okay = validator(callback);
 
     var handlers = {
       // The value directive replaces a value element with text from the current
@@ -341,17 +341,14 @@
     function descend (parent) {
       var directive = parent.directives.shift(),
           operations = directive.operations.slice(0),
-          descent = { directives: directive.directives.slice(0), parent: parent, context: {}, path: parent.path  },
+          descent = {
+            directives: directive.directives.slice(0),
+            parent: parent,
+            context: extend({}, parent.context),
+            path: parent.path
+          },
+          context = parent.context,
           stack = [], i;
-
-      // Create an evaluation context.
-      context = {};
-      for (i = descent; i; i = i.parent) stack.push(i);
-      for (i = stack.length - 1; i != -1; i--) {
-        for (var key in stack[i].context) {
-          context[key] = stack[i].context[key];
-        }
-      }
 
       operate();
 
