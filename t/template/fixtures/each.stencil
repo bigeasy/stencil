@@ -1,7 +1,9 @@
 <html xmlns:s="stencil">
 <body>
-<s:each select="[ 0, 1, 2, 3 ]" into="number">
-  <p><s:value select="number"/></p>
+<ul>
+<s:each select="watchers" into="watcher" key="watcher.id">
+  <li><s:value select="watcher.login"/></li>
 </s:each>
+</ul>
 </body>
 </html>
