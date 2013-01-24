@@ -152,44 +152,33 @@
     return removed;
   }
 
-  function comments (page, descent, node, startChild) {
-    var $, i, I, path, part, parts, offsets, children = {}, instance, contains;
+  function comments (instance, page, path, node, startChild) {
+    var $, i, I, path, parts, offsets, instance, contents = {};
     if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
       parts = $[1].split(/;/);
       offsets = parts[1].split(/:/);
-      offsets = { elements: +(offsets[0]), characters: +(offsets[1]) };
-      part = extend({ url: parts[0], id: parts[2] }, offsets);
-      path = [ part ];
-      for (i = 0, I = descent.length; i < I; i++) {
-        path.unshift(descent[i]);
-      }
-      descent.unshift(part);
-      // **TODO**: Nest for collections.
-      for (i = 0, I = path.length; i < I; i++) {
-        path[i] = path[i].url;
-      }
-      extend(follow(page, path), extend({ marker: node }, offsets));
+      extend(instance, { elements: +(offsets[0]), characters: +(offsets[1]), marker: node });
+      path.push(parts[0]);
+      extend(follow(page, path), instance);
     }
-    contains = descent.length + 1;
     for (node = startChild || node.firstChild; node; node = node.nextSibling) {
-      comments(page, descent, node);
-      if (contains == descent.length) {
+      comments(contents, page, path, node);
+      if (contents.marker) {
         switch (node.nodeType) {
         case 1:
-          descent[0].elements--;
+          contents.elements--;
           break;
         case 3:
-          if (!descent[0].elements) {
-            descent[0].characters -= node.nodeValue.length;
+          if (!contents.elements) {
+            contents.characters -= node.nodeValue.length;
           }
           break;
         }
-        if (descent[0].elements <= 0 && descent[0].characters <= 0) {
-          descent.shift();
+        if (contents.elements <= 0 && contents.characters <= 0) {
           if (startChild) break;
+          delete contents.marker;
+          path.pop();
         }
-      } else if (contains < descent.length) {
-        throw new Error("cannot reconstitute");
       }
     }
   }
@@ -217,7 +206,7 @@
         instances: {}
       }
 
-      comments(page, [], document);
+      comments({}, page, [], document);
 
       callback(null, page);
     }
@@ -319,13 +308,7 @@
               marker.parentNode.insertBefore(salvage.fragment, marker);
               unmark(marker, instance);
 
-              // **TODO**: Oy! Fix NOW.
-              var x = path.slice(0, path.length - 1).map(function (part) {
-                var split = part.split(/;/);
-                return { url: split[0] };
-              });
-
-              comments(page, x, instance.marker.parentNode, instance.marker);
+              comments({}, page, path.slice(0, path.length - 1), instance.marker.parentNode, instance.marker);
 
               callback();
             }
@@ -658,7 +641,7 @@
       };
       document.appendChild(document.importNode(template.page.document.documentElement, true));
 
-      comments(page, [], document);
+      comments({}, page, [], document);
 
       // Evaluate the template.
       rewrite(page, page.directives.slice(0), page.document, parameters, [], okay(result));
