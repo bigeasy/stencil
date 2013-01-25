@@ -348,6 +348,8 @@
 
         previous = marker;
 
+        descent.directives.length = 0;
+
         evaluate(source, context, okay(function (value) {
           if (!Array.isArray(value)) value = [ value ];
           value = value.slice();
@@ -365,7 +367,7 @@
           }
 
           function scribble (id) {
-            sub[sub.length - 1] = last + ";" + escape(id);
+            sub[sub.length - 1] = last + ":" + escape(id);
             var instance = follow(page, sub), node, skip;
 
             if (!instance.marker) {
