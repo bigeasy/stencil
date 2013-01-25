@@ -18,7 +18,7 @@ var context, fs = require('fs'), watchers =
     "id": 43206
   }
 ];
-require('./proof')(1, function (async) {
+require('./proof')(2, function (async) {
   async(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
     context.generate('fixtures/each.stencil', { watchers: watchers }, async());
@@ -30,5 +30,14 @@ require('./proof')(1, function (async) {
 
   function (expected, actual, ok, compare) {
     ok(compare(actual.document, expected), 'generate');
+    context.reconstitute(actual.document, async());
+  },
+  
+  function (actual) {
+    context.regenerate(actual, { watchers: watchers }, async());
+  },
+  
+  function (actual, expected, ok, compare) {
+    ok(compare(actual.document, expected), 'regenerate');
   });
 });
