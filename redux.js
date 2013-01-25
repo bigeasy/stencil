@@ -368,9 +368,15 @@
 
           function scribble (id) {
             sub[sub.length - 1] = last + ":" + escape(id);
-            var instance = follow(page, sub), node, skip;
+            var instance = follow(page, sub), node, skip, fragment;
 
-            if (!instance.marker) {
+            if (instance.marker) {
+              if (previous.nextSibling !== instance.marker) {
+                fragment = page.document.createDocumentFragment();
+                unmark(instance.marker, instance, fragment);
+                previous.parentNode.insertBefore(fragment, previous.nextSibling);
+              }
+            } else {
               var salvage = scavenge(page.template.page, path, page.document);
 
               marker.parentNode.insertBefore(salvage.fragment, previous.nextSibling);
