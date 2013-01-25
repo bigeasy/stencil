@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var context, fs = require('fs'), watchers =
+var context, spliced, fs = require('fs'), watchers =
 [
   {
     "login": "bigeasy",
@@ -18,7 +18,7 @@ var context, fs = require('fs'), watchers =
     "id": 43206
   }
 ];
-require('./proof')(3, function (async, fixture, ok, compare) {
+require('./proof')(5, function (async, fixture, ok, compare) {
   async(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
     context.generate('fixtures/each.stencil', { watchers: watchers }, async());
@@ -49,5 +49,21 @@ require('./proof')(3, function (async, fixture, ok, compare) {
 
   function (reorder, actual) {
     ok(compare(actual.document, reorder), 'reordered');
+    spliced = watchers.splice(1, 1);
+    context.regenerate(actual, { watchers: watchers }, async());
+  },
+
+  function (actual) {
+    fixture('fixtures/each-removed.xml', async());
+  },
+
+  function (removed, actual) {
+    ok(compare(actual.document, removed), 'removed');
+    watchers.splice(1, 0, spliced[0]);
+    context.regenerate(actual, { watchers: watchers }, async());
+  }, 
+  
+  function (actual, reorder) {
+    ok(compare(actual.document, reorder), 'reinserted');
   });
 });

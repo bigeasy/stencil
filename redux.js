@@ -153,11 +153,15 @@
   }
 
   function comments (instance, page, path, node, startChild) {
-    var $, i, I, path, parts, offsets, instance, contents = {};
+    var $, i, I, path, parts, identity, offsets, contents = {};
     if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
       parts = $[1].split(/;/);
       offsets = parts[1].split(/:/);
       extend(instance, { elements: +(offsets[0]), characters: +(offsets[1]), marker: node });
+      identity = parts[0].split(/:/);
+      if (identity.length == 3) {
+        follow(page, path.concat(identity.slice(0, 2).join(":"))).items[identity[2]] = true;
+      }
       path.push(parts[0]);
       extend(follow(page, path), instance);
     }
@@ -335,15 +339,15 @@
         var source = element.getAttribute("select").trim(),
             idSource = element.getAttribute("key").trim(),
             into = element.getAttribute("into").trim(),
-            instance = follow(page, path),
-            marker = instance.marker,
+            prototype = follow(page, path),
+            marker = prototype.marker,
             sub = path.slice(0), last = sub[sub.length - 1],
-            index = 0, previous;
+            index = 0, previous, items = {};
 
-        if (instance.characters || instance.elements) {
-          marker = unmark(marker, instance);
-          instance.instances.length = descent.directives.length = instance.characters = instance.elements = 0;
-          marker = instance.marker = mark(marker, directive.id, instance);
+        if (prototype.characters || prototype.elements) {
+          marker = unmark(marker, prototype);
+          prototype.instances.length = descent.directives.length = prototype.characters = prototype.elements = 0;
+          marker = prototype.marker = mark(marker, directive.id, prototype);
         }
 
         previous = marker;
@@ -357,17 +361,29 @@
           shift();
 
           function shift () {
+            var id, instance;
             if (value.length) {
               context[into] = descent.context[into] = value.shift();
               if (idSource) evaluate(idSource, context, okay(scribble));
               else scribble(index++);
             } else {
+              for (id in prototype.items) {
+                sub[sub.length - 1] = last + ":" + id; 
+                instance = follow(page, sub);
+                unmark(instance.marker, instance);
+              }
+              prototype.items = items;
               callback();
             }
           }
 
           function scribble (id) {
-            sub[sub.length - 1] = last + ":" + escape(id);
+            id = escape(id);
+
+            items[id] = true;
+            delete prototype.items[id];
+
+            sub[sub.length - 1] = last + ":" + id;
             var instance = follow(page, sub), node, skip, fragment;
 
             if (instance.marker) {
@@ -623,10 +639,10 @@
     }
   }
 
-  function follow(instance, path) {
+  function follow (instance, path) {
     for (var i = 0, I = path.length; i < I; i++) {
       if (!instance.instances[path[i]]) {
-        instance.instances[path[i]] = { instances: {} };
+        instance.instances[path[i]] = { instances: {}, items: {} };
       }
       instance = instance.instances[path[i]];
     }
