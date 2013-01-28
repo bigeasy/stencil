@@ -1,0 +1,7 @@
+<html xmlns:s="stencil" xmlns:sub="tag:nested.1.stencil">
+<body>
+<sub:nest>
+  <p>Hello, World!</p>
+</sub:nest>
+</body>
+</html>

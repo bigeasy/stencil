@@ -1,7 +1,0 @@
-<html xmlns:s="stencil">
-<body>
-<s:if select="true"><p>1</p></s:if>
-<p>2</p>
-<s:if select="false"><p>3</p></s:if>
-</body>
-</html>

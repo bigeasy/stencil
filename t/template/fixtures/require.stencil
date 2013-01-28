@@ -1,5 +1,0 @@
-<html xmlns:s="stencil" xmlns:quotes="req:quotes.js">
-<body>
-<p><s:value select="quotes.rosten"/></p>
-</body>
-</html>

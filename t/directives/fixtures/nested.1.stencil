@@ -1,0 +1,7 @@
+<s:include xmlns:s="stencil" xmlns:sub="req:nested.2.stencil">
+  <s:tag name="nest">
+    <sub:nest>
+      <s:block/>
+    </sub:nest>
+  </s:tag>
+</s:include>
