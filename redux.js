@@ -449,7 +449,7 @@
                 prototype = follow(included.page, include.path),
                 instance = follow(page, sub),
                 characters = instance.characters, elements = instance.elements,
-                previous = instance.marker;
+                previous = instance.marker, end;
 
             while (elements) {
               previous = previous.nextSibling; 
@@ -465,13 +465,12 @@
               die(characters);
             }
 
-            var comment = page.document.createComment("[(" + directive.id + ")]");
-            previous.parentNode.insertBefore(comment, previous.nextSibling);
+            end = previous.nextSibling;
             var scrap = scavenge(included.page, include.path, page.document);
             previous.parentNode.insertBefore(scrap.fragment, previous.nextSibling);
             rewrite({}, page, included, include.directives, library, context, sub, okay(function () {
               var node = instance.marker, elements = 0, characters = 0; 
-              while (node.nodeType != 8 || node.nodeValue != "[(" + directive.id + ")]") {
+              while (end != node) {
                 switch (node.nodeType) {
                 case 1:
                   characters = 0;
