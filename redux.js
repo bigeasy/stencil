@@ -201,7 +201,7 @@
       }
     }
 
-    fetch(url, okay(fetched));
+    fetch(base, url, okay(fetched));
 
     function fetched (template) {
       var page = {
@@ -231,7 +231,7 @@
   var handlers = {
     // The value directive replaces a value element with text from the current
     // context.
-    value: function (parent, page, directive, element, context, path, callback) {
+    value: function (parent, page, template, directive, element, context, path, rewrite, callback) {
       var source = element.getAttribute("select").trim(),
           instance = follow(page, path),
           marker = unmark(instance.marker, instance);
@@ -250,7 +250,7 @@
         callback();
       }));
     },
-    if: function (parent, page, directive, element, context, path, callback) {
+    if: function (parent, page, template, directive, element, context, path, rewrite, callback) {
       var source = element.getAttribute("select").trim(),
           instance = follow(page, path),
           marker = instance.marker;
@@ -269,7 +269,7 @@
             var fragment = page.document.createDocumentFragment();
             fragment.appendChild(page.document.importNode(element, true));
 
-            var salvage = scavenge(page.template.page, path, page.document);
+            var salvage = scavenge(template.page, directive.path, page.document);
 
             instance.marker = mark(marker, directive.id, salvage.instance);
             marker.parentNode.insertBefore(salvage.fragment, marker);
@@ -277,15 +277,15 @@
 
             comments({}, page, path.slice(0, path.length - 1), instance.marker.parentNode, instance.marker);
           }
-          rewrite({}, page, directive.directives, context, path, callback);
+          rewrite(directive.directives, path, callback);
         }
       }));
     },
-    else: function (parent, page, directive, element, context, path, callback) {
+    else: function (parent, page, template, directive, element, context, path, rewrite, callback) {
       element.setAttribute("select", "true");
-      handlers.elseif(parent, page, directive, element, context, path, callback);
+      handlers.elseif(parent, page, template, directive, element, context, path, rewrite, callback);
     },
-    elseif: function (parent, page, directive, element, context, path, callback) {
+    elseif: function (parent, page, template, directive, element, context, path, rewrite, callback) {
       var previous = element.previousSibling,
           instance = follow(page, path),
           marker = instance.marker;
@@ -295,10 +295,10 @@
         instance.marker = mark(marker, directive.id, instance);
         callback();
       } else {
-        handlers["if"](parent, page, directive, element, context, path, callback);
+        handlers["if"](parent, page, template, directive, element, context, path, rewrite, callback);
       }
     },
-    each: function (parent, page, directive, element, context, path, callback) {
+    each: function (parent, page, template, directive, element, context, path, rewrite, callback) {
       var source = element.getAttribute("select").trim(),
           idSource = element.getAttribute("key").trim(),
           into = element.getAttribute("into").trim(),
@@ -355,7 +355,7 @@
               previous.parentNode.insertBefore(fragment, previous.nextSibling);
             }
           } else {
-            var salvage = scavenge(page.template.page, path, page.document);
+            var salvage = scavenge(template.page, directive.path, page.document);
 
             marker.parentNode.insertBefore(salvage.fragment, previous.nextSibling);
             extend(instance, salvage.instance);
@@ -376,13 +376,13 @@
             skip.characters -= previous.nodeValue.length;
           }
 
-          rewrite({}, page, directive.directives, context, sub, okay(shift));
+          rewrite(directive.directives, sub, okay(shift));
         }
       }));
     }
   }
 
-  function rewrite (parent, page, directives, context, path, callback) {
+  function rewrite (parent, page, template, directives, library, context, path, callback) {
     var okay = validator(callback);
 
     context = extend({}, context);
@@ -402,6 +402,8 @@
           sub = path,
           attributed;
 
+      library = extend({}, library);
+
       if (directive.id) {
         sub = path.concat(directive.id);
         var instance = follow(page, sub), marker = instance.marker,
@@ -413,15 +415,21 @@
       function operate (operation) {
         switch (operation && operation.type) {
         case "require":
-          resolver(page.template.base + '/' + operation.href, "text/javascript", okay(function (module) {
+          resolver(template.base + '/' + operation.href, "text/javascript", okay(function (module) {
             invoke(module, context, okay(function (value) {
               context[operation.name] = value;
               operate(operations.shift());
             }));
           }));
           break;
+        case "include":
+          fetch(template.base, operation.href, okay(function (included) {
+            library[operation.uri] = included;
+            operate(operations.shift());
+          }));
+          break;
         case "attribute":
-          evaluate(operation.value, context, check(callback, function (value) {
+          evaluate(operation.value, context, okay(function (value) {
             if (value == null) {
               element.removeAttribute(operation.name);
             } else {
@@ -431,8 +439,59 @@
           }));
           break;
         default:
-          if (directive.interpreter) directive.interpreter(parent, page, directive, element, context, sub, shift);
-          else rewrite({}, page, directive.directives, context, sub, shift);
+          var included;
+          if (directive.interpreter) directive.interpreter(parent, page, template, directive, element, context, sub,
+            function (directives, path, callback) {
+              rewrite({}, page, template, directives, library, context, path, callback);
+            }, shift);
+          else if (directive.element && (included = library[directive.element.namespaceURI])) {
+            var include = included.library[directive.element.localName], 
+                prototype = follow(included.page, include.path),
+                instance = follow(page, sub),
+                characters = instance.characters, elements = instance.elements,
+                previous = instance.marker;
+
+            while (elements) {
+              previous = previous.nextSibling; 
+              if (previous.nodeType == 1) elements--;
+            }
+
+            while (characters > 0) {
+              previous = previous.nextSibling; 
+              characters -= previous.nodeValue.length;
+            }
+
+            if (characters < 0) {
+              die(characters);
+            }
+
+            var comment = page.document.createComment("[(" + directive.id + ")]");
+            previous.parentNode.insertBefore(comment, previous.nextSibling);
+            var scrap = scavenge(included.page, include.path, page.document);
+            previous.parentNode.insertBefore(scrap.fragment, previous.nextSibling);
+            rewrite({}, page, included, include.directives, library, context, sub, okay(function () {
+              var node = instance.marker, elements = 0, characters = 0; 
+              while (node.nodeType != 8 || node.nodeValue != "[(" + directive.id + ")]") {
+                switch (node.nodeType) {
+                case 1:
+                  characters = 0;
+                  elements++;
+                  break;
+                case 3:
+                case 4:
+                  characters += node.nodeValue.length;
+                  break;
+                }
+                node = node.nextSibling;
+              }
+              node.parentNode.removeChild(node);
+              var m = mark(instance.marker, directive.id, { elements: elements, characters: characters });
+              instance.marker.parentNode.removeChild(instance.marker);
+              instance.marker = m;
+              shift(null);
+            }));
+          }
+          else rewrite({}, page, template, directive.directives, library, context, sub, shift);
           break; 
         }
       }
@@ -440,7 +499,7 @@
   }
 
   // Compile the template at the given url and send it to the given callback.
-  function fetch (url, callback) {
+  function fetch (base, url, callback) {
     var okay = validator(callback), identifier = 0;
 
     // Send an pre-compiled template if we have one, otherwise compile the
@@ -491,18 +550,18 @@
     function compile (document) {
       // Our directives and a temporary list of user elements with Stencil
       // directive attributes.
-      var directives = [], unmarked = [],
+      var directives = [], library = {},
           fragment = document.createDocumentFragment(),
           page = { instances: {}, document: document, fragment: fragment };
 
       fragment.appendChild(document.documentElement);
 
       // Visit all the nodes creating a tree of directives.
-      visit(page, directives, [], fragment);
+      visit(page, { stencil: true }, library, directives, [], fragment);
 
       // Create our template.
       templates[url] = {
-        url: url, page: page, directives: directives,
+        url: url, page: page, directives: directives, library: library,
         base: absolutize(base, url).replace(/\/[^\/]+$/, '/')
       };
 
@@ -511,13 +570,13 @@
     }
 
     // Create a directive structure from the node, if the node is a directive.
-    function directivize (node) {
+    function directivize (namespaces, node) {
       // Only elements can be directives.
       if (node.nodeType != 1) return;
 
       // Gather object constructors, template includes and dynamic attributes
       // into our array of operations.
-      var operations = [], attributes = [], properties = {};
+      var operations = [], attributes = [], properties = {}, includes = [];
       for (var i = 0, I = node.attributes.length; i < I; i++) {
         var attr = node.attributes.item(i), protocol;
         switch (attr.namespaceURI) {
@@ -525,7 +584,10 @@
           if (protocol = attr.nodeValue.split(/:/).shift()) {
             var href = normalize(attr.nodeValue.substring(protocol.length + 1));
             if (!"require".indexOf(protocol)) operations.unshift({ type: "require", href: href, name: attr.localName });
-            else if (!"include".indexOf(protocol)) operations.unshift({ type: "include", href: href, name: attr.localName });
+            else if (!"include".indexOf(protocol)) {
+              operations.unshift({ type: "include", href: href, uri: attr.nodeValue });
+              namespaces[attr.nodeValue] = true;
+            }
           }
           break;
         case "stencil":
@@ -541,7 +603,7 @@
 
       var directive = { operations: operations.concat(attributes), directives: [] };
 
-      if (node.namespaceURI == "stencil") {
+      if (namespaces[node.namespaceURI]) {
         directive.element = node;
         directive.interpreter = handlers[node.localName];
       }
@@ -549,7 +611,7 @@
       // We have a directive if the namespace is the Stencil namespace, or we've
       // discovered calculated attributes. If we're not a Stencil directive, we
       // insert a placeholder marker as a child of the element.
-      if (node.namespaceURI == "stencil" || attributes.length) {
+      if (namespaces[node.namespaceURI] || attributes.length) {
         directive.id = url + ":" + (identifier++);
       }
       
@@ -560,19 +622,26 @@
       }
     }
   
-    function visit (page, directives, path, node) {
-      var directive, child, unravel, elements = 0, characters = 0, before = node.nextSibling;
-      if (directive = directivize(node)) {
+    function visit (page, namespaces, library, directives, path, node) {
+      var directive, child, unravel, elements = 0, characters = 0, before;
+      if (directive = directivize(namespaces, node)) {
         unravel = directive.id;
         directives.push(directive);
         directives = directive.directives;
+        if (node.namespaceURI == "stencil" && node.localName == "tag") {
+          library[node.getAttribute("name")] = directive;
+          library = directive.library;
+        }
       }
       for (child = node.firstChild; child; child = child.nextSibling) {
-        visit(page, directives, path, child);
+        visit(page, extend({}, namespaces), library, directives, path, child);
       }
       if (unravel) {
-        while (node.namespaceURI == "stencil" && node.lastChild) {
+        var marker = null;
+        var pn  = node.parentNode;
+        while (namespaces[node.namespaceURI] && node.firstChild) {
           child = node.removeChild(node.firstChild);
+          if (marker == null) marker = child;
           switch (child.nodeType) {
           case 1:
             characters = 0;
@@ -583,17 +652,18 @@
             characters += child.nodeValue.length;
             break;
           }
-          before = node.parentNode.insertBefore(child, before);
+          node.parentNode.insertBefore(child, node);
         }
         path = path.concat(directive.id);
         var instance = extend(follow(page, path), {
           elements: elements,
           characters: characters
         });
-        instance.marker = mark(node, directive.id, instance);
-        if (node.namespaceURI == "stencil") {
+        instance.marker = mark(marker || node, directive.id, instance);
+        if (namespaces[node.namespaceURI]) {
           node.parentNode.removeChild(node);
         }
+        directive.path = path;
       }
     }
   }
@@ -617,11 +687,10 @@
     }
 
     var url = normalize(page.template.url);
-    fetch(url, okay(rebase));
+    fetch(base, url, okay(rebase));
 
     function rebase (template) {
-      page.template.base = template.base;
-      rewrite({}, page, template.directives, parameters, [], okay(function () {
+      rewrite({}, page, template, template.directives, {}, parameters, [], okay(function () {
         callback(null, page);
       }));
     }
@@ -636,7 +705,7 @@
     }
 
     url = normalize(url);
-    fetch(url, okay(paginate));
+    fetch(base, url, okay(paginate));
     
     function paginate (template) {
       // We need a fragment because a document node can have only one element
@@ -663,7 +732,7 @@
       comments({}, page, [], fragment);
 
       // Evaluate the template.
-      rewrite({}, page, template.directives, parameters, [], okay(result));
+      rewrite({}, page, template, template.directives, {}, parameters, [], okay(result));
       
       function result () {
         page.document.appendChild(page.fragment);
