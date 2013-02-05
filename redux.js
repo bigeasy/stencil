@@ -523,7 +523,7 @@
                 node = node.nextSibling;
               }
               removeChild(node.parentNode, node);
-              var m = mark(instance.marker, directive.id, { elements: elements, characters: characters });
+              var m = mark(instance.marker, directive.id, { nodes: nodes, characters: characters });
               removeChild(instance.marker.parentNode, instance.marker);
               instance.marker = m;
               shift(null);
