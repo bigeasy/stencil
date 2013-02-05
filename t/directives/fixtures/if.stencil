@@ -1,5 +1,5 @@
 <html xmlns:s="stencil">
 <body>
-<s:if select="value"><p><s:value select="value"/></p></s:if>
+<p><s:if select="value"><s:value select="value"/></s:if></p>
 </body>
 </html>
