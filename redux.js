@@ -487,23 +487,8 @@
                 prototype = follow(included.page, include.path),
                 instance = follow(page, sub),
                 characters = instance.characters, nodes = instance.nodes,
-                previous = instance.marker, end;
+                previous = instance.marker, end = findEnd(instance);
 
-            while (nodes) {
-              previous = previous.nextSibling; 
-              if (!isText(previous)) nodes--;
-            }
-
-            while (characters > 0) {
-              previous = previous.nextSibling; 
-              characters -= previous.nodeValue.length;
-            }
-
-            if (characters < 0) {
-              die(characters);
-            }
-
-            end = previous.nextSibling;
             var scrap = scavenge(included.page, include.path, page.document);
             insertBefore(previous.parentNode, scrap.fragment, previous.nextSibling);
             rewrite({}, page, included, include.directives, library, context, sub, okay(function () {
