@@ -494,15 +494,11 @@
             rewrite({}, page, included, include.directives, library, context, sub, okay(function () {
               var node = instance.marker, nodes = 0, characters = 0; 
               while (end != node) {
-                switch (node.nodeType) {
-                case 3:
-                case 4:
+                if (isText(node)) {
                   characters += node.nodeValue.length;
-                  break;
-                default:
+                } else {
                   characters = 0;
                   nodes++;
-                  break;
                 }
                 node = node.nextSibling;
               }
