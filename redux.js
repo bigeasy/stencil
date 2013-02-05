@@ -394,14 +394,12 @@
             extend(instance, salvage.instance);
             instance.marker = mark(previous.nextSibling, sub[sub.length - 1], instance);
 
-            // FIXME: Getting multiple stuff back, sub is appended to.
             comments({}, page, sub, instance.marker.parentNode, instance.marker);
           }
 
           previous = findEnd(instance)
 
           rewrite(instance.marker, previous, sub[sub.length - 1], directive.directives, sub, okay(shift));
-          //rewrite(directive.directives, sub, okay(shift));
         }
       }));
     }
@@ -467,29 +465,22 @@
           var included;
           if (directive.interpreter) directive.interpreter(parent, page, template, directive, element, context, sub,
             function (marker, end, part, directives, path, callback) {
-              if (arguments.length == 6) {
-                rewrite({}, page, template, directives, library, context, path, function () {
-                  var node = marker.nextSibling, nodes = 0, characters = 0, instance = follow(page, path);
-                  while (node != end) {
-                    if (isText(node)) {
-                      characters += node.nodeValue.length;
-                    } else {
-                      characters = 0;
-                      nodes++;
-                    }
-                    node = node.nextSibling;
+              rewrite({}, page, template, directives, library, context, path, function () {
+                var node = marker.nextSibling, nodes = 0, characters = 0, instance = follow(page, path);
+                while (node != end) {
+                  if (isText(node)) {
+                    characters += node.nodeValue.length;
+                  } else {
+                    characters = 0;
+                    nodes++;
                   }
-                  instance.marker = remark(marker, part, { nodes: nodes, characters: characters });
-                  instance.nodes = nodes;
-                  instance.characters = characters;
-                  callback(null);
-                });
-              } else {
-                directives = arguments[0];
-                path = arguments[1];
-                path = arguments[1];
-                rewrite({}, page, template, directives, library, context, path, callback);
-              }
+                  node = node.nextSibling;
+                }
+                instance.marker = remark(marker, part, { nodes: nodes, characters: characters });
+                instance.nodes = nodes;
+                instance.characters = characters;
+                callback(null);
+              });
             }, shift);
           else if (directive.element && (included = library[directive.element.namespaceURI])) {
             var include = included.library[directive.element.localName], 
