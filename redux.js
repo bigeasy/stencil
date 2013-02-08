@@ -175,7 +175,7 @@
     return removed;
   }
 
-  function comments (instance, page, path, node, startChild) {
+  function comments (instance, page, path, node) {
     var $, i, I, path, parts, identity, offsets, contents = {};
     if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
       parts = $[1].split(/;/);
@@ -190,7 +190,7 @@
       instance.nodes++; // kludgey
     }
     i = path.length;
-    for (node = startChild || node.firstChild; node; node = node.nextSibling) {
+    for (node = node.firstChild; node; node = node.nextSibling) {
       comments(contents, page, path, node);
       if (1 + i == path.length) {
         if (isText(node)) {
@@ -201,7 +201,6 @@
           contents.nodes--;
         }
         if (contents.nodes <= 0 && contents.characters <= 0) {
-          if (startChild) break;
           delete contents.marker;
           path.pop();
         }
@@ -299,13 +298,11 @@
           callback();
         } else {
           if (!(instance.nodes || instance.characters)) {
+            marker = unmark(marker, instance);
             var salvage = scavenge(template.page, directive.path, page.document);
-
-            instance.marker = mark(marker, directive.id, salvage.instance);
-            insertBefore(marker.parentNode, salvage.fragment, marker);
-            unmark(marker, instance);
-
-            comments({}, page, path.slice(0, path.length - 1), instance.marker.parentNode, instance.marker);
+            instance.marker = mark(salvage.fragment.firstChild, directive.id, salvage.instance);
+            comments({}, page, path.slice(0, path.length - 1), salvage.fragment);
+            insertBefore(marker.parentNode, salvage.fragment, marker.reference);
           }
           rewrite(instance.marker, findEnd(instance), directive.id, directive.directives, path, callback);
         }
@@ -332,11 +329,12 @@
       var source = element.getAttribute("select").trim(),
           idSource = element.getAttribute("key").trim(),
           into = element.getAttribute("into").trim(),
-          prototype = follow(page, path),
-          marker = prototype.marker,
+          prototype = follow(page, path), items = prototype.items, marker = prototype.marker,
           sub = path.slice(0), last = sub[sub.length - 1],
-          index = 0, previous, parentNode, items = {},
+          index = 0, previous, parentNode,
           okay = validator(callback);
+
+      prototype.items = {};
 
       if (prototype.characters || prototype.nodes) {
         marker = unmark(marker, prototype);
@@ -360,12 +358,11 @@
             if (idSource) evaluate(idSource, context, okay(scribble));
             else scribble(index++);
           } else {
-            for (id in prototype.items) {
+            for (id in items) {
               sub[sub.length - 1] = last + ":" + id; 
               instance = follow(page, sub);
               unmark(instance.marker, instance);
             }
-            prototype.items = items;
             callback();
           }
         }
@@ -373,8 +370,10 @@
         function scribble (id) {
           id = escape(id);
 
-          items[id] = true;
-          delete prototype.items[id];
+          // Side-effect fun: the `comments` call above will add the item to the
+          // prototype, so we need to delete it here.
+          delete items[id];
+          prototype.items[id] = true;
 
           sub[sub.length - 1] = last + ":" + id;
           var instance = follow(page, sub), node, fragment;
@@ -390,12 +389,9 @@
           } else {
             var salvage = scavenge(template.page, directive.path, page.document);
 
-            insertBefore(marker.parentNode, salvage.fragment, previous.nextSibling);
-            extend(instance, salvage.instance);
-            instance.marker = mark(previous.nextSibling, sub[sub.length - 1], instance);
-
-            // FIXME: Getting multiple stuff back, sub is appended to.
-            comments({}, page, sub, instance.marker.parentNode, instance.marker);
+            instance.marker = mark(salvage.fragment.firstChild, sub[sub.length - 1], salvage.instance);
+            comments({}, page, sub.slice(0, sub.length - 2), salvage.fragment);
+            insertBefore(previous.parentNode, salvage.fragment, previous.nextSibling);
           }
 
           previous = findEnd(instance)
@@ -488,37 +484,18 @@
                 prototype = follow(included.page, include.path),
                 instance = follow(page, sub),
                 characters = instance.characters, nodes = instance.nodes,
-                previous = instance.marker, end;
+                previous = instance.marker, end = findEnd(instance);
 
-            while (nodes) {
-              previous = previous.nextSibling; 
-              if (!isText(previous)) nodes--;
-            }
-
-            while (characters > 0) {
-              previous = previous.nextSibling; 
-              characters -= previous.nodeValue.length;
-            }
-
-            if (characters < 0) {
-              die(characters);
-            }
-
-            end = previous.nextSibling;
             var scrap = scavenge(included.page, include.path, page.document);
             insertBefore(previous.parentNode, scrap.fragment, previous.nextSibling);
             rewrite({}, page, included, include.directives, library, context, sub, okay(function () {
               var node = instance.marker, nodes = 0, characters = 0; 
               while (end != node) {
-                switch (node.nodeType) {
-                case 3:
-                case 4:
+                if (isText(node)) {
                   characters += node.nodeValue.length;
-                  break;
-                default:
+                } else {
                   characters = 0;
                   nodes++;
-                  break;
                 }
                 node = node.nextSibling;
               }
