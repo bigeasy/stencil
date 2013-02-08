@@ -1,6 +1,0 @@
-<html xmlns:s="stencil">
-<!---->
-<body>
-<p><!--(Stencil[fixtures/value.stencil#0])-->Hello, World!</p>
-</body>
-</html>
