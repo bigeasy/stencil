@@ -329,11 +329,12 @@
       var source = element.getAttribute("select").trim(),
           idSource = element.getAttribute("key").trim(),
           into = element.getAttribute("into").trim(),
-          prototype = follow(page, path),
-          marker = prototype.marker,
+          prototype = follow(page, path), items = prototype.items, marker = prototype.marker,
           sub = path.slice(0), last = sub[sub.length - 1],
-          index = 0, previous, parentNode, items = {},
+          index = 0, previous, parentNode,
           okay = validator(callback);
+
+      prototype.items = {};
 
       if (prototype.characters || prototype.nodes) {
         marker = unmark(marker, prototype);
@@ -357,18 +358,22 @@
             if (idSource) evaluate(idSource, context, okay(scribble));
             else scribble(index++);
           } else {
-            for (id in prototype.items) {
+            for (id in items) {
               sub[sub.length - 1] = last + ":" + id; 
               instance = follow(page, sub);
               unmark(instance.marker, instance);
             }
-            prototype.items = items;
             callback();
           }
         }
 
         function scribble (id) {
           id = escape(id);
+
+          // Side-effect fun: the `comments` call above will add the item to the
+          // prototype, so we need to delete it here.
+          delete items[id];
+          prototype.items[id] = true;
 
           sub[sub.length - 1] = last + ":" + id;
           var instance = follow(page, sub), node, fragment;
@@ -388,11 +393,6 @@
             comments({}, page, sub.slice(0, sub.length - 2), salvage.fragment);
             insertBefore(previous.parentNode, salvage.fragment, previous.nextSibling);
           }
-
-          // Side-effect fun: the `comments` call above will add the item to the
-          // prototype, so we need to delete it here.
-          items[id] = true;
-          delete prototype.items[id];
 
           previous = findEnd(instance)
 
