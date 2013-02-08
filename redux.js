@@ -175,7 +175,7 @@
     return removed;
   }
 
-  function comments (instance, page, path, node) {
+  function vivify (instance, page, path, node) {
     var $, i, I, path, parts, identity, offsets, contents = {};
     if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
       parts = $[1].split(/;/);
@@ -191,7 +191,7 @@
     }
     i = path.length;
     for (node = node.firstChild; node; node = node.nextSibling) {
-      comments(contents, page, path, node);
+      vivify(contents, page, path, node);
       if (1 + i == path.length) {
         if (isText(node)) {
           if (!contents.nodes) {
@@ -231,7 +231,7 @@
         instances: {}
       }
 
-      comments({}, page, [], document);
+      vivify({}, page, [], document);
 
       callback(null, page);
     }
@@ -301,7 +301,7 @@
             marker = unmark(marker, instance);
             var salvage = scavenge(template.page, directive.path, page.document);
             instance.marker = mark(salvage.fragment.firstChild, directive.id, salvage.instance);
-            comments({}, page, path.slice(0, path.length - 1), salvage.fragment);
+            vivify({}, page, path.slice(0, path.length - 1), salvage.fragment);
             insertBefore(marker.parentNode, salvage.fragment, marker.reference);
           }
           rewrite(instance.marker, findEnd(instance), directive.id, directive.directives, path, callback);
@@ -370,8 +370,6 @@
         function scribble (id) {
           id = escape(id);
 
-          // Side-effect fun: the `comments` call above will add the item to the
-          // prototype, so we need to delete it here.
           delete items[id];
           prototype.items[id] = true;
 
@@ -390,7 +388,7 @@
             var salvage = scavenge(template.page, directive.path, page.document);
 
             instance.marker = mark(salvage.fragment.firstChild, sub[sub.length - 1], salvage.instance);
-            comments({}, page, sub.slice(0, sub.length - 2), salvage.fragment);
+            vivify({}, page, sub.slice(0, sub.length - 2), salvage.fragment);
             insertBefore(previous.parentNode, salvage.fragment, previous.nextSibling);
           }
 
@@ -742,7 +740,7 @@
       };
       insertBefore(fragment, page.document.importNode(template.page.fragment, true));
 
-      comments({}, page, [], fragment);
+      vivify({}, page, [], fragment);
 
       // Evaluate the template.
       rewrite({}, page, template, template.directives, {}, parameters, [], okay(result));
