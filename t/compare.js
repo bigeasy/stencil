@@ -60,9 +60,10 @@ function compare (actual, expected) {
     e = expected.shift();
     switch (e.nodeType) {
     case 1:
-    case 8:
-      while (a.nodeType == 3 && actual.length) {
-        at.push(a.nodeValue);
+      while (a.nodeType != 1 && actual.length) {
+        if (a.nodeType == 3) {
+          at.push(a.nodeValue);
+        }
         a = actual.shift();
       }
       if (a.nodeType != e.nodeType) return abend(e);
@@ -83,6 +84,8 @@ function compare (actual, expected) {
       break;
     case 3:
       et.push(e.nodeValue);
+      break;
+    case 8:
       break;
     default:
       throw new Error("Unexpected nodeType: " + e.nodeType);
