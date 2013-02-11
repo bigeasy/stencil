@@ -52,7 +52,7 @@
           if (normal.length == 1 && normal[0] == '') throw new Error('underflow');
           normal.pop();
         } else {
-          normal.push(parts[i]); 
+          normal.push(parts[i]);
         }
       } else if ((parts[i] != '' || i == 0) && parts[i] != '.') {
         normal.push(parts[i]);
@@ -106,7 +106,7 @@
   function invoke (result, context, callback) {
     try {
       if (typeof result == "function") {
-        result(context, callback); 
+        result(context, callback);
       } else {
         callback(null, result);
       }
@@ -114,7 +114,7 @@
       callback(e);
     }
   }
-  
+
   function remark (marker, part, instance) {
     var marker = mark(marker, part, instance);
     removeChild(marker.parentNode, marker.nextSibling);
@@ -163,7 +163,7 @@
       insertBefore(fragment, removed);
     }
     if (i < 0) {
-      insertBefore(parentNode, removeChild(fragment, removed), marker.nextSibling); 
+      insertBefore(parentNode, removeChild(fragment, removed), marker.nextSibling);
       removed.splitText(removed.nodeValue.length + i);
       insertBefore(fragment, removeChild(parentNode, marker.nextSibling));
     }
@@ -235,7 +235,7 @@
   }
 
   function scavenge (scrap, path, document) {
-    var prototype = follow(scrap, path), fragment = scrap.document.createDocumentFragment(); 
+    var prototype = follow(scrap, path), fragment = scrap.document.createDocumentFragment();
     var marker = unmark(prototype.marker, prototype, fragment);
     var spares = document.importNode(fragment, true);
     removeChild(spares, spares.firstChild);
@@ -356,7 +356,7 @@
             else scribble(index++);
           } else {
             for (id in items) {
-              sub[sub.length - 1] = last + ":" + id; 
+              sub[sub.length - 1] = last + ":" + id;
               instance = follow(page, sub);
               unmark(instance.marker, instance);
             }
@@ -475,7 +475,7 @@
               });
             }, shift);
           else if (directive.element && (included = library[directive.element.namespaceURI])) {
-            var include = included.library[directive.element.localName], 
+            var include = included.library[directive.element.localName],
                 prototype = follow(included.page, include.path),
                 instance = follow(page, sub),
                 characters = instance.characters, nodes = instance.nodes,
@@ -484,7 +484,7 @@
             var scrap = scavenge(included.page, include.path, page.document);
             insertBefore(previous.parentNode, scrap.fragment, previous.nextSibling);
             rewrite({}, page, included, include.directives, library, context, sub, okay(function () {
-              var node = instance.marker, nodes = 0, characters = 0; 
+              var node = instance.marker, nodes = 0, characters = 0;
               while (end != node) {
                 if (isText(node)) {
                   characters += node.nodeValue.length;
@@ -502,7 +502,7 @@
             }));
           }
           else rewrite({}, page, template, directive.directives, library, context, sub, shift);
-          break; 
+          break;
         }
       }
     }
@@ -520,7 +520,7 @@
     // We compile the URL into a parallel tree of directives. The directives
     // identify the elements that define them in the document using an
     // automatically generated id.
-    // 
+    //
     // Some directives are directive attributes that can be applied to any
     // element, not just a Stencil attribute. Directive attributes include
     // include object constructors, template includes, and dynamic attributes.
@@ -541,7 +541,7 @@
     // which does not support namespaces. All namespaces will be stripped before
     // serialization. The namespace declarations are removed from the template
     // at they are encountered.
-    // 
+    //
     // We are using namespaces as part of the mechanics of the template
     // language, of course, but we don't need to track namespace mappings. We're
     // only using the namespace URLs as to locate our objects and templates.
@@ -624,14 +624,14 @@
       if (namespaces[node.namespaceURI] || attributes.length) {
         directive.id = url + ":" + (identifier++);
       }
-      
+
       // Otherwise, we have operations that will alter the variable context, but
       // no calculated attributes nor directives that rewrite the DOM.
       if (directive.id || directive.operations.length) {
         return directive;
       }
     }
-  
+
     function unravel (page, namespaces, library, directives, path, node) {
       var directive, child, nodes = 0, characters = 0, before, end;
       if (directive = directivize(namespaces, node)) {
@@ -714,7 +714,7 @@
 
     url = normalize(url);
     fetch(base, url, okay(paginate));
-    
+
     function paginate (template) {
       // We need a fragment because a document node can have only one element
       // child and some operations will replace the root, prepending the new
@@ -741,7 +741,7 @@
 
       // Evaluate the template.
       rewrite({}, page, template, template.directives, {}, parameters, [], okay(result));
-      
+
       function result () {
         insertBefore(page.document, page.fragment);
         var comment = page.document.createComment("Stencil/Template:" + url);
