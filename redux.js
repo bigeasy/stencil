@@ -61,9 +61,6 @@
     return normal.join('/');
   }
 
-  var NS_STENCIL = "stencil",
-      XMLNS = "http://www.w3.org/2000/xmlns/";
-
   // We cache expressions compiled into functions by their trimmed source. We
   // use the variables in scope the first time the function is encountered. If
   // it works at all, then it supposed to work for every occurrence of the
