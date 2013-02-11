@@ -1,6 +1,5 @@
 <html xmlns:s="stencil" xmlns:salutation="req:greetings.js">
-<!---->
 <body>
-<p><!---->Hello, World!</p>
+<p>Hello, World!</p>
 </body>
 </html>
