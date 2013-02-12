@@ -1,6 +1,5 @@
 <html xmlns:s="stencil">
-<!---->
 <body>
-<!----><img src="nurse.png" alt="Hello, Nurse!">
+<img src="nurse.png" alt="Hello, Nurse!">
 </body>
 </html>

@@ -1,21 +1,22 @@
 #!/usr/bin/env node
 
-var context, fs = require('fs');
 require('./proof')(5, function (async) {
+  var context, fs = require('fs');
+
   async(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
     context.generate('fixtures/elseif.stencil', { value: 'a' }, async());
   },
-  
+
   function (actual, fixture) {
     fixture('fixtures/elseif-a.xml', async());
   },
-  
+
   function (a, actual, ok, compare) {
     ok(compare(actual.document, a), 'generate');
     context.reconstitute(actual.document, async());
   },
-  
+
   function (actual) {
     context.regenerate(actual, { value: 'a' }, async());
   },
@@ -37,7 +38,7 @@ require('./proof')(5, function (async) {
   function (actual, fixture) {
     fixture('fixtures/elseif-c.xml', async());
   },
-  
+
   function (c, actual, ok, compare) {
     ok(compare(actual.document, c), 'c');
     context.regenerate(actual, { value: 'a' }, async());
