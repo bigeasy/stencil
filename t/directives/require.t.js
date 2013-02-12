@@ -11,20 +11,20 @@ require('./proof')(2, function (async, ok, compare) {
   function (actual, fixture) {
     fixture('fixtures/require-generate.xml', async());
   },
-  
+
   function (expected, actual, actual) {
     ok(compare(actual.document, expected), 'called');
     context.reconstitute(actual.document, async());
   },
-  
+
   function (actual) {
     context.regenerate(actual, { greeting: "Hello, Nurse!" }, async());
   },
-  
+
   function (actual, fixture) {
     fixture('fixtures/require-regenerate.xml', async());
   },
-  
+
   function (expected, actual) {
     ok(compare(actual.document, expected), 'regenerate');
   });

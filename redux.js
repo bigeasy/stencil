@@ -52,7 +52,7 @@
           if (normal.length == 1 && normal[0] == '') throw new Error('underflow');
           normal.pop();
         } else {
-          normal.push(parts[i]); 
+          normal.push(parts[i]);
         }
       } else if ((parts[i] != '' || i == 0) && parts[i] != '.') {
         normal.push(parts[i]);
@@ -60,9 +60,6 @@
     }
     return normal.join('/');
   }
-
-  var NS_STENCIL = "stencil",
-      XMLNS = "http://www.w3.org/2000/xmlns/";
 
   // We cache expressions compiled into functions by their trimmed source. We
   // use the variables in scope the first time the function is encountered. If
@@ -109,7 +106,7 @@
   function invoke (result, context, callback) {
     try {
       if (typeof result == "function") {
-        result(context, callback); 
+        result(context, callback);
       } else {
         callback(null, result);
       }
@@ -117,22 +114,6 @@
       callback(e);
     }
   }
-  
-  function remark (marker, part, instance) {
-    var marker = mark(marker, part, instance);
-    removeChild(marker.parentNode, marker.nextSibling);
-    return marker;
-  }
-
-  function mark (marker, part, instance) {
-    var reference = marker.nodeType ? marker : marker.reference,
-        offsets = [ instance.nodes, instance.characters ].join(":"),
-        key = [ part, offsets ].join(";"),
-        comment = marker.parentNode.ownerDocument.createComment("(Stencil[" + key + "])");
-    return insertBefore(marker.parentNode, comment, reference);
-  }
-
-  function isText (node) { return node.nodeType == 3 || node.nodeType == 4 }
 
   // Placeholders until issues in `xmldom` are resolved.
   function insertBefore (parentNode, child, reference) {
@@ -150,61 +131,25 @@
     return child;
   }
 
-  function unmark (marker, instance, fragment) {
-    var i, removed, parentNode = marker.parentNode;
-    if (!fragment) {
-      fragment = marker.ownerDocument.createDocumentFragment();
-    }
-    for (i = instance.nodes; i;) {
-      removed = removeChild(parentNode, marker.nextSibling);
-      if (!isText(removed)) i--;
-      insertBefore(fragment, removed);
-    }
-    // **TODO**: What if we run into an elementbefore we get all our characters?
-    for (i = instance.characters; i > 0; i -= removed.nodeValue.length) {
-      removed = removeChild(parentNode, marker.nextSibling)
-      insertBefore(fragment, removed);
-    }
-    if (i < 0) {
-      insertBefore(parentNode, removeChild(fragment, removed), marker.nextSibling); 
-      removed.splitText(removed.nodeValue.length + i);
-      insertBefore(fragment, removeChild(parentNode, marker.nextSibling));
-    }
-    removed = { parentNode: parentNode, reference: marker.nextSibling };
-    insertBefore(fragment, removeChild(parentNode, marker), fragment.firstChild);
-    return removed;
-  }
+  var isDirective = /^[\w\/.]+:\d+(?:;[\d\w%]+)?$/;
 
-  function vivify (instance, page, path, node) {
-    var $, i, I, path, parts, identity, offsets, contents = {};
-    if (node.nodeType == 8 && ($ = /^\(Stencil\[(.+)\]\)$/.exec(node.nodeValue))) {
-      parts = $[1].split(/;/);
-      offsets = parts[1].split(/:/);
-      extend(instance, { nodes: +(offsets[0]), characters: +(offsets[1]), marker: node });
-      identity = parts[0].split(/:/);
-      if (identity.length == 3) {
-        follow(page, path.concat(identity.slice(0, 2).join(":"))).items[identity[2]] = true;
-      }
-      path.push(parts[0]);
-      extend(follow(page, path), instance);
-      instance.nodes++; // kludgey
-    }
-    i = path.length;
-    for (node = node.firstChild; node; node = node.nextSibling) {
-      vivify(contents, page, path, node);
-      if (1 + i == path.length) {
-        if (isText(node)) {
-          if (!contents.nodes) {
-            contents.characters -= node.nodeValue.length;
+  function vivify (page, path, node) {
+    var child, parts;
+    for (child = node.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType == 8) {
+        if (isDirective.test(child.nodeValue)) {
+          parts = child.nodeValue.split(/;/);
+          if (parts.length == 2) {
+            follow(page, path.concat(parts[0])).items[parts[1]] = true;
           }
-        } else {
-          contents.nodes--;
-        }
-        if (contents.nodes <= 0 && contents.characters <= 0) {
-          delete contents.marker;
+          path.push(child.nodeValue);
+          follow(page, path).begin = child;
+        } else if (child.nodeValue == "?") {
+          follow(page, path).end = child;
           path.pop();
         }
       }
+      vivify(page, path, child);
     }
   }
 
@@ -213,7 +158,7 @@
 
     for (child = document.documentElement.firstChild; child; child = child.nextSibling) {
       if (child.nodeType == 8) {
-        url = child.nodeValue.replace(/^Stencil\/Template:/, '');
+        url = child.nodeValue.replace(/^stencil:/, '');
         if (url.length != child.nodeValue.length) break;
         url = null;
       }
@@ -228,83 +173,87 @@
         url: template.url,
         directives: template.directives,
         instanceId: 0,
-        instances: {}
+        markers: {}
       }
 
-      vivify({}, page, [], document);
+      vivify(page, [], document);
 
       callback(null, page);
     }
   }
 
-  function scavenge (scrap, path, document) {
-    var prototype = follow(scrap, path), fragment = scrap.document.createDocumentFragment(); 
-    var marker = unmark(prototype.marker, prototype, fragment);
-    var spares = document.importNode(fragment, true);
-    removeChild(spares, spares.firstChild);
-    insertBefore(marker.parentNode, fragment, marker.reference);
-    return { fragment: spares, instance: prototype };
+  function copy (document, node, end) {
+    var fragment = document.createDocumentFragment();
+    while (node != end) {
+      insertBefore(fragment, document.importNode(node, true));
+      node = node.nextSibling; 
+    }
+    return fragment;
   }
 
-  function findEnd (instance) {
-    var node = instance.marker.nextSibling, nodes = instance.nodes, characters = instance.characters;
-    while (nodes || characters > 0) {
-      if (isText(node)) {
-        if (!nodes) characters -= node.nodeValue.length;
-      } else if (nodes) {
-        nodes--;
-      }
-      node = node.nextSibling;
+  function erase (node, end) {
+    var next;
+    while (node != end) {
+      next = node.nextSibling;
+      removeChild(node.parentNode, node);
+      node = next;
     }
-    return node;
+  }
+
+  function empty (marker) {
+    return marker.begin.nextSibling == marker.end;
+  }
+
+  function fill (marker, node) {
+    insertBefore(marker.end.parentNode, node, marker.end);
+  }
+
+  function cut (marker) {
+    var fragment = marker.begin.ownerDocument.createDocumentFragment(),
+        node = marker.begin, end = marker.end.nextSibling, next;
+    while (node !== end) {
+      next = node.nextSibling;
+      insertBefore(fragment, removeChild(node.parentNode, node));
+      node = next;
+    }
+    return fragment;
   }
 
   var handlers = {
     // The value directive replaces a value element with text from the current
     // context.
     value: function (parent, page, template, directive, element, context, path, rewrite, callback) {
-      var source = element.getAttribute("select").trim(),
-          instance = follow(page, path),
-          marker = unmark(instance.marker, instance);
+      var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
-        // Record the instance.
-        instance.characters = String(value).length;
-        instance.nodes = 0;
-
-        // Mark the new insert.
-        instance.marker = mark(marker, directive.id, instance);
+        // Delete the directive body.
+        erase(marker.begin.nextSibling, marker.end);
 
         // Insert the text value.
-        insertBefore(marker.parentNode, page.document.createTextNode(value), marker.reference);
+        fill(marker, page.document.createTextNode(value));
 
         callback();
       }));
     },
     if: function (parent, page, template, directive, element, context, path, rewrite, callback) {
-      var source = element.getAttribute("select").trim(),
-          instance = follow(page, path),
-          marker = instance.marker;
+      var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
-        var end;
         parent.condition = !!value;
-        // If the directive body is already in the document, we have nothing
-        // to do, we continue and rewrite the body.
+        // If the directive body is already in the document, we have nothing to
+        // do, we continue and rewrite the body.
         if (!value) {
-          marker = unmark(marker, instance);
-          instance.instances.length = instance.characters = instance.nodes = 0;
-          instance.marker = mark(marker, directive.id, instance);
+          erase(marker.begin.nextSibling, marker.end);
+          follow(page, path).markers = {};
           callback();
         } else {
-          if (!(instance.nodes || instance.characters)) {
-            marker = unmark(marker, instance);
-            var salvage = scavenge(template.page, directive.path, page.document);
-            instance.marker = mark(salvage.fragment.firstChild, directive.id, salvage.instance);
-            vivify({}, page, path.slice(0, path.length - 1), salvage.fragment);
-            insertBefore(marker.parentNode, salvage.fragment, marker.reference);
+          if (empty(marker)) {
+            var prototype = follow(template.page, directive.path), 
+                fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+            vivify(page, path, fragment);
+            fill(marker, fragment);
           }
-          rewrite(instance.marker, findEnd(instance), directive.id, directive.directives, path, callback);
+          rewrite(directive.directives, path, callback);
         }
       }));
     },
@@ -313,13 +262,10 @@
       handlers.elseif(parent, page, template, directive, element, context, path, rewrite, callback);
     },
     elseif: function (parent, page, template, directive, element, context, path, rewrite, callback) {
-      var previous = element.previousSibling,
-          instance = follow(page, path),
-          marker = instance.marker;
+      var marker = follow(page, path);
       if (parent.condition) {
-        marker = unmark(marker, instance);
-        instance.instances.length = instance.characters = instance.nodes = 0;
-        instance.marker = mark(marker, directive.id, instance);
+        erase(marker.begin.nextSibling, marker.end);
+        follow(page, path).markers = {};
         callback();
       } else {
         handlers["if"](parent, page, template, directive, element, context, path, rewrite, callback);
@@ -329,21 +275,19 @@
       var source = element.getAttribute("select").trim(),
           idSource = element.getAttribute("key").trim(),
           into = element.getAttribute("into").trim(),
-          prototype = follow(page, path), items = prototype.items, marker = prototype.marker,
-          sub = path.slice(0), last = sub[sub.length - 1],
-          index = 0, previous, parentNode,
+          head = follow(page, path), items = head.items,
+          previous = head.end, parentNode = previous.parentNode,
+          base = path.slice(0, path.length - 2),
+          markers = follow(page, base).markers,
+          index = 0,
           okay = validator(callback);
 
-      prototype.items = {};
+      head.items = {};
 
-      if (prototype.characters || prototype.nodes) {
-        marker = unmark(marker, prototype);
-        prototype.instances.length = prototype.characters = prototype.nodes = 0;
-        marker = prototype.marker = mark(marker, directive.id, prototype);
+      if (!empty(head)) {
+        erase(head.begin.nextSibling, head.end);
+        follow(page, path).markers = {};
       }
-
-      previous = marker.nextSibling;
-      parentNode = marker.parentNode;
 
       evaluate(source, context, okay(function (value) {
         if (!Array.isArray(value)) value = [ value ];
@@ -352,49 +296,51 @@
         shift();
 
         function shift () {
-          var id, instance;
+          var id, marker, part;
           if (value.length) {
             context[into] = value.shift();
-            if (idSource) evaluate(idSource, context, okay(scribble));
+            if (idSource) evaluate(idSource, context, okay(count));
             else scribble(index++);
           } else {
             for (id in items) {
-              sub[sub.length - 1] = last + ":" + id; 
-              instance = follow(page, sub);
-              unmark(instance.marker, instance);
+              part = directive.id + ";" + id;
+              marker = follow(page, base.concat([ part ]));
+              erase(marker.begin, marker.end.nextSibling);
+              delete markers[part];
             }
             callback();
           }
         }
 
-        function scribble (id) {
+        function count (id) {
           id = escape(id);
 
           delete items[id];
-          prototype.items[id] = true;
+          head.items[id] = true;
 
-          sub[sub.length - 1] = last + ":" + id;
-          var instance = follow(page, sub), node, fragment;
+          scribble(id);
+        }
 
-          previous = previous ? previous.previousSibling : parentNode.lastChild;
+        function scribble (id) {
+          var qualified = directive.id + ";" + id,
+              path = base.concat([ qualified ]),
+              marker = follow(page, path);
 
-          if (instance.marker) {
-            if (previous.nextSibling !== instance.marker) {
-              fragment = page.document.createDocumentFragment();
-              unmark(instance.marker, instance, fragment);
-              insertBefore(previous.parentNode, fragment, previous.nextSibling);
+          if (marker.begin) {
+            if (previous.nextSibling !== marker.begin) {
+              insertBefore(previous.parentNode, cut(marker), previous.nextSibling);
             }
           } else {
-            var salvage = scavenge(template.page, directive.path, page.document);
-
-            instance.marker = mark(salvage.fragment.firstChild, sub[sub.length - 1], salvage.instance);
-            vivify({}, page, sub.slice(0, sub.length - 2), salvage.fragment);
-            insertBefore(previous.parentNode, salvage.fragment, previous.nextSibling);
+            var prototype = follow(template.page, directive.path),
+                fragment = copy(page.document, prototype.begin.nextSibling, prototype.end.nextSibling);
+            insertBefore(fragment, page.document.createComment(qualified), fragment.firstChild); 
+            vivify(page, base, fragment);
+            insertBefore(previous.parentNode, fragment, previous.nextSibling);
           }
 
-          previous = findEnd(instance)
+          previous = follow(page, path).end;
 
-          rewrite(instance.marker, previous, sub[sub.length - 1], directive.directives, sub, okay(shift));
+          rewrite(directive.directives, path, okay(shift));
         }
       }));
     }
@@ -424,8 +370,7 @@
 
       if (directive.id) {
         sub = path.concat(directive.id);
-        var instance = follow(page, sub), marker = instance.marker,
-            element = directive.element ? directive.element.cloneNode(false) : marker.nextSibling;
+        var element = directive.element || follow(page, sub).end.nextSibling;
       }
 
       operate(operations.shift());
@@ -459,53 +404,22 @@
         default:
           var included;
           if (directive.interpreter) directive.interpreter(parent, page, template, directive, element, context, sub,
-            function (marker, end, part, directives, path, callback) {
-              rewrite({}, page, template, directives, library, context, path, function () {
-                var node = marker.nextSibling, nodes = 0, characters = 0, instance = follow(page, path);
-                while (node != end) {
-                  if (isText(node)) {
-                    characters += node.nodeValue.length;
-                  } else {
-                    characters = 0;
-                    nodes++;
-                  }
-                  node = node.nextSibling;
-                }
-                instance.marker = remark(marker, part, { nodes: nodes, characters: characters });
-                instance.nodes = nodes;
-                instance.characters = characters;
-                callback(null);
-              });
+            function (directives, path, callback) {
+              rewrite({ parent: parent }, page, template, directives, library, context, path, callback);
             }, shift);
           else if (directive.element && (included = library[directive.element.namespaceURI])) {
-            var include = included.library[directive.element.localName], 
+            var include = included.library[directive.element.localName],
                 prototype = follow(included.page, include.path),
-                instance = follow(page, sub),
-                characters = instance.characters, nodes = instance.nodes,
-                previous = instance.marker, end = findEnd(instance);
+                marker = follow(page, sub),
+                previous = marker.end;
 
-            var scrap = scavenge(included.page, include.path, page.document);
-            insertBefore(previous.parentNode, scrap.fragment, previous.nextSibling);
-            rewrite({}, page, included, include.directives, library, context, sub, okay(function () {
-              var node = instance.marker, nodes = 0, characters = 0; 
-              while (end != node) {
-                if (isText(node)) {
-                  characters += node.nodeValue.length;
-                } else {
-                  characters = 0;
-                  nodes++;
-                }
-                node = node.nextSibling;
-              }
-              removeChild(node.parentNode, node);
-              var m = mark(instance.marker, directive.id, { nodes: nodes, characters: characters });
-              removeChild(instance.marker.parentNode, instance.marker);
-              instance.marker = m;
-              shift(null);
-            }));
+            var fragment = copy(page.document, prototype.begin, prototype.end.nextSibling);
+            fill(marker, fragment);
+            sub.push(include.id);
+            rewrite({ parent: parent }, page, included, include.directives, library, context, sub, okay(shift));
           }
           else rewrite({}, page, template, directive.directives, library, context, sub, shift);
-          break; 
+          break;
         }
       }
     }
@@ -523,7 +437,7 @@
     // We compile the URL into a parallel tree of directives. The directives
     // identify the elements that define them in the document using an
     // automatically generated id.
-    // 
+    //
     // Some directives are directive attributes that can be applied to any
     // element, not just a Stencil attribute. Directive attributes include
     // include object constructors, template includes, and dynamic attributes.
@@ -544,7 +458,7 @@
     // which does not support namespaces. All namespaces will be stripped before
     // serialization. The namespace declarations are removed from the template
     // at they are encountered.
-    // 
+    //
     // We are using namespaces as part of the mechanics of the template
     // language, of course, but we don't need to track namespace mappings. We're
     // only using the namespace URLs as to locate our objects and templates.
@@ -565,12 +479,13 @@
       // directive attributes.
       var directives = [], library = {},
           fragment = document.createDocumentFragment(),
-          page = { instances: {}, document: document, fragment: fragment };
+          page = { markers: {}, document: document, fragment: fragment };
 
       insertBefore(fragment, document.documentElement);
 
       // Visit all the nodes creating a tree of directives.
-      unravel(page, { stencil: true }, library, directives, [], fragment);
+      unravel(page.document, { stencil: true }, library, directives, [], fragment);
+      vivify(page, [], fragment);
 
       // Create our template.
       templates[url] = {
@@ -627,66 +542,58 @@
       if (namespaces[node.namespaceURI] || attributes.length) {
         directive.id = url + ":" + (identifier++);
       }
-      
+
       // Otherwise, we have operations that will alter the variable context, but
       // no calculated attributes nor directives that rewrite the DOM.
       if (directive.id || directive.operations.length) {
         return directive;
       }
     }
-  
-    function unravel (page, namespaces, library, directives, path, node) {
-      var directive, child, nodes = 0, characters = 0, before, end;
+
+    function unravel (document, namespaces, library, directives, path, node) {
+      var directive, child, parentNode, marker, end;
       if (directive = directivize(namespaces, node)) {
         if (directive.id) {
           path = path.concat(directive.id);
         }
+        directive.path = path;
+
         directives.push(directive);
         directives = directive.directives;
+
         if (node.namespaceURI == "stencil" && node.localName == "tag") {
           library[node.getAttribute("name")] = directive;
           library = directive.library;
         }
       }
       for (child = node.firstChild; child; child = child.nextSibling) {
-        child = unravel(page, extend({}, namespaces), library, directives, path, child);
+        child = unravel(document, extend({}, namespaces), library, directives, path, child);
       }
-      child = node;
       if (directive && directive.id) {
+        end = node;
+        parentNode = node.parentNode;
+        insertBefore(parentNode, document.createComment(directive.id), node);
         if (namespaces[node.namespaceURI]) {
-          var firstChild = node.firstChild;
+          end = node.nextSibling;
           while (node.firstChild) {
-            child = removeChild(node, node.firstChild);
-            if (isText(child)) {
-              characters += child.nodeValue.length;
-            } else {
-              characters = 0;
-              nodes++;
-            }
-            insertBefore(node.parentNode, child, node);
+            insertBefore(parentNode, removeChild(node, node.firstChild), node);
           }
+          removeChild(parentNode, node);
         }
-        var instance = extend(follow(page, path), {
-          nodes: nodes, characters: characters
-        });
-        instance.marker = mark(firstChild || node, directive.id, instance);
-        if (namespaces[node.namespaceURI]) {
-          removeChild(node.parentNode, node);
-        }
-        directive.path = path;
+        return insertBefore(parentNode, document.createComment("?"), end);
       }
-      return child;
+      return node;
     }
   }
 
-  function follow (instance, path) {
+  function follow (marker, path) {
     for (var i = 0, I = path.length; i < I; i++) {
-      if (!instance.instances[path[i]]) {
-        instance.instances[path[i]] = { instances: {}, items: {} };
+      if (!marker.markers[path[i]]) {
+        marker.markers[path[i]] = { markers: {}, items: {} };
       }
-      instance = instance.instances[path[i]];
+      marker = marker.markers[path[i]];
     }
-    return instance;
+    return marker;
   }
 
   function regenerate (page, parameters, callback) {
@@ -717,7 +624,7 @@
 
     url = normalize(url);
     fetch(base, url, okay(paginate));
-    
+
     function paginate (template) {
       // We need a fragment because a document node can have only one element
       // child and some operations will replace the root, prepending the new
@@ -736,18 +643,18 @@
         document: fragment.ownerDocument,
         fragment: fragment,
         template: template,
-        instances: {}
+        markers: {}
       };
       insertBefore(fragment, page.document.importNode(template.page.fragment, true));
 
-      vivify({}, page, [], fragment);
+      vivify(page, [], fragment);
 
       // Evaluate the template.
       rewrite({}, page, template, template.directives, {}, parameters, [], okay(result));
-      
+
       function result () {
         insertBefore(page.document, page.fragment);
-        var comment = page.document.createComment("Stencil/Template:" + url);
+        var comment = page.document.createComment("stencil:" + url);
         insertBefore(page.document.documentElement, comment, page.document.documentElement.firstChild);
         callback(null, page);
       }

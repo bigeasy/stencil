@@ -1,24 +1,25 @@
 #!/usr/bin/env node
 
-var context, spliced, fs = require('fs'), watchers =
-[
-  {
-    "login": "bigeasy",
-    "url": "https://api.github.com/users/bigeasy",
-    "id": 34673
-  },
-  {
-    "login": "chadsmith",
-    "url": "https://api.github.com/users/chadsmith",
-    "id": 187174
-  },
-  {
-    "login": "azampagl",
-    "url": "https://api.github.com/users/azampagl",
-    "id": 43206
-  }
-];
 require('./proof')(5, function (async, fixture, ok, compare) {
+  var context, spliced, fs = require('fs'), watchers =
+  [
+    {
+      "login": "bigeasy",
+      "url": "https://api.github.com/users/bigeasy",
+      "id": 34673
+    },
+    {
+      "login": "chadsmith",
+      "url": "https://api.github.com/users/chadsmith",
+      "id": 187174
+    },
+    {
+      "login": "azampagl",
+      "url": "https://api.github.com/users/azampagl",
+      "id": 43206
+    }
+  ];
+
   async(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
     context.generate('fixtures/each.stencil', { watchers: watchers }, async());
@@ -61,8 +62,8 @@ require('./proof')(5, function (async, fixture, ok, compare) {
     ok(compare(actual.document, removed), 'removed');
     watchers.splice(1, 0, spliced[0]);
     context.regenerate(actual, { watchers: watchers }, async());
-  }, 
-  
+  },
+
   function (actual, reorder) {
     ok(compare(actual.document, reorder), 'reinserted');
   });
