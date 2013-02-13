@@ -222,7 +222,7 @@
   var handlers = {
     // The value directive replaces a value element with text from the current
     // context.
-    value: function (parent, page, template, directive, element, context, path, rewrite, callback) {
+    value: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
@@ -235,7 +235,7 @@
         callback();
       }));
     },
-    if: function (parent, page, template, directive, element, context, path, rewrite, callback) {
+    if: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
@@ -252,26 +252,27 @@
                 fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
             vivify(page, path, fragment);
             fill(marker, fragment);
+            generating = true;
           }
-          rewrite(directive.directives, path, callback);
+          rewrite(directive.directives, path, generating, callback);
         }
       }));
     },
-    else: function (parent, page, template, directive, element, context, path, rewrite, callback) {
+    else: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
       element.setAttribute("select", "true");
-      handlers.elseif(parent, page, template, directive, element, context, path, rewrite, callback);
+      handlers.elseif(parent, page, template, directive, element, context, path, generating, rewrite, callback);
     },
-    elseif: function (parent, page, template, directive, element, context, path, rewrite, callback) {
+    elseif: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
       var marker = follow(page, path);
       if (parent.condition) {
         erase(marker.begin.nextSibling, marker.end);
         follow(page, path).markers = {};
         callback();
       } else {
-        handlers["if"](parent, page, template, directive, element, context, path, rewrite, callback);
+        handlers["if"](parent, page, template, directive, element, context, path, generating, rewrite, callback);
       }
     },
-    each: function (parent, page, template, directive, element, context, path, rewrite, callback) {
+    each: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
       var source = element.getAttribute("select").trim(),
           idSource = element.getAttribute("key").trim(),
           into = element.getAttribute("into").trim(),
@@ -336,17 +337,33 @@
             insertBefore(fragment, page.document.createComment(qualified), fragment.firstChild); 
             vivify(page, base, fragment);
             insertBefore(previous.parentNode, fragment, previous.nextSibling);
+            generating = true;
           }
 
           previous = follow(page, path).end;
 
-          rewrite(directive.directives, path, okay(shift));
+          rewrite(directive.directives, path, generating, okay(shift));
         }
       }));
+    },
+    // **TODO**: Pass around a generating flag, so that we only evaluate this
+    // bit once, not for performance, but to simplify the implementation.
+    block: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
+      if (generating) {
+        var prototype = follow(parent.template.page, parent.directive.path),
+            marker = follow(page, path),
+            fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+        if (prototype.begin.nextSibling != prototype.end) {
+          erase(marker.begin.nextSibling, marker.end);
+          insertBefore(marker.end.parentNode, fragment, marker.end);
+        }
+        callback();
+        // **TODO**: Keep rewriting.
+      }
     }
   }
 
-  function rewrite (parent, page, template, directives, library, context, path, callback) {
+  function rewrite (parent, page, template, directives, library, context, path, generating, callback) {
     var okay = validator(callback);
 
     context = extend({}, context);
@@ -403,22 +420,24 @@
           break;
         default:
           var included;
-          if (directive.interpreter) directive.interpreter(parent, page, template, directive, element, context, sub,
-            function (directives, path, callback) {
-              rewrite({ parent: parent }, page, template, directives, library, context, path, callback);
+          if (directive.interpreter) directive.interpreter(parent, page, template, directive, element, context, sub, generating,
+            function (directives, path, generating, callback) {
+              rewrite({ parent: parent }, page, template, directives, library, context, path, generating, callback);
             }, shift);
           else if (directive.element && (included = library[directive.element.namespaceURI])) {
-            var include = included.library[directive.element.localName],
-                prototype = follow(included.page, include.path),
-                marker = follow(page, sub),
-                previous = marker.end;
-
-            var fragment = copy(page.document, prototype.begin, prototype.end.nextSibling);
-            fill(marker, fragment);
+            var include = included.library[directive.element.localName];
+            if (generating) {
+              var prototype = follow(included.page, include.path),
+                  marker = follow(page, sub),
+                  fragment = copy(page.document, prototype.begin, prototype.end.nextSibling);
+              vivify(page, sub, fragment);
+              erase(marker.begin.nextSibling, marker.end);
+              fill(marker, fragment);
+            }
             sub.push(include.id);
-            rewrite({ parent: parent }, page, included, include.directives, library, context, sub, okay(shift));
+            rewrite({ parent: parent, template: template, directive: directive }, page, included, include.directives, library, context, sub, generating, okay(shift));
           }
-          else rewrite({}, page, template, directive.directives, library, context, sub, shift);
+          else rewrite({ parent: parent }, page, template, directive.directives, library, context, sub, generating, shift);
           break;
         }
       }
@@ -608,7 +627,7 @@
     fetch(base, url, okay(rebase));
 
     function rebase (template) {
-      rewrite({}, page, template, template.directives, {}, parameters, [], okay(function () {
+      rewrite({}, page, template, template.directives, {}, parameters, [], false, okay(function () {
         callback(null, page);
       }));
     }
@@ -650,7 +669,7 @@
       vivify(page, [], fragment);
 
       // Evaluate the template.
-      rewrite({}, page, template, template.directives, {}, parameters, [], okay(result));
+      rewrite({}, page, template, template.directives, {}, parameters, [], true, okay(result));
 
       function result () {
         insertBefore(page.document, page.fragment);

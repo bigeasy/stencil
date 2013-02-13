@@ -1,0 +1,5 @@
+<html xmlns:s="stencil" xmlns:b="inc:_bodied.stencil">
+<body>
+<b:bodied><p>Hello, World!</p></b:bodied>
+</body>
+</html>
