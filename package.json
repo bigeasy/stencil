@@ -8,7 +8,7 @@
   , "url": "http://github.com/bigeasy/stencil/raw/master/LICENSE"
   }]
 , "homepage": "https://github.com/bigeasy/stencil"
-, "main": "redux.js"
+, "main": "index.js"
 , "repository":
   { "type": "git"
   , "url": "http://github.com/bigeasy/stencil.git"
