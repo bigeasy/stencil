@@ -348,17 +348,22 @@
     },
     // **TODO**: Pass around a generating flag, so that we only evaluate this
     // bit once, not for performance, but to simplify the implementation.
-    block: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
+    block: function (parent, page, template, directive, element, context, path, generating, ignore, callback) {
       if (generating) {
-        var prototype = follow(parent.template.page, parent.directive.path),
-            marker = follow(page, path),
-            fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+        var prototype = follow(parent.template.page, parent.directive.path);
         if (prototype.begin.nextSibling != prototype.end) {
+          var marker = follow(page, path),
+              fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+          marker.markers = {};
+          vivify(page, path, fragment);
           erase(marker.begin.nextSibling, marker.end);
           insertBefore(marker.end.parentNode, fragment, marker.end);
         }
-        callback();
-        // **TODO**: Keep rewriting.
+        // **TODO**: Function signature is getting super ugly, the
+        // `parent.library` is an awful kludge.
+        rewrite({ parent: parent, template: template, directive: directive },
+          page, parent.template, parent.directive.directives,
+          parent.library, context, path, generating, callback);
       }
     }
   }
@@ -435,7 +440,7 @@
               fill(marker, fragment);
             }
             sub.push(include.id);
-            rewrite({ parent: parent, template: template, directive: directive }, page, included, include.directives, library, context, sub, generating, okay(shift));
+            rewrite({ parent: parent, template: template, directive: directive, library: library }, page, included, include.directives, library, context, sub, generating, okay(shift));
           }
           else rewrite({ parent: parent }, page, template, directive.directives, library, context, sub, generating, shift);
           break;
