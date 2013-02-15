@@ -1,0 +1,3 @@
+<s:include xmlns:s="stencil">
+  <s:tag name="conditional"><s:block/></s:tag>
+</s:include>
