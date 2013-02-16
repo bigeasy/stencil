@@ -131,13 +131,11 @@
     return child;
   }
 
-  var isDirective = /^[\w\/.]+:\d+(?:;[\d\w%]+)?$/;
-
   function vivify (page, path, node) {
     var child, parts;
     for (child = node.firstChild; child; child = child.nextSibling) {
       if (child.nodeType == 8) {
-        if (isDirective.test(child.nodeValue)) {
+        if (/^[\w\/.]+:\d+(?:;[\d\w%]+)?$/.test(child.nodeValue)) {
           parts = child.nodeValue.split(/;/);
           if (parts.length == 2) {
             follow(page, path.concat(parts[0])).items[parts[1]] = true;
