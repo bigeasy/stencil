@@ -357,21 +357,28 @@
     // bit once, not for performance, but to simplify the implementation.
     block: function (parent, frames, page, template, library, directive, element,
                      context, path, generating, callback) {
+      var name = element.getAttribute("name"), marker, fragment, definition,
+          caller = frames[0], prototype, i, I;
       if (generating) {
-        var caller = frames[0],
-            prototype = follow(caller.template.page, caller.directive.path);
+        if (name) {
+          definition = caller.directive.directives.filter(function (directive) {
+            return directive.element.localName == name
+                && directive.element.namespaceURI == caller.directive.element.namespaceURI;
+          }).shift();
+        } else {
+          definition = caller.directive;
+        }
+        prototype = follow(caller.template.page, definition.path);
         if (prototype.begin.nextSibling != prototype.end) {
-          var marker = follow(page, path),
-              fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+          fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+          marker = follow(page, path);
           marker.markers = {};
           vivify(page, path, fragment);
           erase(marker.begin.nextSibling, marker.end);
           insertBefore(marker.end.parentNode, fragment, marker.end);
         }
-        // **TODO**: Function signature is getting super ugly, the
-        // `parent.library` is an awful kludge.
         frames = frames.concat({ template: template, directive: directive });
-        rewrite({}, frames, page, caller.template, library, caller.directive.directives,
+        rewrite({}, frames, page, caller.template, library, definition.directives,
                 path, context, generating, callback);
       }
     }
