@@ -1,0 +1,7 @@
+<html xmlns:s="stencil" xmlns:c="inc:_conditional.stencil">
+<body>
+<s:if select="greeting">
+<c:conditional><p>Hello, World!</p></c:conditional>
+</s:if>
+</body>
+</html>

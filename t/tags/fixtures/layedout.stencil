@@ -1,0 +1,4 @@
+<o:document xmlns:s="stencil" xmlns:o="inc:layout.stencil">
+  <o:head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></o:head>
+  <o:body><p>Hello, World!</p></o:body>
+</o:document>

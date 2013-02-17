@@ -131,13 +131,11 @@
     return child;
   }
 
-  var isDirective = /^[\w\/.]+:\d+(?:;[\d\w%]+)?$/;
-
   function vivify (page, path, node) {
     var child, parts;
     for (child = node.firstChild; child; child = child.nextSibling) {
       if (child.nodeType == 8) {
-        if (isDirective.test(child.nodeValue)) {
+        if (/^[\w\/.]+:\d+(?:;[\d\w%]+)?$/.test(child.nodeValue)) {
           parts = child.nodeValue.split(/;/);
           if (parts.length == 2) {
             follow(page, path.concat(parts[0])).items[parts[1]] = true;
@@ -222,7 +220,8 @@
   var handlers = {
     // The value directive replaces a value element with text from the current
     // context.
-    value: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
+    value: function (parent, frames, page, template, library,
+                     directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
@@ -235,7 +234,8 @@
         callback();
       }));
     },
-    if: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
+    if: function (parent, frames, page, template, library,
+                  directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
@@ -254,25 +254,31 @@
             fill(marker, fragment);
             generating = true;
           }
-          rewrite(directive.directives, path, generating, callback);
+          rewrite({}, frames, page, template, library, directive.directives,
+                  path, context, generating, callback);
         }
       }));
     },
-    else: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
+    else: function (parent, frames, page, template, library,
+                    directive, element, context, path, generating, callback) {
       element.setAttribute("select", "true");
-      handlers.elseif(parent, page, template, directive, element, context, path, generating, rewrite, callback);
+      handlers.elseif(parent, frames, page, template, library,
+                      directive, element, context, path, generating, callback);
     },
-    elseif: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
+    elseif: function (parent, frames, page, template, library,
+                      directive, element, context, path, generating, callback) {
       var marker = follow(page, path);
       if (parent.condition) {
         erase(marker.begin.nextSibling, marker.end);
         follow(page, path).markers = {};
         callback();
       } else {
-        handlers["if"](parent, page, template, directive, element, context, path, generating, rewrite, callback);
+        handlers["if"](parent, frames, page, template, library,
+                       directive, element, context, path, generating, callback);
       }
     },
-    each: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
+    each: function (parent, frames, page, template, library,
+                    directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(),
           idSource = element.getAttribute("key").trim(),
           into = element.getAttribute("into").trim(),
@@ -342,28 +348,44 @@
 
           previous = follow(page, path).end;
 
-          rewrite(directive.directives, path, generating, okay(shift));
+          rewrite({}, frames, page, template, library, directive.directives,
+                  path, context, generating, okay(shift));
         }
       }));
     },
     // **TODO**: Pass around a generating flag, so that we only evaluate this
     // bit once, not for performance, but to simplify the implementation.
-    block: function (parent, page, template, directive, element, context, path, generating, rewrite, callback) {
+    block: function (parent, frames, page, template, library, directive, element,
+                     context, path, generating, callback) {
+      var name = element.getAttribute("name"), marker, fragment, definition,
+          caller = frames[0], prototype, i, I;
       if (generating) {
-        var prototype = follow(parent.template.page, parent.directive.path),
-            marker = follow(page, path),
-            fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+        if (name) {
+          definition = caller.directive.directives.filter(function (directive) {
+            return directive.element.localName == name
+                && directive.element.namespaceURI == caller.directive.element.namespaceURI;
+          }).shift();
+        } else {
+          definition = caller.directive;
+        }
+        prototype = follow(caller.template.page, definition.path);
         if (prototype.begin.nextSibling != prototype.end) {
+          fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+          marker = follow(page, path);
+          marker.markers = {};
+          vivify(page, path, fragment);
           erase(marker.begin.nextSibling, marker.end);
           insertBefore(marker.end.parentNode, fragment, marker.end);
         }
-        callback();
-        // **TODO**: Keep rewriting.
+        frames = frames.concat({ template: template, directive: directive });
+        rewrite({}, frames, page, caller.template, library, definition.directives,
+                path, context, generating, callback);
       }
     }
   }
 
-  function rewrite (parent, page, template, directives, library, context, path, generating, callback) {
+  function rewrite (parent, frames, page, template, library,
+                    directives, path, context, generating, callback) {
     var okay = validator(callback);
 
     context = extend({}, context);
@@ -420,10 +442,9 @@
           break;
         default:
           var included;
-          if (directive.interpreter) directive.interpreter(parent, page, template, directive, element, context, sub, generating,
-            function (directives, path, generating, callback) {
-              rewrite({ parent: parent }, page, template, directives, library, context, path, generating, callback);
-            }, shift);
+          if (directive.interpreter)
+            directive.interpreter(parent, frames, page, template, library,
+                                  directive, element, context, sub, generating, shift);
           else if (directive.element && (included = library[directive.element.namespaceURI])) {
             var include = included.library[directive.element.localName];
             if (generating) {
@@ -435,9 +456,10 @@
               fill(marker, fragment);
             }
             sub.push(include.id);
-            rewrite({ parent: parent, template: template, directive: directive }, page, included, include.directives, library, context, sub, generating, okay(shift));
+            frames = frames.concat({ template: template, directive: directive, library: library });
+            rewrite({}, frames, page, included, library, include.directives, sub, context, generating, okay(shift));
           }
-          else rewrite({ parent: parent }, page, template, directive.directives, library, context, sub, generating, shift);
+          else rewrite({}, frames, page, template, library, directive.directives, sub, context, generating, shift);
           break;
         }
       }
@@ -627,7 +649,8 @@
     fetch(base, url, okay(rebase));
 
     function rebase (template) {
-      rewrite({}, page, template, template.directives, {}, parameters, [], false, okay(function () {
+      rewrite({}, [], page, template, {}, template.directives,
+              [], parameters, false, okay(function () {
         callback(null, page);
       }));
     }
@@ -669,7 +692,8 @@
       vivify(page, [], fragment);
 
       // Evaluate the template.
-      rewrite({}, page, template, template.directives, {}, parameters, [], true, okay(result));
+      rewrite({}, [], page, template, {}, template.directives,
+              [], parameters, true, okay(result));
 
       function result () {
         insertBefore(page.document, page.fragment);
