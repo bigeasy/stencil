@@ -1,5 +1,0 @@
-<html xmlns:s="http://bigeasy.github.com/stencil" xmlns:e="./quotes">
-<body>
-<p><s:value select="quotes.rosten"/></p>
-</body>
-</html>
