@@ -84,7 +84,7 @@
 
   //
   function evaluate (source, context, callback) {
-    var parameters = [], values = [], callbacks = 0,
+    var parameters = ['$context'], values = [context], callbacks = 0,
         i, I, name, result, compiled;
     source = source.trim();
     compiled = functions[source];
@@ -97,7 +97,7 @@
     } else {
       parameters = compiled.parameters;
     }
-    for (i = 0, I = parameters.length; i < I; i++) {
+    for (i = 1, I = parameters.length; i < I; i++) {
       values.push(context[parameters[i]]);
     }
     invoke(compiled.expression.apply(this, values), context, callback);
@@ -377,7 +377,7 @@
           erase(marker.begin.nextSibling, marker.end);
           insertBefore(marker.end.parentNode, fragment, marker.end);
         }
-        frames = frames.concat({ template: template, directive: directive });
+        frames = [{ template: template, directive: directive }].concat(frames);
         rewrite({}, frames, page, caller.template, library, definition.directives,
                 path, context, generating, callback);
       }
@@ -389,6 +389,8 @@
     var okay = validator(callback);
 
     context = extend({}, context);
+    if (frames[0].attributes) context.$attributes = frames[0].attributes;
+    else delete context.$attributes;
     directives = directives.slice(0);
 
     shift();
@@ -446,6 +448,11 @@
             directive.interpreter(parent, frames, page, template, library,
                                   directive, element, context, sub, generating, shift);
           else if (directive.element && (included = library[directive.element.namespaceURI])) {
+            var attributes = {};
+            for (var i = 0, I = directive.element.attributes.length; i < I; i++) {
+              var attribute = directive.element.attributes[i];
+              if (attribute.namespaceURI == null) attributes[attribute.localName] = attribute.nodeValue;
+            }
             var include = included.library[directive.element.localName];
             if (generating) {
               var prototype = follow(included.page, include.path),
@@ -456,7 +463,7 @@
               fill(marker, fragment);
             }
             sub.push(include.id);
-            frames = frames.concat({ template: template, directive: directive, library: library });
+            frames = [{ attributes: attributes, template: template, directive: directive, library: library }].concat(frames);
             rewrite({}, frames, page, included, library, include.directives, sub, context, generating, okay(shift));
           }
           else rewrite({}, frames, page, template, library, directive.directives, sub, context, generating, shift);
@@ -649,7 +656,7 @@
     fetch(base, url, okay(rebase));
 
     function rebase (template) {
-      rewrite({}, [], page, template, {}, template.directives,
+      rewrite({}, [{}], page, template, {}, template.directives,
               [], parameters, false, okay(function () {
         callback(null, page);
       }));
@@ -692,7 +699,7 @@
       vivify(page, [], fragment);
 
       // Evaluate the template.
-      rewrite({}, [], page, template, {}, template.directives,
+      rewrite({}, [{}], page, template, {}, template.directives,
               [], parameters, true, okay(result));
 
       function result () {

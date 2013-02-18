@@ -1,5 +1,0 @@
-<s:include xmlns:s="stencil">
-  <s:tag name="nest">
-    <s:block/>
-  </s:tag>
-</s:include>
