@@ -1,0 +1,6 @@
+<html xmlns:s="stencil" xmlns:a="inc:_attribute.stencil">
+<body>
+<p>Hello, World!</p>
+<p>true</p>
+</body>
+</html>
