@@ -1,4 +1,4 @@
-<html xmlns:s="stencil" xmlns:c="inc:_conditional.stencil">
+<html>
 <body>
 <p>Hello, World!</p>
 </body>
