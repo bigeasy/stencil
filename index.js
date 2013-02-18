@@ -359,15 +359,15 @@
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
           caller = frames[0], prototype, i, I;
+      if (name) {
+        definition = caller.directive.directives.filter(function (directive) {
+          return directive.element.localName == name
+              && directive.element.namespaceURI == caller.directive.element.namespaceURI;
+        }).shift();
+      } else {
+        definition = caller.directive;
+      }
       if (generating) {
-        if (name) {
-          definition = caller.directive.directives.filter(function (directive) {
-            return directive.element.localName == name
-                && directive.element.namespaceURI == caller.directive.element.namespaceURI;
-          }).shift();
-        } else {
-          definition = caller.directive;
-        }
         prototype = follow(caller.template.page, definition.path);
         if (prototype.begin.nextSibling != prototype.end) {
           fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
@@ -377,10 +377,10 @@
           erase(marker.begin.nextSibling, marker.end);
           insertBefore(marker.end.parentNode, fragment, marker.end);
         }
-        frames = [{ template: template, directive: directive }].concat(frames);
-        rewrite({}, frames, page, caller.template, library, definition.directives,
-                path, context, generating, callback);
       }
+      frames = [{ template: template, directive: directive }].concat(frames);
+      rewrite({}, frames, page, caller.template, library, definition.directives,
+              path, context, generating, callback);
     }
   }
 
