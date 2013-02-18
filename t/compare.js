@@ -77,7 +77,9 @@ function compare (actual, expected) {
         for (name in ea) {
           if (!aa[name]) return abend(e);
           if (ea[name].nodeValue != aa[name].nodeValue) return abend(e);
+          delete(aa[name]);
         }
+        if (Object.keys(aa).length) return abend(e);
       }
       at.length = et.length = 0;
       a = actual.shift();

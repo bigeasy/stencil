@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var context, fs = require('fs');
-require('./proof')(3, function (async, ok, compare) {
+require('./proof')(4, function (async, ok, compare) {
 
   async(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
@@ -26,6 +26,15 @@ require('./proof')(3, function (async, ok, compare) {
     context.regenerate(actual, { greeting: "Hello, World!" }, async());
   },
   
+  function (actual, truthy, ok, compare) {
+    ok(compare(actual.document, truthy), 'regenerating');
+    context.reconstitute(actual.document, async());
+  },
+
+  function (actual) {
+    context.regenerate(actual, { greeting: "Hello, World!" }, async());
+  },
+
   function (actual, truthy, ok, compare) {
     ok(compare(actual.document, truthy), 'regenerating');
   });

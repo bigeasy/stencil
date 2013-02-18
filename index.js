@@ -359,15 +359,15 @@
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
           caller = frames[0], prototype, i, I;
+      if (name) {
+        definition = caller.directive.directives.filter(function (directive) {
+          return directive.element.localName == name
+              && directive.element.namespaceURI == caller.directive.element.namespaceURI;
+        }).shift();
+      } else {
+        definition = caller.directive;
+      }
       if (generating) {
-        if (name) {
-          definition = caller.directive.directives.filter(function (directive) {
-            return directive.element.localName == name
-                && directive.element.namespaceURI == caller.directive.element.namespaceURI;
-          }).shift();
-        } else {
-          definition = caller.directive;
-        }
         prototype = follow(caller.template.page, definition.path);
         if (prototype.begin.nextSibling != prototype.end) {
           fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
@@ -377,10 +377,10 @@
           erase(marker.begin.nextSibling, marker.end);
           insertBefore(marker.end.parentNode, fragment, marker.end);
         }
-        frames = [{ template: template, directive: directive }].concat(frames);
-        rewrite({}, frames, page, caller.template, library, definition.directives,
-                path, context, generating, callback);
       }
+      frames = [{ template: template, directive: directive }].concat(frames);
+      rewrite({}, frames, page, caller.template, library, definition.directives,
+              path, context, generating, callback);
     }
   }
 
@@ -553,17 +553,23 @@
       // Gather object constructors, template includes and dynamic attributes
       // into our array of operations.
       var operations = [], attributes = [], properties = {}, includes = [];
-      for (var i = 0, I = node.attributes.length; i < I; i++) {
-        var attr = node.attributes.item(i), protocol;
+      for (var i = 0; i < node.attributes.length; i++) {
+        var attr = node.attributes[i], protocol;
         switch (attr.namespaceURI) {
         case "http://www.w3.org/2000/xmlns/":
           if (protocol = attr.nodeValue.split(/:/).shift()) {
             var href = normalize(attr.nodeValue.substring(protocol.length + 1));
-            if (!"require".indexOf(protocol)) operations.unshift({ type: "require", href: href, name: attr.localName });
-            else if (!"include".indexOf(protocol)) {
+            if (!"require".indexOf(protocol)) {
+              operations.unshift({ type: "require", href: href, name: attr.localName });
+              namespaces[attr.nodeValue] = true;
+            } else if (!"include".indexOf(protocol)) {
               operations.unshift({ type: "include", href: href, uri: attr.nodeValue });
               namespaces[attr.nodeValue] = true;
             }
+          }
+          if (namespaces[attr.nodeValue]) {
+            node.removeAttributeNode(attr);
+            i--;
           }
           break;
         case "stencil":
