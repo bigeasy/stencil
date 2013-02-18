@@ -5,7 +5,7 @@ require('./proof')(3, function (async, ok, compare) {
 
   async(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
-    context.generate('fixtures/minimal.stencil', { greeting: "Hello, World!" }, async());
+    context.generate('fixtures/minimal.stencil', {}, async());
   },
 
   function (actual, fixture) {
