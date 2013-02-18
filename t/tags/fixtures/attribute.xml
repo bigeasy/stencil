@@ -1,4 +1,4 @@
-<html xmlns:s="stencil" xmlns:a="inc:_attribute.stencil">
+<html>
 <body>
 <p>Hello, World!</p>
 <p>true</p>
