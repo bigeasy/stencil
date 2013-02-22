@@ -1,0 +1,6 @@
+<s:include xmlns:s="stencil">
+  <s:tag name="sub">
+    <s:tag name="child"><p>Hello, World!</p></s:tag>
+    <s:block/>
+  </s:tag>
+</s:include>

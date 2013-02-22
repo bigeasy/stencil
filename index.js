@@ -381,6 +381,16 @@
       frames = [{ template: template, directive: directive }].concat(frames);
       rewrite({}, frames, page, caller.template, library, definition.directives,
               path, context, generating, callback);
+    },
+    tag: function (parent, frames, page, template, library, directive, element,
+                   context, path, generating, callback) {
+      var marker = follow(page, path);
+      if (!empty(marker)) {
+        erase(marker.begin.nextSibling, marker.end);
+        follow(page, path).markers = {};      
+      }
+      library[library[template.url]].library[element.getAttribute("name")] = directive;
+      callback();
     }
   }
 
@@ -429,6 +439,7 @@
         case "include":
           fetch(template.base, operation.href, okay(function (included) {
             library[operation.uri] = included;
+            library[included.url] = operation.uri;
             operate(operations.shift());
           }));
           break;
@@ -583,7 +594,7 @@
         node.removeAttributeNS("stencil", attribute.name);
       });
 
-      var directive = { operations: operations.concat(attributes), directives: [] };
+      var directive = { operations: operations.concat(attributes), directives: [], library: {} };
 
       if (namespaces[node.namespaceURI]) {
         directive.element = node;
@@ -605,6 +616,7 @@
     }
 
     function unravel (document, namespaces, library, directives, path, node) {
+      if (!library) throw new Error();
       var directive, child, parentNode, marker, end;
       if (directive = directivize(namespaces, node)) {
         if (directive.id) {
