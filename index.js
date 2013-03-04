@@ -353,8 +353,6 @@
         }
       }));
     },
-    // **TODO**: Pass around a generating flag, so that we only evaluate this
-    // bit once, not for performance, but to simplify the implementation.
     block: function (parent, frames, page, template, library, directive, element,
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
