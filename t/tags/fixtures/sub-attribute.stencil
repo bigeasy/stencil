@@ -1,0 +1,7 @@
+<html xmlns:s="stencil" xmlns:a="inc:_sub-attribute.stencil">
+<body>
+<a:greeting salutation="Hello">
+  <p><a:target name="World"/></p>
+</a:greeting>
+</body>
+</html>

@@ -135,7 +135,7 @@
     var child, parts;
     for (child = node.firstChild; child; child = child.nextSibling) {
       if (child.nodeType == 8) {
-        if (/^[\w\/.]+:\d+(?:;[\d\w%]+)?$/.test(child.nodeValue)) {
+        if (/^[\w\/.-]+:\d+(?:;[\d\w%]+)?$/.test(child.nodeValue)) {
           parts = child.nodeValue.split(/;/);
           if (parts.length == 2) {
             follow(page, path.concat(parts[0])).items[parts[1]] = true;
@@ -220,7 +220,7 @@
   var handlers = {
     // The value directive replaces a value element with text from the current
     // context.
-    value: function (parent, frames, page, template, library,
+    value: function (parent, frames, page, template, includes,
                      directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
@@ -234,7 +234,7 @@
         callback();
       }));
     },
-    if: function (parent, frames, page, template, library,
+    if: function (parent, frames, page, template, includes,
                   directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
@@ -254,18 +254,18 @@
             fill(marker, fragment);
             generating = true;
           }
-          rewrite({}, frames, page, template, library, directive.directives,
+          rewrite({}, frames, page, template, includes, directive.directives,
                   path, context, generating, callback);
         }
       }));
     },
-    else: function (parent, frames, page, template, library,
+    else: function (parent, frames, page, template, includes,
                     directive, element, context, path, generating, callback) {
       element.setAttribute("select", "true");
-      handlers.elseif(parent, frames, page, template, library,
+      handlers.elseif(parent, frames, page, template, includes,
                       directive, element, context, path, generating, callback);
     },
-    elseif: function (parent, frames, page, template, library,
+    elseif: function (parent, frames, page, template, includes,
                       directive, element, context, path, generating, callback) {
       var marker = follow(page, path);
       if (parent.condition) {
@@ -273,11 +273,11 @@
         follow(page, path).markers = {};
         callback();
       } else {
-        handlers["if"](parent, frames, page, template, library,
+        handlers["if"](parent, frames, page, template, includes,
                        directive, element, context, path, generating, callback);
       }
     },
-    each: function (parent, frames, page, template, library,
+    each: function (parent, frames, page, template, includes,
                     directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(),
           idSource = element.getAttribute("key").trim(),
@@ -348,14 +348,12 @@
 
           previous = follow(page, path).end;
 
-          rewrite({}, frames, page, template, library, directive.directives,
+          rewrite({}, frames, page, template, includes, directive.directives,
                   path, context, generating, okay(shift));
         }
       }));
     },
-    // **TODO**: Pass around a generating flag, so that we only evaluate this
-    // bit once, not for performance, but to simplify the implementation.
-    block: function (parent, frames, page, template, library, directive, element,
+    block: function (parent, frames, page, template, includes, directive, element,
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
           caller = frames[0], prototype, i, I;
@@ -379,28 +377,39 @@
         }
       }
       frames = [{ template: template, directive: directive }].concat(frames);
-      rewrite({}, frames, page, caller.template, library, definition.directives,
+      rewrite({}, frames, page, caller.template, includes, definition.directives,
               path, context, generating, callback);
     },
-    tag: function (parent, frames, page, template, library, directive, element,
+    tag: function (parent, frames, page, template, includes, directive, element,
                    context, path, generating, callback) {
       var marker = follow(page, path);
       if (!empty(marker)) {
         erase(marker.begin.nextSibling, marker.end);
         follow(page, path).markers = {};      
       }
-      library[library[template.url]].library[element.getAttribute("name")] = directive;
+      directive = extend({}, directive);
+      directive.frame = frames[0];
+      includes[includes[template.url]].tags[element.getAttribute("name")] = directive;
       callback();
     }
   }
 
-  function rewrite (parent, frames, page, template, library,
+  function rewrite (parent, frames, page, template, includes,
                     directives, path, context, generating, callback) {
-    var okay = validator(callback);
+    var okay = validator(callback), prefix = '$';
 
     context = extend({}, context);
-    if (frames[0].attributes) context.$attributes = frames[0].attributes;
-    else delete context.$attributes;
+    if (frames[0].attributes) {
+      frames[0].attributes.forEach(function (attributes) {
+        context[prefix + 'attributes'] = attributes;
+        prefix += '$';
+      });
+    } else {
+      while (context[prefix + 'attributes']) {
+        delete context.$attributes;
+        prefix += '$';
+      }
+    }
     directives = directives.slice(0);
 
     shift();
@@ -414,10 +423,11 @@
     function consume () {
       var directive = directives.shift(),
           operations = directive.operations.slice(0),
-          sub = path,
+          sub = path, include,
           attributed;
 
-      library = extend({}, library);
+      // **TODO**: Probably doesn't do much.
+      includes = extend({}, includes);
 
       if (directive.id) {
         sub = path.concat(directive.id);
@@ -437,9 +447,15 @@
           }));
           break;
         case "include":
+          
           fetch(template.base, operation.href, okay(function (included) {
-            library[operation.uri] = included;
-            library[included.url] = operation.uri;
+            // See `tag` directive handler for where we need to lookup the URL
+            // of the included document by the URI specified as the attribute
+            // value to the `xmlns:*` attribute.
+            included = extend({}, included);
+            included.tags = extend({}, included.tags);
+            includes[operation.uri] = included;
+            includes[included.url] = operation.uri;
             operate(operations.shift());
           }));
           break;
@@ -455,29 +471,38 @@
           break;
         default:
           var included;
-          if (directive.interpreter)
-            directive.interpreter(parent, frames, page, template, library,
+          if (directive.interpreter) {
+            directive.interpreter(parent, frames, page, template, includes,
                                   directive, element, context, sub, generating, shift);
-          else if (directive.element && (included = library[directive.element.namespaceURI])) {
+          } else if (directive.element && (included = includes[directive.element.namespaceURI])) {
             var attributes = {};
             for (var i = 0, I = directive.element.attributes.length; i < I; i++) {
               var attribute = directive.element.attributes[i];
               if (attribute.namespaceURI == null) attributes[attribute.localName] = attribute.nodeValue;
             }
-            var include = included.library[directive.element.localName];
+            var include = included.tags[directive.element.localName];
             if (generating) {
-              var prototype = follow(included.page, include.path),
-                  marker = follow(page, sub),
-                  fragment = copy(page.document, prototype.begin, prototype.end.nextSibling);
+              var prototype = follow(included.page, include.path);
+                  var marker = follow(page, sub);
+                  var fragment = copy(page.document, prototype.begin, prototype.end.nextSibling);
               vivify(page, sub, fragment);
               erase(marker.begin.nextSibling, marker.end);
               fill(marker, fragment);
             }
             sub.push(include.id);
-            frames = [{ attributes: attributes, template: template, directive: directive, library: library }].concat(frames);
-            rewrite({}, frames, page, included, library, include.directives, sub, context, generating, okay(shift));
+            var frame = include.frame || { attributes: [],
+                                           template: template,
+                                           directive: directive,
+                                           includes: includes }
+            frame.attributes.unshift(attributes);
+            frames = [frame].concat(frames);
+            rewrite({}, frames, page, included, includes, include.directives,
+                    sub, context, generating, okay(shift));
           }
-          else rewrite({}, frames, page, template, library, directive.directives, sub, context, generating, shift);
+          else {
+            rewrite({}, frames, page, template, includes, directive.directives,
+                    sub, context, generating, shift);
+          }
           break;
         }
       }
@@ -536,19 +561,19 @@
     function compile (document) {
       // Our directives and a temporary list of user elements with Stencil
       // directive attributes.
-      var directives = [], library = {},
+      var directives = [], tags = {},
           fragment = document.createDocumentFragment(),
           page = { markers: {}, document: document, fragment: fragment };
 
       insertBefore(fragment, document.documentElement);
 
       // Visit all the nodes creating a tree of directives.
-      unravel(page.document, { stencil: true }, library, directives, [], fragment);
+      unravel(page.document, { stencil: true }, tags, directives, [], fragment);
       vivify(page, [], fragment);
 
       // Create our template.
       templates[url] = {
-        url: url, page: page, directives: directives, library: library,
+        url: url, page: page, directives: directives, tags: tags,
         base: absolutize(base, url).replace(/\/[^\/]+$/, '/')
       };
 
@@ -594,7 +619,7 @@
         node.removeAttributeNS("stencil", attribute.name);
       });
 
-      var directive = { operations: operations.concat(attributes), directives: [], library: {} };
+      var directive = { operations: operations.concat(attributes), directives: [], tags: {} };
 
       if (namespaces[node.namespaceURI]) {
         directive.element = node;
@@ -615,8 +640,8 @@
       }
     }
 
-    function unravel (document, namespaces, library, directives, path, node) {
-      if (!library) throw new Error();
+    function unravel (document, namespaces, tags, directives, path, node) {
+      if (!tags) throw new Error();
       var directive, child, parentNode, marker, end;
       if (directive = directivize(namespaces, node)) {
         if (directive.id) {
@@ -628,12 +653,12 @@
         directives = directive.directives;
 
         if (node.namespaceURI == "stencil" && node.localName == "tag") {
-          library[node.getAttribute("name")] = directive;
-          library = directive.library;
+          tags[node.getAttribute("name")] = directive;
+          tags = directive.tags;
         }
       }
       for (child = node.firstChild; child; child = child.nextSibling) {
-        child = unravel(document, extend({}, namespaces), library, directives, path, child);
+        child = unravel(document, extend({}, namespaces), tags, directives, path, child);
       }
       if (directive && directive.id) {
         end = node;
@@ -705,7 +730,8 @@
       // TODO: This not likely to be portable. Need to determine how to create a
       // clone of the document. Ah... I'm going to have to test how to import
       // nodes generated from XML into documents built by parsing HTML5.
-      var fragment = template.page.fragment.ownerDocument.implementation.createDocument().createDocumentFragment(),
+      var fragment = template.page.fragment.ownerDocument
+                             .implementation.createDocument().createDocumentFragment(),
           page = {
         document: fragment.ownerDocument,
         fragment: fragment,
