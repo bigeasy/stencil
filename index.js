@@ -387,6 +387,8 @@
         erase(marker.begin.nextSibling, marker.end);
         follow(page, path).markers = {};      
       }
+      directive = extend({}, directive);
+      directive.frame = frames[0];
       includes[includes[template.url]].tags[element.getAttribute("name")] = directive;
       callback();
     }
@@ -394,11 +396,20 @@
 
   function rewrite (parent, frames, page, template, includes,
                     directives, path, context, generating, callback) {
-    var okay = validator(callback);
+    var okay = validator(callback), prefix = '$';
 
     context = extend({}, context);
-    if (frames[0].attributes) context.$attributes = frames[0].attributes;
-    else delete context.$attributes;
+    if (frames[0].attributes) {
+      frames[0].attributes.forEach(function (attributes) {
+        context[prefix + 'attributes'] = attributes;
+        prefix += '$';
+      });
+    } else {
+      while (context[prefix + 'attributes']) {
+        delete context.$attributes;
+        prefix += '$';
+      }
+    }
     directives = directives.slice(0);
 
     shift();
@@ -412,7 +423,7 @@
     function consume () {
       var directive = directives.shift(),
           operations = directive.operations.slice(0),
-          sub = path,
+          sub = path, include,
           attributed;
 
       // **TODO**: Probably doesn't do much.
@@ -441,6 +452,8 @@
             // See `tag` directive handler for where we need to lookup the URL
             // of the included document by the URI specified as the attribute
             // value to the `xmlns:*` attribute.
+            included = extend({}, included);
+            included.tags = extend({}, included.tags);
             includes[operation.uri] = included;
             includes[included.url] = operation.uri;
             operate(operations.shift());
@@ -477,10 +490,12 @@
               fill(marker, fragment);
             }
             sub.push(include.id);
-            frames = [{ attributes: attributes,
-                        template: template,
-                        directive: directive,
-                        includes: includes }].concat(frames);
+            var frame = include.frame || { attributes: [],
+                                           template: template,
+                                           directive: directive,
+                                           includes: includes }
+            frame.attributes.unshift(attributes);
+            frames = [frame].concat(frames);
             rewrite({}, frames, page, included, includes, include.directives,
                     sub, context, generating, okay(shift));
           }
