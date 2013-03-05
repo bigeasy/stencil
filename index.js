@@ -436,8 +436,11 @@
           }));
           break;
         case "include":
+          
           fetch(template.base, operation.href, okay(function (included) {
-            // **TODO**: Why?
+            // See `tag` directive handler for where we need to lookup the URL
+            // of the included document by the URI specified as the attribute
+            // value to the `xmlns:*` attribute.
             includes[operation.uri] = included;
             includes[included.url] = operation.uri;
             operate(operations.shift());
