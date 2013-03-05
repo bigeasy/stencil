@@ -387,7 +387,7 @@
         erase(marker.begin.nextSibling, marker.end);
         follow(page, path).markers = {};      
       }
-      library[library[template.url]].library[element.getAttribute("name")] = directive;
+      library[library[template.url]].tags[element.getAttribute("name")] = directive;
       callback();
     }
   }
@@ -415,6 +415,7 @@
           sub = path,
           attributed;
 
+      // **TODO**: Probably doesn't do much.
       library = extend({}, library);
 
       if (directive.id) {
@@ -463,7 +464,7 @@
               var attribute = directive.element.attributes[i];
               if (attribute.namespaceURI == null) attributes[attribute.localName] = attribute.nodeValue;
             }
-            var include = included.library[directive.element.localName];
+            var include = included.tags[directive.element.localName];
             if (generating) {
               var prototype = follow(included.page, include.path);
                   var marker = follow(page, sub);
@@ -543,19 +544,19 @@
     function compile (document) {
       // Our directives and a temporary list of user elements with Stencil
       // directive attributes.
-      var directives = [], library = {},
+      var directives = [], tags = {},
           fragment = document.createDocumentFragment(),
           page = { markers: {}, document: document, fragment: fragment };
 
       insertBefore(fragment, document.documentElement);
 
       // Visit all the nodes creating a tree of directives.
-      unravel(page.document, { stencil: true }, library, directives, [], fragment);
+      unravel(page.document, { stencil: true }, tags, directives, [], fragment);
       vivify(page, [], fragment);
 
       // Create our template.
       templates[url] = {
-        url: url, page: page, directives: directives, library: library,
+        url: url, page: page, directives: directives, tags: tags,
         base: absolutize(base, url).replace(/\/[^\/]+$/, '/')
       };
 
@@ -601,7 +602,7 @@
         node.removeAttributeNS("stencil", attribute.name);
       });
 
-      var directive = { operations: operations.concat(attributes), directives: [], library: {} };
+      var directive = { operations: operations.concat(attributes), directives: [], tags: {} };
 
       if (namespaces[node.namespaceURI]) {
         directive.element = node;
@@ -622,8 +623,8 @@
       }
     }
 
-    function unravel (document, namespaces, library, directives, path, node) {
-      if (!library) throw new Error();
+    function unravel (document, namespaces, tags, directives, path, node) {
+      if (!tags) throw new Error();
       var directive, child, parentNode, marker, end;
       if (directive = directivize(namespaces, node)) {
         if (directive.id) {
@@ -635,12 +636,12 @@
         directives = directive.directives;
 
         if (node.namespaceURI == "stencil" && node.localName == "tag") {
-          library[node.getAttribute("name")] = directive;
-          library = directive.library;
+          tags[node.getAttribute("name")] = directive;
+          tags = directive.tags;
         }
       }
       for (child = node.firstChild; child; child = child.nextSibling) {
-        child = unravel(document, extend({}, namespaces), library, directives, path, child);
+        child = unravel(document, extend({}, namespaces), tags, directives, path, child);
       }
       if (directive && directive.id) {
         end = node;
