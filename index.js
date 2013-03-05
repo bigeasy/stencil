@@ -436,6 +436,7 @@
           break;
         case "include":
           fetch(template.base, operation.href, okay(function (included) {
+            // **TODO**: Why?
             library[operation.uri] = included;
             library[included.url] = operation.uri;
             operate(operations.shift());
@@ -453,10 +454,10 @@
           break;
         default:
           var included;
-          if (directive.interpreter)
+          if (directive.interpreter) {
             directive.interpreter(parent, frames, page, template, library,
                                   directive, element, context, sub, generating, shift);
-          else if (directive.element && (included = library[directive.element.namespaceURI])) {
+          } else if (directive.element && (included = library[directive.element.namespaceURI])) {
             var attributes = {};
             for (var i = 0, I = directive.element.attributes.length; i < I; i++) {
               var attribute = directive.element.attributes[i];
@@ -464,18 +465,26 @@
             }
             var include = included.library[directive.element.localName];
             if (generating) {
-              var prototype = follow(included.page, include.path),
-                  marker = follow(page, sub),
-                  fragment = copy(page.document, prototype.begin, prototype.end.nextSibling);
+              var prototype = follow(included.page, include.path);
+                  var marker = follow(page, sub);
+                  var fragment = copy(page.document, prototype.begin, prototype.end.nextSibling);
               vivify(page, sub, fragment);
               erase(marker.begin.nextSibling, marker.end);
               fill(marker, fragment);
             }
             sub.push(include.id);
-            frames = [{ attributes: attributes, template: template, directive: directive, library: library }].concat(frames);
-            rewrite({}, frames, page, included, library, include.directives, sub, context, generating, okay(shift));
+            say(directive.element + "");
+            frames = [{ attributes: attributes,
+                        template: template,
+                        directive: directive,
+                        library: library }].concat(frames);
+            rewrite({}, frames, page, included, library, include.directives,
+                    sub, context, generating, okay(shift));
           }
-          else rewrite({}, frames, page, template, library, directive.directives, sub, context, generating, shift);
+          else {
+            rewrite({}, frames, page, template, library, directive.directives,
+                    sub, context, generating, shift);
+          }
           break;
         }
       }
@@ -703,7 +712,8 @@
       // TODO: This not likely to be portable. Need to determine how to create a
       // clone of the document. Ah... I'm going to have to test how to import
       // nodes generated from XML into documents built by parsing HTML5.
-      var fragment = template.page.fragment.ownerDocument.implementation.createDocument().createDocumentFragment(),
+      var fragment = template.page.fragment.ownerDocument
+                             .implementation.createDocument().createDocumentFragment(),
           page = {
         document: fragment.ownerDocument,
         fragment: fragment,
