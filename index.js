@@ -477,7 +477,6 @@
               fill(marker, fragment);
             }
             sub.push(include.id);
-            say(directive.element + "");
             frames = [{ attributes: attributes,
                         template: template,
                         directive: directive,
