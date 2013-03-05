@@ -220,7 +220,7 @@
   var handlers = {
     // The value directive replaces a value element with text from the current
     // context.
-    value: function (parent, frames, page, template, library,
+    value: function (parent, frames, page, template, includes,
                      directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
@@ -234,7 +234,7 @@
         callback();
       }));
     },
-    if: function (parent, frames, page, template, library,
+    if: function (parent, frames, page, template, includes,
                   directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
@@ -254,18 +254,18 @@
             fill(marker, fragment);
             generating = true;
           }
-          rewrite({}, frames, page, template, library, directive.directives,
+          rewrite({}, frames, page, template, includes, directive.directives,
                   path, context, generating, callback);
         }
       }));
     },
-    else: function (parent, frames, page, template, library,
+    else: function (parent, frames, page, template, includes,
                     directive, element, context, path, generating, callback) {
       element.setAttribute("select", "true");
-      handlers.elseif(parent, frames, page, template, library,
+      handlers.elseif(parent, frames, page, template, includes,
                       directive, element, context, path, generating, callback);
     },
-    elseif: function (parent, frames, page, template, library,
+    elseif: function (parent, frames, page, template, includes,
                       directive, element, context, path, generating, callback) {
       var marker = follow(page, path);
       if (parent.condition) {
@@ -273,11 +273,11 @@
         follow(page, path).markers = {};
         callback();
       } else {
-        handlers["if"](parent, frames, page, template, library,
+        handlers["if"](parent, frames, page, template, includes,
                        directive, element, context, path, generating, callback);
       }
     },
-    each: function (parent, frames, page, template, library,
+    each: function (parent, frames, page, template, includes,
                     directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(),
           idSource = element.getAttribute("key").trim(),
@@ -348,12 +348,12 @@
 
           previous = follow(page, path).end;
 
-          rewrite({}, frames, page, template, library, directive.directives,
+          rewrite({}, frames, page, template, includes, directive.directives,
                   path, context, generating, okay(shift));
         }
       }));
     },
-    block: function (parent, frames, page, template, library, directive, element,
+    block: function (parent, frames, page, template, includes, directive, element,
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
           caller = frames[0], prototype, i, I;
@@ -377,22 +377,22 @@
         }
       }
       frames = [{ template: template, directive: directive }].concat(frames);
-      rewrite({}, frames, page, caller.template, library, definition.directives,
+      rewrite({}, frames, page, caller.template, includes, definition.directives,
               path, context, generating, callback);
     },
-    tag: function (parent, frames, page, template, library, directive, element,
+    tag: function (parent, frames, page, template, includes, directive, element,
                    context, path, generating, callback) {
       var marker = follow(page, path);
       if (!empty(marker)) {
         erase(marker.begin.nextSibling, marker.end);
         follow(page, path).markers = {};      
       }
-      library[library[template.url]].tags[element.getAttribute("name")] = directive;
+      includes[includes[template.url]].tags[element.getAttribute("name")] = directive;
       callback();
     }
   }
 
-  function rewrite (parent, frames, page, template, library,
+  function rewrite (parent, frames, page, template, includes,
                     directives, path, context, generating, callback) {
     var okay = validator(callback);
 
@@ -416,7 +416,7 @@
           attributed;
 
       // **TODO**: Probably doesn't do much.
-      library = extend({}, library);
+      includes = extend({}, includes);
 
       if (directive.id) {
         sub = path.concat(directive.id);
@@ -438,8 +438,8 @@
         case "include":
           fetch(template.base, operation.href, okay(function (included) {
             // **TODO**: Why?
-            library[operation.uri] = included;
-            library[included.url] = operation.uri;
+            includes[operation.uri] = included;
+            includes[included.url] = operation.uri;
             operate(operations.shift());
           }));
           break;
@@ -456,9 +456,9 @@
         default:
           var included;
           if (directive.interpreter) {
-            directive.interpreter(parent, frames, page, template, library,
+            directive.interpreter(parent, frames, page, template, includes,
                                   directive, element, context, sub, generating, shift);
-          } else if (directive.element && (included = library[directive.element.namespaceURI])) {
+          } else if (directive.element && (included = includes[directive.element.namespaceURI])) {
             var attributes = {};
             for (var i = 0, I = directive.element.attributes.length; i < I; i++) {
               var attribute = directive.element.attributes[i];
@@ -478,12 +478,12 @@
             frames = [{ attributes: attributes,
                         template: template,
                         directive: directive,
-                        library: library }].concat(frames);
-            rewrite({}, frames, page, included, library, include.directives,
+                        includes: includes }].concat(frames);
+            rewrite({}, frames, page, included, includes, include.directives,
                     sub, context, generating, okay(shift));
           }
           else {
-            rewrite({}, frames, page, template, library, directive.directives,
+            rewrite({}, frames, page, template, includes, directive.directives,
                     sub, context, generating, shift);
           }
           break;
