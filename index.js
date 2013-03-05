@@ -84,7 +84,7 @@
 
   //
   function evaluate (source, context, callback) {
-    var parameters = ['$context'], values = [context], callbacks = 0,
+    var parameters = ['$'], values = [context], callbacks = 0,
         i, I, name, result, compiled;
     source = source.trim();
     compiled = functions[source];
