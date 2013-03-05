@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(5, function (async, fixture, ok, compare) {
+require('./proof')(5, function (step, fixture, ok, compare) {
   var context, spliced, fs = require('fs'), watchers =
   [
     {
@@ -20,48 +20,48 @@ require('./proof')(5, function (async, fixture, ok, compare) {
     }
   ];
 
-  async(function (stencil, resolver) {
+  step(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
-    context.generate('fixtures/each.stencil', { watchers: watchers }, async());
+    context.generate('fixtures/each.stencil', { watchers: watchers }, step());
   },
 
   function (actual) {
-    fixture('fixtures/each.xml', async());
+    fixture('fixtures/each.xml', step());
   },
 
   function (expected, actual) {
     ok(compare(actual.document, expected), 'generate');
-    context.reconstitute(actual.document, async());
+    context.reconstitute(actual.document, step());
   },
 
   function (actual) {
-    context.regenerate(actual, { watchers: watchers }, async());
+    context.regenerate(actual, { watchers: watchers }, step());
   },
 
   function (actual, expected) {
     ok(compare(actual.document, expected), 'regenerate');
     watchers.unshift(watchers.pop());
-    context.regenerate(actual, { watchers: watchers }, async());
+    context.regenerate(actual, { watchers: watchers }, step());
   },
 
   function (actual) {
-    fixture('fixtures/each-reorder.xml', async());
+    fixture('fixtures/each-reorder.xml', step());
   },
 
   function (reorder, actual) {
     ok(compare(actual.document, reorder), 'reordered');
     spliced = watchers.splice(1, 1);
-    context.regenerate(actual, { watchers: watchers }, async());
+    context.regenerate(actual, { watchers: watchers }, step());
   },
 
   function (actual) {
-    fixture('fixtures/each-removed.xml', async());
+    fixture('fixtures/each-removed.xml', step());
   },
 
   function (removed, actual) {
     ok(compare(actual.document, removed), 'removed');
     watchers.splice(1, 0, spliced[0]);
-    context.regenerate(actual, { watchers: watchers }, async());
+    context.regenerate(actual, { watchers: watchers }, step());
   },
 
   function (actual, reorder) {

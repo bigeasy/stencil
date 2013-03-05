@@ -1,28 +1,28 @@
 #!/usr/bin/env node
 
-require('./proof')(2, function (async, ok, compare) {
+require('./proof')(2, function (step, ok, compare) {
   var context, fs = require('fs');
 
-  async(function (stencil, resolver) {
+  step(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
-    context.generate('fixtures/require.stencil', { greeting: "Hello, World!" }, async());
+    context.generate('fixtures/require.stencil', { greeting: "Hello, World!" }, step());
   },
 
   function (actual, fixture) {
-    fixture('fixtures/require-generate.xml', async());
+    fixture('fixtures/require-generate.xml', step());
   },
 
   function (expected, actual, actual) {
     ok(compare(actual.document, expected), 'called');
-    context.reconstitute(actual.document, async());
+    context.reconstitute(actual.document, step());
   },
 
   function (actual) {
-    context.regenerate(actual, { greeting: "Hello, Nurse!" }, async());
+    context.regenerate(actual, { greeting: "Hello, Nurse!" }, step());
   },
 
   function (actual, fixture) {
-    fixture('fixtures/require-regenerate.xml', async());
+    fixture('fixtures/require-regenerate.xml', step());
   },
 
   function (expected, actual) {

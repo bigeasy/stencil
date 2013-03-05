@@ -1,38 +1,38 @@
 #!/usr/bin/env node
 
 var context, fs = require('fs');
-require('./proof')(4, function (async, ok, compare) {
+require('./proof')(4, function (step, ok, compare) {
 
-  async(function (stencil, resolver) {
+  step(function (stencil, resolver) {
     context = stencil.create(__dirname + '/', resolver.create());
-    context.generate('fixtures/conditional.stencil', { greeting: "Hello, World!" }, async());
+    context.generate('fixtures/conditional.stencil', { greeting: "Hello, World!" }, step());
   },
   
   function (actual, fixture) {
-    fixture('fixtures/conditional-true.xml', async());
+    fixture('fixtures/conditional-true.xml', step());
   },
   
   function (truthy, actual, ok, compare) {
     ok(compare(actual.document, truthy), 'true');
-    context.regenerate(actual, {}, async());
+    context.regenerate(actual, {}, step());
   },
 
   function (actual, fixture) {
-    fixture('fixtures/conditional-false.xml', async());
+    fixture('fixtures/conditional-false.xml', step());
   },
   
   function (falsey, actual, ok, compare) {
     ok(compare(actual.document, falsey), 'false');
-    context.regenerate(actual, { greeting: "Hello, World!" }, async());
+    context.regenerate(actual, { greeting: "Hello, World!" }, step());
   },
   
   function (actual, truthy, ok, compare) {
     ok(compare(actual.document, truthy), 'regenerating');
-    context.reconstitute(actual.document, async());
+    context.reconstitute(actual.document, step());
   },
 
   function (actual) {
-    context.regenerate(actual, { greeting: "Hello, World!" }, async());
+    context.regenerate(actual, { greeting: "Hello, World!" }, step());
   },
 
   function (actual, truthy, ok, compare) {
