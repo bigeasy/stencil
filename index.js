@@ -6,10 +6,10 @@
 
   function die () {
     console.log.apply(console, slice.call(arguments, 0));
-    return process.exit(1);
+    process.exit(1);
   }
 
-  function say () { return console.log.apply(console, slice.call(arguments, 0)) }
+  function say () { console.log.apply(console, slice.call(arguments, 0)) }
 
   function validator (callback) {
     if (typeof callback != "function") throw new Error("no callback");
