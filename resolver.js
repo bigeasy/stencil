@@ -16,6 +16,9 @@ module.exports.create = function create () {
         else callback(null, new (xmldom.DOMParser)().parseFromString(source));
       });*/
       break;
+    case "application/json":
+      callback(null, JSON.parse(fs.readFileSync(url, "utf8")));
+      break;
     }
   }
 }

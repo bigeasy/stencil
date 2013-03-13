@@ -83,7 +83,7 @@
   var functions = {};
 
   //
-  function evaluate (source, context, callback) {
+  function evaluate (base, source, context, callback) {
     var parameters = ['$'], values = [context], callbacks = 0,
         i, I, name, result, compiled;
     source = source.trim();
@@ -99,6 +99,13 @@
     }
     for (i = 1, I = parameters.length; i < I; i++) {
       values.push(context[parameters[i]]);
+    }
+    context.$ = function (url) {
+      return function (context, callback) {
+        resolver(absolutize(base, url), 'application/json', function (error, result) {
+          callback(error, result);
+        });
+      }
     }
     invoke(compiled.expression.apply(this, values), context, callback);
   }
@@ -224,7 +231,7 @@
                      directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
-      evaluate(source, context, check(callback, function (value) {
+      evaluate(template.base, source, context, check(callback, function (value) {
         // Delete the directive body.
         erase(marker.begin.nextSibling, marker.end);
 
@@ -238,7 +245,7 @@
                   directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
-      evaluate(source, context, check(callback, function (value) {
+      evaluate(template.base, source, context, check(callback, function (value) {
         parent.condition = !!value;
         // If the directive body is already in the document, we have nothing to
         // do, we continue and rewrite the body.
@@ -296,7 +303,7 @@
         follow(page, path).markers = {};
       }
 
-      evaluate(source, context, okay(function (value) {
+      evaluate(template.base, source, context, okay(function (value) {
         if (!Array.isArray(value)) value = [ value ];
         value = value.slice();
 
@@ -306,7 +313,7 @@
           var id, marker, part;
           if (value.length) {
             context[into] = value.shift();
-            if (idSource) evaluate(idSource, context, okay(count));
+            if (idSource) evaluate(template.base, idSource, context, okay(count));
             else count(index++);
           } else {
             for (id in items) {
@@ -460,7 +467,7 @@
           }));
           break;
         case "attribute":
-          evaluate(operation.value, context, okay(function (value) {
+          evaluate(template.base, operation.value, context, okay(function (value) {
             if (value == null) {
               element.removeAttribute(operation.name);
             } else {
