@@ -28,3 +28,5 @@ used as `$.$('query')`. When used in the context it is assumed to be a request
 for mime type `application/json`. The `$` variable is already hard wired to be
 the context to `$.$` means that we're not going to consume another variable name
 with something like `$resolver`.
+
+Maybe `_$` as the special variable disambiguates, can be used in the libraries.
