@@ -307,7 +307,7 @@
           if (value.length) {
             context[into] = value.shift();
             if (idSource) evaluate(idSource, context, okay(count));
-            else scribble(index++);
+            else count(index++);
           } else {
             for (id in items) {
               part = directive.id + ";" + id;
