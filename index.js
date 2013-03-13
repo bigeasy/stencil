@@ -313,8 +313,8 @@
           var id, marker, part;
           if (value.length) {
             context[into] = value.shift();
-            if (idSource) evaluate(template.base, idSource, context, okay(count));
-            else count(index++);
+            if (idSource) evaluate(template.base, idSource, context, okay(scribble));
+            else scribble(index++);
           } else {
             for (id in items) {
               part = directive.id + ";" + id;
@@ -326,16 +326,12 @@
           }
         }
 
-        function count (id) {
+        function scribble (id) {
           id = escape(id);
 
           delete items[id];
           head.items[id] = true;
 
-          scribble(id);
-        }
-
-        function scribble (id) {
           var qualified = directive.id + ";" + id,
               path = base.concat([ qualified ]),
               marker = follow(page, path);
