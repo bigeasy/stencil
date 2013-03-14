@@ -83,13 +83,13 @@
   var functions = {};
 
   //
-  function evaluate (base, source, context, callback) {
+  function evaluate (source, context, callback) {
     var parameters = ['$'], values = [context], callbacks = 0,
         i, I, name, result, compiled;
     source = source.trim();
     compiled = functions[source];
     if (!compiled) {
-      for (name in context) parameters.push(name);
+      parameters.push.apply(parameters, Object.keys(context));
       functions[source] = compiled = {
         parameters: parameters,
         expression: Function.apply(Function, parameters.concat([ "return " + source ]))
@@ -99,13 +99,6 @@
     }
     for (i = 1, I = parameters.length; i < I; i++) {
       values.push(context[parameters[i]]);
-    }
-    context.$ = function (url) {
-      return function (context, callback) {
-        resolver(absolutize(base, url), 'application/json', function (error, result) {
-          callback(error, result);
-        });
-      }
     }
     invoke(compiled.expression.apply(this, values), context, callback);
   }
@@ -231,7 +224,7 @@
                      directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
-      evaluate(template.base, source, context, check(callback, function (value) {
+      evaluate(source, context, check(callback, function (value) {
         // Delete the directive body.
         erase(marker.begin.nextSibling, marker.end);
 
@@ -245,7 +238,7 @@
                   directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
-      evaluate(template.base, source, context, check(callback, function (value) {
+      evaluate(source, context, check(callback, function (value) {
         parent.condition = !!value;
         // If the directive body is already in the document, we have nothing to
         // do, we continue and rewrite the body.
@@ -303,7 +296,7 @@
         follow(page, path).markers = {};
       }
 
-      evaluate(template.base, source, context, okay(function (value) {
+      evaluate(source, context, okay(function (value) {
         if (!Array.isArray(value)) value = [ value ];
         value = value.slice();
 
@@ -313,7 +306,7 @@
           var id, marker, part;
           if (value.length) {
             context[into] = value.shift();
-            if (idSource) evaluate(template.base, idSource, context, okay(scribble));
+            if (idSource) evaluate(idSource, context, okay(scribble));
             else scribble(index++);
           } else {
             for (id in items) {
@@ -400,8 +393,13 @@
   function rewrite (parent, frames, page, template, includes,
                     directives, path, context, generating, callback) {
     var okay = validator(callback), prefix = '$';
-
-    context = extend({}, context);
+    context = extend(Object.create({ $: function (url) {
+      return function (context, callback) {
+        resolver(absolutize(template.base, url), 'application/json', function (error, result) {
+          callback(error, result);
+        });
+      }
+    }}), context);
     if (frames[0].attributes) {
       frames[0].attributes.forEach(function (attributes) {
         context[prefix + 'attributes'] = attributes;
@@ -463,7 +461,7 @@
           }));
           break;
         case "attribute":
-          evaluate(template.base, operation.value, context, okay(function (value) {
+          evaluate(operation.value, context, okay(function (value) {
             if (value == null) {
               element.removeAttribute(operation.name);
             } else {
