@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-require('./proof')(3, function (step, fixture, ok, compare) {
-  var context, spliced, fs = require('fs'), watchers =
+require('./proof')(3, function (step, context, fixture, ok, compare) {
+  var spliced, fs = require('fs'), watchers =
   [
     {
       "login": "bigeasy",
@@ -21,7 +21,6 @@ require('./proof')(3, function (step, fixture, ok, compare) {
   ];
 
   step(function (stencil, resolver) {
-    context = stencil.create(__dirname + '/', resolver.create());
     context.generate('fixtures/indexed.stencil', { watchers: watchers }, step());
     fixture('fixtures/each.xml', step());
   },

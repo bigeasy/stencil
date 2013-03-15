@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
-var context, fs = require('fs');
-require('./proof')(3, function (step, ok, compare) {
+var fs = require('fs');
+require('./proof')(3, function (step, context, ok, compare) {
 
   step(function (stencil, resolver) {
-    context = stencil.create(__dirname + '/', resolver.create());
     context.generate('fixtures/sub-attribute.stencil', {}, step());
   },
   

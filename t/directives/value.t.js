@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
-require('./proof')(2, function (step, ok, compare) {
-  var context, fs = require('fs');
+require('./proof')(2, function (step, context, ok, compare) {
+  var fs = require('fs');
 
   step(function (stencil, resolver) {
-    context = stencil.create(__dirname + '/', resolver.create());
     context.generate('fixtures/value.stencil', { greeting: "Hello, World!" }, step());
   },
 

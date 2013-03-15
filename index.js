@@ -1,7 +1,7 @@
 ! function (definition) {
   if (typeof module == "object" && module.exports) definition(require, module.exports, module);
   else if (typeof define == "function" && typeof define.amd == "object") define(definition);
-} (function (require, exports, module) { exports.create = function (base, resolver) {
+} (function (require, exports, module) { exports.create = function (base, modules, resources) {
   var slice = [].slice, templates = {};
 
   function die () {
@@ -395,7 +395,7 @@
     var okay = validator(callback), prefix = '$';
     context = extend(Object.create({ $: function (url) {
       return function (context, callback) {
-        resolver(absolutize(template.base, url), 'application/json', function (error, result) {
+        resources(absolutize(template.base, url), 'application/json', function (error, result) {
           callback(error, result);
         });
       }
@@ -440,7 +440,7 @@
       function operate (operation) {
         switch (operation && operation.type) {
         case "require":
-          resolver(template.base + '/' + operation.href, "text/javascript", okay(function (module) {
+          modules(template.base + '/' + operation.href, okay(function (module) {
             invoke(module, context, okay(function (value) {
               context[operation.name] = value;
               operate(operations.shift());
@@ -517,7 +517,7 @@
     // Send an pre-compiled template if we have one, otherwise compile the
     // template and cache it.
     if (templates[url]) callback(null, templates[url]);
-    else resolver(absolutize(base, url), "text/xml", okay(compile));
+    else resources(absolutize(base, url), "text/xml", okay(compile));
 
     // We compile the URL into a parallel tree of directives. The directives
     // identify the elements that define them in the document using an
