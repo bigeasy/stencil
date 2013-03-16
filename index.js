@@ -1,7 +1,7 @@
 ! function (definition) {
   if (typeof module == "object" && module.exports) definition(require, module.exports, module);
   else if (typeof define == "function" && typeof define.amd == "object") define(definition);
-} (function (require, exports, module) { exports.create = function (base, modules, resources) {
+} (function (require, exports, module) { exports.create = function (javascript, xml, json) {
   var slice = [].slice, templates = {};
 
   function die () {
@@ -162,7 +162,7 @@
       }
     }
 
-    fetch(base, url, okay(fetched));
+    fetch(url, okay(fetched));
 
     function fetched (template) {
       var page = {
@@ -395,7 +395,7 @@
     var okay = validator(callback), prefix = '$';
     context = extend(Object.create({ $: function (url) {
       return function (context, callback) {
-        resources(absolutize(template.base, url), 'application/json', function (error, result) {
+        json(absolutize(template.url + '/..', url), function (error, result) {
           callback(error, result);
         });
       }
@@ -440,7 +440,7 @@
       function operate (operation) {
         switch (operation && operation.type) {
         case "require":
-          modules(template.base + '/' + operation.href, okay(function (module) {
+          javascript(absolutize(template.url + '/..', operation.href), okay(function (module) {
             invoke(module, context, okay(function (value) {
               context[operation.name] = value;
               operate(operations.shift());
@@ -448,8 +448,7 @@
           }));
           break;
         case "include":
-          
-          fetch(template.base, operation.href, okay(function (included) {
+          fetch(absolutize(template.url + '/..', operation.href), okay(function (included) {
             // See `tag` directive handler for where we need to lookup the URL
             // of the included document by the URI specified as the attribute
             // value to the `xmlns:*` attribute.
@@ -511,13 +510,13 @@
   }
 
   // Compile the template at the given url and send it to the given callback.
-  function fetch (base, url, callback) {
+  function fetch (url, callback) {
     var okay = validator(callback), identifier = 0;
 
     // Send an pre-compiled template if we have one, otherwise compile the
     // template and cache it.
     if (templates[url]) callback(null, templates[url]);
-    else resources(absolutize(base, url), "text/xml", okay(compile));
+    else xml(url, okay(compile));
 
     // We compile the URL into a parallel tree of directives. The directives
     // identify the elements that define them in the document using an
@@ -574,8 +573,7 @@
 
       // Create our template.
       templates[url] = {
-        url: url, page: page, directives: directives, tags: tags,
-        base: absolutize(base, url).replace(/\/[^\/]+$/, '/')
+        url: url, page: page, directives: directives, tags: tags
       };
 
       // Send the template to our caller.
@@ -697,7 +695,7 @@
     }
 
     var url = normalize(page.template.url);
-    fetch(base, url, okay(rebase));
+    fetch(url, okay(rebase));
 
     function rebase (template) {
       rewrite({}, [{}], page, template, {}, template.directives,
@@ -715,8 +713,8 @@
       parameters = {};
     }
 
-    url = normalize(url);
-    fetch(base, url, okay(paginate));
+    url = absolutize('/', normalize(url));
+    fetch(url, okay(paginate));
 
     function paginate (template) {
       // We need a fragment because a document node can have only one element
