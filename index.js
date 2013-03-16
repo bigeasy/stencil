@@ -4,6 +4,42 @@
 } (function (require, exports, module) { exports.create = function (javascript, xml, json) {
   var slice = [].slice, templates = {};
 
+  if (!javascript) {
+    javascript = function (url, callback) {
+      require([ url ], function (module) { callback(null, module) });
+    }
+  }
+
+  function get (url, property, callback) {
+    var xhr = new XMLHttpRequest(), done;
+    xhr.open( "GET", url, true );
+    xhr.onerror = function (event) {
+      console.log(event);
+    }
+    xhr.onreadystatechange = function () {
+      if (!done && xhr.readyState == 4 && xhr.status == 200) {
+        done = true;
+        callback(null, xhr[property]);
+      }
+    }
+    xhr.send(null);
+  }
+
+  if (!xml) {
+    xml = function (url, callback) {
+      get(url, 'responseXML', callback);
+    }
+  }
+
+  if (!json) {
+    json = function (url, callback) {
+      get(url, 'responseText', function (error, body) {
+        if (error) callback(error);
+        else callback(null, JSON.parse(body));
+      });
+    }
+  }
+
   function die () {
     console.log.apply(console, slice.call(arguments, 0));
     process.exit(1);
