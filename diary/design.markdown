@@ -32,6 +32,26 @@ loading, to come to design decision on this right now.
  * [modulr-node](https://github.com/tobie/modulr-node/tree/v0.6.1).
  * [Lazy evaluation of CommonJS modules](http://calendar.perfplanet.com/2011/lazy-evaluation-of-commonjs-modules/).
 
+Having gone a couple rounds with resource loading, here's what I've disovered.
+
+The JSON resource loading is not needed by Stencil itself, therefore it doesn't
+belong in Stencil itself. However, there is hardly ever going to be a Stencil
+program that doesn't load some JSON. Okay, perhaps there are applications where
+the JSON is loaded and pushed into Stencil, and that is the only way, so maybe
+it isn't a lie, you know, like Windows 95, which is pointless without Office 95.
+
+Actually, there are a lot of applications where you might push information into
+a template, without having the template pull in other resources, like command
+line applications.
+
+## Module Loading
+
+I'm not loving having all that cladding wrapped around a Stencil scaffold, when
+these scaffolds are supposed to be short and tidy. I prefer CommonJS method. I'm
+feeling like there needs to be a file system organization that is a convention,
+that these programs take a normal form, it gets wrapped during development, and
+you use browserfy or AMD's pre-processor to wrap the module for production.
+
 ## Stencil Context and Variable Names
 
 Currently sorting out the details of context. I've got a pattern for working
