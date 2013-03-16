@@ -4,10 +4,10 @@ function visit (array, element) {
   array.push({ start: true, element: element, nodeType: 1 });
   for (var child = element.firstChild; child; child = child.nextSibling) {
     if (child.nodeType == 1) {
-      visit(array, child);    
+      visit(array, child);
     } else {
       array.push(child);
-    } 
+    }
   }
   array.push({ start: false, element: element, nodeType: 1 });
   return array;
@@ -15,7 +15,6 @@ function visit (array, element) {
 
 function flatten (doc) {
   return visit([], doc.documentElement || doc);
-  
 }
 
 function attributes (element) {
@@ -32,7 +31,6 @@ function attributes (element) {
 function _name (node) {
   return node.localName + (node.namespaceURI ? '(' + node.namespaceURI + ')' : '');
 }
-
 
 function compare (actual, expected) {
   var _actual = actual, _expected = expected;

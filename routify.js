@@ -8,7 +8,7 @@ function routes (base) {
       var file = path.join(dir, entry), stat = fs.statSync(file);
       if (stat.isDirectory()) {
         children(base, parts.concat(file));
-      } else { 
+      } else {
         files.push(entry);
       }
     });

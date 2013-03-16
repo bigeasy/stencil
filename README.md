@@ -121,7 +121,7 @@ Released: Sun Jul 22 22:05:35 UTC 2012.
  * Implement expression function cache. #9.
  * Normalize URLs. #22. #13. #4. #3.
  * Implement `each`. #7.
- * Create `README.md`. #34. 
+ * Create `README.md`. #34.
  * Implement layouts.
  * Implement require. #15.
  * Build on Travis CI. #41. #19. #6.

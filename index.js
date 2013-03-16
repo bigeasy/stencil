@@ -184,7 +184,7 @@
     var fragment = document.createDocumentFragment();
     while (node != end) {
       insertBefore(fragment, document.importNode(node, true));
-      node = node.nextSibling; 
+      node = node.nextSibling;
     }
     return fragment;
   }
@@ -248,7 +248,7 @@
           callback();
         } else {
           if (empty(marker)) {
-            var prototype = follow(template.page, directive.path), 
+            var prototype = follow(template.page, directive.path),
                 fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
             vivify(page, path, fragment);
             fill(marker, fragment);
@@ -336,7 +336,7 @@
           } else {
             var prototype = follow(template.page, directive.path),
                 fragment = copy(page.document, prototype.begin.nextSibling, prototype.end.nextSibling);
-            insertBefore(fragment, page.document.createComment(qualified), fragment.firstChild); 
+            insertBefore(fragment, page.document.createComment(qualified), fragment.firstChild);
             vivify(page, base, fragment);
             insertBefore(previous.parentNode, fragment, previous.nextSibling);
             generating = true;
@@ -381,7 +381,7 @@
       var marker = follow(page, path);
       if (!empty(marker)) {
         erase(marker.begin.nextSibling, marker.end);
-        follow(page, path).markers = {};      
+        follow(page, path).markers = {};
       }
       directive = extend({}, directive);
       directive.frame = frames[0];
