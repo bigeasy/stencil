@@ -1,49 +1,46 @@
 #!/usr/bin/env node
 
-require('./proof')(5, function (step, context) {
+require('./proof')(5, function (step, context, fixture, ok, compare) {
   var fs = require('fs');
 
-  step(function (stencil, resolver) {
+  step(function () {
+
     context.generate('fixtures/elseif.stencil', { value: 'a' }, step());
-  },
-
-  function (actual, fixture) {
     fixture('fixtures/elseif-a.xml', step());
-  },
-
-  function (a, actual, ok, compare) {
-    ok(compare(actual.document, a), 'generate');
-    context.reconstitute(actual.document, step());
-  },
-
-  function (actual) {
-    context.regenerate(actual, { value: 'a' }, step());
-  },
-
-  function (actual, a, compare, ok) {
-    ok(compare(actual.document, a), 'reconstitute');
-    context.regenerate(actual, { value: 'b' }, step());
-  },
-
-  function (actual, fixture) {
     fixture('fixtures/elseif-b.xml', step());
-  },
-
-  function (b, actual, ok, compare) {
-    ok(compare(actual.document, b), 'b');
-    context.regenerate(actual, { value: 'c' }, step());
-  },
-
-  function (actual, fixture) {
     fixture('fixtures/elseif-c.xml', step());
-  },
 
-  function (c, actual, ok, compare) {
-    ok(compare(actual.document, c), 'c');
-    context.regenerate(actual, { value: 'a' }, step());
-  },
+  }, function (actual, a, b, c) {
 
-  function (actual, a, ok, compare) {
-    ok(compare(actual.document, a), 'a-after-scavenge');
+    ok(compare(actual.document, a), 'generate');
+
+    step(function () {
+
+      context.reconstitute(actual.document, step());
+
+    }, function (actual) {
+
+      context.regenerate(actual, { value: 'a' }, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, a), 'reconstitute');
+      context.regenerate(actual, { value: 'b' }, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, b), 'b');
+      context.regenerate(actual, { value: 'c' }, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, c), 'c');
+      context.regenerate(actual, { value: 'a' }, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, a), 'a-after-scavenge');
+
+    });
   });
 });

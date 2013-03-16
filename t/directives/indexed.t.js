@@ -20,25 +20,35 @@ require('./proof')(3, function (step, context, fixture, ok, compare) {
     }
   ];
 
-  step(function (stencil, resolver) {
+  step(function () {
+
     context.generate('fixtures/indexed.stencil', { watchers: watchers }, step());
     fixture('fixtures/each.xml', step());
-  },
 
-  function (actual, expected) {
+  }, function (actual, expected) {
+
     ok(compare(actual.document, expected), 'generate');
 
     step(function () {
+
       context.reconstitute(actual.document, step());
+
     }, function (actual) {
+
       context.regenerate(actual, { watchers: watchers }, step());
+
     }, function (actual) {
+
       ok(compare(actual.document, expected), 'regenerate');
       watchers.unshift(watchers.pop());
       context.regenerate(actual, { watchers: watchers }, step());
       fixture('fixtures/each-reorder.xml', step());
+
     }, function (actual, expected) {
+
       ok(compare(actual.document, expected), 'reorder');
+
     });
+
   });
 });

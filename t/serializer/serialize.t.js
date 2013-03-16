@@ -7,9 +7,8 @@ require('proof')(1, function (step, equal) {
 
   step(function () {
     fs.readFile(__dirname + '/fixtures/serialize.xml', 'utf8', step());
-  }, function (actual) {
     fs.readFile(__dirname + '/fixtures/serialize.html', 'utf8', step());
-  }, function (expected, actual) {
+  }, function (actual, expected) {
     var dom = new (xmldom.DOMParser)().parseFromString(actual);
     equal(serializer(dom) + '\n', expected, 'serialized');
   });
