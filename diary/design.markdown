@@ -52,6 +52,12 @@ feeling like there needs to be a file system organization that is a convention,
 that these programs take a normal form, it gets wrapped during development, and
 you use browserfy or AMD's pre-processor to wrap the module for production.
 
+Actually, I'm tending toward the notion of each bit of your program being a
+small file, which ought to be okay with Noders. It ends up being like the CGI of
+old. This eschews all that REST nausea, how many verbs can dance on the head of
+a pin? It's a way to go. It lends credibility to the Stencils to come up with an
+analogous way to respond to another URL.
+
 ## Stencil Context and Variable Names
 
 Currently sorting out the details of context. I've got a pattern for working
