@@ -1,5 +1,13 @@
 # Stencil Design
 
+## Stencil from the File System
+
+Using Register, Stencil can be served like static HTML files, like PHP, off of
+the file system. While considering the implementation of this, 
+
+Totally lost the clarity I had that I wanted to record. Not even sure if it is
+about serving from the file system, or naming things, or what.
+
 ## Stencil and Resource Loading
 
 Key to the Stencil strategy is the notion that your scripts run identically on
