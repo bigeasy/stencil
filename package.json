@@ -17,6 +17,8 @@
 , "devDependencies":
   { "proof": "0.0.27"
   , "uglify-js": "~1.3"
+  , "reactor": "0.0.5"
+  , "connect": "~2"
   }
 , "dependencies":
   { "xmldom": "git://github.com/jindw/xmldom.git#8417be2f5be412cc531d299c9fa9a13564b073f5"
