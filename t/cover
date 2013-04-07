@@ -12,5 +12,7 @@ done
 node_modules/.bin/istanbul report --root coverage --dir coverage > /dev/null
 
 sed -i -e s,'^SF:'`pwd`/,SF:, coverage/lcov.info
+sed -i -e '/BRF:0/d' coverage/lcov.info
+sed -i -e '/BRH:0/d' coverage/lcov.info
 
 exit 0
