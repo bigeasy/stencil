@@ -11,7 +11,7 @@ function normalize (url) {
         if (normal.length == 1 && normal[0] == '') throw new Error('underflow');
         normal.pop();
       } else {
-        normal.push(parts[i]); 
+        normal.push(parts[i]);
       }
     } else if ((parts[i] != '' || i == 0) && parts[i] != '.') {
       normal.push(parts[i]);

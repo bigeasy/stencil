@@ -1,14 +1,9 @@
-<html xmlns:s="stencil">
-<!-- -->
+<html>
 <body>
 <ul>
-<!-- -->
-<!-- -->
-<li><!-- -->bigeasy</li>
-<!-- -->
-<li><!-- -->chadsmith</li>
-<!-- -->
-<li><!-- -->azampagl</li>
+<li>bigeasy</li>
+<li>chadsmith</li>
+<li>azampagl</li>
 </ul>
 </body>
 </html>

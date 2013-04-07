@@ -1,18 +1,34 @@
 #!/usr/bin/env node
 
-var context, fs = require('fs');
-require('./proof')(1, function (async, ok, compare) {
+var fs = require('fs');
+require('./proof')(3, function (step, context, fixture, ok, compare) {
 
-  async(function (stencil, resolver) {
-    context = stencil.create(__dirname + '/', resolver.create());
-    context.generate('fixtures/minimal.stencil', { greeting: "Hello, World!" }, async());
-  },
-  
-  function (actual, fixture) {
-    fixture('fixtures/minimal.xml', async());
-  },
-  
-  function (expected, actual, ok, compare) {
+  step(function () {
+
+    context.generate('fixtures/minimal.stencil', {}, step());
+    fixture('fixtures/minimal.xml', step());
+
+  }, function (actual, expected) {
+
     ok(compare(actual.document, expected), 'generate');
+
+    step(function() {
+
+      context.regenerate(actual, {}, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, expected), 'regenerate');
+      context.reconstitute(actual.document, step());
+
+    }, function (actual) {
+
+      context.regenerate(actual, {}, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, expected), 'reconstitute');
+
+    });
   });
 });

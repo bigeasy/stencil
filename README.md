@@ -52,7 +52,7 @@ serialize to older HTML flavors for older browsers.
 
 ## Stencil on the Browser
 
-On the browser, when we genrerate Stencil XML, we simply import it into the
+On the browser, when we generate Stencil XML, we simply import it into the
 existing DOM using `Document.adoptNode`.
 
 ## Remember
@@ -69,7 +69,7 @@ existing DOM using `Document.adoptNode`.
 
 ## Motivations
 
-Revisiting the ideas explorted in a [Java based
+Revisiting the ideas explored in a [Java based
 Stencil](https://github.com/defunct/stencil).
 
 Stencil is asynchronous HTML5 templating for Node.js and the browser. It based
@@ -86,45 +86,6 @@ Stencil is to define three roles, application developer, web developer, and web
 designer, and say the first two roles labor to create a childlike sense of
 wonder in the latter role.
 
-An application developer creates APIs that the web develoepr can query. The web
+An application developer creates APIs that the web developer can query. The web
 developer wraps those APIs in tag libraries, so that the web designer can focus
 on semantic layout.
-
-## Change Log
-
-Changes for each release.
-
-### Version 0.0.2
-
-Released: Pending.
-
- * Implement tag libraries. #38.
- * Implement programatic attributes. #53.
- * A `null` return value eliminates an attribute. #32.
- * Implement `validator` function template used in Strata. #27.
- * Add `try/catch` to error handling wrapper `check`. #26.
- * No more element attached to `value`. #24.
- * Implement pull-to-push. #48. #40.
- * Use same relative URL on the browser as on the server. #47.
- * Update `t/sizes` to work with Bash 3, OS X. #46.
- * Implement serialization. #42.
-
-### Version 0.0.1
-
-Released: Sun Jul 22 22:05:35 UTC 2012.
-
- * Push JSON update into DOM. #37.
- * Implement HTML serializer. #10.
- * Implement `if`. #31.
- * Reference `xmldom` dependency by SHA1.
- * Build on Windows. #36.
- * Implement expression function cache. #9.
- * Normalize URLs. #22. #13. #4. #3.
- * Implement `each`. #7.
- * Create `README.md`. #34. 
- * Implement layouts.
- * Implement require. #15.
- * Build on Travis CI. #41. #19. #6.
- * Create XML comparision function #8. #5.
- * Implement value replacement. #2.
- * Create test directory. #35. #33. #21. #16. #1.

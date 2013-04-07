@@ -1,102 +1,60 @@
-// 1. Write down the problem.
-// 2. Think very hard. 
-// 3. Write down the answer.
-!function (definition) {
-  if (typeof module == "object" && module.exports) module.exports = definition();
+! function (definition) {
+  if (typeof module == "object" && module.exports) definition(require, module.exports, module);
   else if (typeof define == "function" && typeof define.amd == "object") define(definition);
-  else this.tz = definition();
-} (function () { function create (base, resolver) {
-  var slice = [].slice;
+} (function (require, exports, module) { exports.create = function (javascript, xml, json) {
+  var slice = [].slice, templates = {};
+
+  if (!javascript) {
+    javascript = function (url, callback) {
+      require([ url ], function (module) { callback(null, module) });
+    }
+  }
+
+  function get (url, property, callback) {
+    var xhr = new XMLHttpRequest(), done;
+    xhr.open( "GET", url, true );
+    xhr.onerror = function (event) {
+      console.log(event);
+    }
+    xhr.onreadystatechange = function () {
+      if (!done && xhr.readyState == 4 && xhr.status == 200) {
+        done = true;
+        callback(null, xhr[property]);
+      }
+    }
+    xhr.send(null);
+  }
+
+  if (!xml) {
+    xml = function (url, callback) {
+      get(url, 'responseXML', callback);
+    }
+  }
+
+  if (!json) {
+    json = function (url, callback) {
+      get(url, 'responseText', function (error, body) {
+        if (error) callback(error);
+        else callback(null, JSON.parse(body));
+      });
+    }
+  }
 
   function die () {
     console.log.apply(console, slice.call(arguments, 0));
-    return process.exit(1);
-  };
-
-  function say () { return console.log.apply(console, slice.call(arguments, 0)) }
-
-  function extend (to, from) {
-    for (var key in from) to[key] = from[key];
-    return to;
+    process.exit(1);
   }
 
-  // const      ELEMENT_NODE                   = 1;
-  // const      ATTRIBUTE_NODE                 = 2;
-  // const      TEXT_NODE                      = 3;
-  // const      CDATA_SECTION_NODE             = 4;
-  // const      ENTITY_REFERENCE_NODE          = 5;
-  // const      ENTITY_NODE                    = 6;
-  // const      PROCESSING_INSTRUCTION_NODE    = 7;
-  // const      COMMENT_NODE                   = 8;
-  // const      DOCUMENT_NODE                  = 9;
-  // const      DOCUMENT_TYPE_NODE             = 10;
-  // const      DOCUMENT_FRAGMENT_NODE         = 11;
-  // const      NOTATION_NODE                  = 12;
+  function say () { console.log.apply(console, slice.call(arguments, 0)) }
 
-  var NS_STENCIL = "stencil"
-    , XMLNS = "http://www.w3.org/2000/xmlns/"
-    ;
-
-  // Because they can be shared across templates, We cache expressions compiled
-  // into functions by their trimmed source.
-  var functions = {};
-
-  // A structure that surrounds a DOM node, create a level in context stack.
-  function createElement (node) {
-    return { node: node
-           , includes: {}
-           , loading: 0
-           , assignments: {}
-           , context: {}
-           , unresolved: []
-           , attrs: {}
-           };
-  }
-
-  // `nodes` is a node who's children are inserted before the given `node`.
-  function insertSnippet (stencil, snippet, node, nodes) {
-    var identifier = stencil.identifier++
-      , text = '[' + (identifier)  + ']'
-      , parentNode = node.parentNode
-      , child 
-      , comment
-      ;
-
-    extend(snippet, { elements: 0, characters: 0, identifier: identifier });
-
-    // TODO: To implement specific place-holders, keep this comment. Count the
-    // number of character at the outset. If you encounter a place holder,
-    // remove this comment.
-    stencil.comments[text] = parentNode.insertBefore(node.ownerDocument.createComment(text), node);
-
-    // TODO: What to do about wierdos, like comments and PIs.
-    while (nodes.firstChild) {
-      child = nodes.firstChild;
-      switch (child.nodeType) {
-      case 1:
-        snippet.elements++;
-        snippet.characters = 0;
-        break;
-      case 3:
-      case 4:
-        snippet.characters += child.nodeValue.length;
-        break;
-      }
-      parentNode.insertBefore(child, node); 
-    }
-
-    snippet.comment = text;
-
-    return snippet;
-  }
-
-  // TODO: I'd prefer to see this up at the top of the module, underneath say
-  // and die.
   function validator (callback) {
+    if (typeof callback != "function") throw new Error("no callback");
     return function (forward) { return check(callback, forward) }
   }
 
   function check (callback, forward) {
+    if (typeof callback != "function") throw new Error("no callback");
+    if (typeof forward != "function") throw new Error("no forward");
     return function (error) {
       if (error) {
         callback(error);
@@ -110,426 +68,33 @@
     }
   }
 
-  // What follows is `xmlify`. This is a great big function that encapsulates
-  // the state of a frame in a call stack. The stack is within the `decent`
-  // object. The `stencil` parameter is the globalesque stencil object. `done`
-  // is the callback function to call when the method completes.
+  function extend (to, from) {
+    for (var key in from) to[key] = from[key];
+    return to;
+  }
 
-  // STEP: stack and caller are objects, where stack is this (rather self or callee).
-  function xmlify (stencil, descent, done) {
-    var stack = descent.stack
-      , stop = stack.length - 1, returned
-      , base = descent.url.replace(/\/[^\/]+$/, '/')
-      , dirty = {}
-      , okay = validator(done)
-      , elements =
-    { if: function (record, node) {
-        var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(descent), source);
+  function absolutize (base, url) {
+    return normalize(url[0] == '/' ? url : base + '/' + url);
+  }
 
-        if (result) {
-          xmlify(stencil, descent, okay(function (nodes) {
-            while (nodes.firstChild) {
-              node.parentNode.insertBefore(nodes.firstChild, node); 
-            }
-            prune(node);
-          }));
+  function normalize (url) {
+    var parts = url.split('/'), i, I, normal = [];
+    for (i = 0, I = parts.length; i < I; i++) {
+      if (/\?#/.test(parts[i])) {
+        normal.push.apply(normal, parts.slice(i));
+        break;
+      } if (parts[i] == '..') {
+        if (normal.length && normal[normal.length - 1] != '..') {
+          if (normal.length == 1 && normal[0] == '') throw new Error('underflow');
+          normal.pop();
         } else {
-          prune(node);
+          normal.push(parts[i]);
         }
-      }
-    , each: function (record, node) {
-        var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(descent), source);
-        // Need to callback result if it is dynamic.
-
-        replace(result);
-        
-        // TODO Use callback.
-        function replace (result) {
-          var into = node.getAttribute('into')
-            , limit = node.getAttribute('limit')
-            , unique = node.getAttribute('unique')
-            , clone
-            , context
-            , i = 0, item;
-
-          if (limit == '' || limit == null) limit = result.length;
-          limit = Math.min(limit, result.length);
-
-          next();
-
-          // TODO: I'm expecting base to always be a full url.
-          function execute (id) {
-            xmlify(stencil, descent, okay(function (nodes, dirty) {
-              if (id != null) {
-                var snippet = rootObject(context[into],
-                  { unique: { source: unique, value: id }
-                  , into: into
-                  , url: descent.url
-                  , dirty: dirty
-                  , source: source
-                  , node: node.getAttribute('id')
-                  });
-                insertSnippet(stencil, snippet, node, nodes);
-                stencil.snippets[snippet.identifier] = snippet;
-                stack.forEach(function (element) {
-                  for (var key in element.assignments) {
-                    var assignment = element.assignments[key];
-                    if (assignment.collection == 'dynamics') {
-                      stencil.dynamics[assignment.index].dependencies.push(snippet.identifier);
-                    }
-                  }
-                });
-              } else {
-                while (nodes.firstChild) {
-                  node.parentNode.insertBefore(nodes.firstChild, node); 
-                }
-              }
-              next();
-            }));
-          }
-
-          function next () {
-            if (i < limit) {
-              stack.unshift(createElement(stencil.document.importNode(node, true)));
-              stack[0].context[into] = result[i++]; 
-              context = contextSnapshot(descent);
-              if (unique) {
-                execute(evaluate(context, unique));
-              } else {
-                execute();
-              }
-            } else {
-              prune(node);
-            }
-          }
-        }
-      }
-    , value: function (record, node) {
-        var source = node.getAttribute('select').trim()
-          , result = evaluate(contextSnapshot(descent), source)
-          ;
-        dirty[node.getAttribute('id')] = result;
-        var text = node.ownerDocument.createTextNode(result)
-        node.parentNode.insertBefore(text, node);
-        node.parentNode.removeChild(node);
-        record.node = text;
-        resume();
-      }
-    , include: function (record, node) {
-        var parentNode = node.parentNode;
-        while (node.firstChild) parentNode.insertBefore(node.firstChild, node);
-        parentNode.removeChild(node);
-        if (children(parentNode.firstChild)) resume();
-      }
-    , tag: function (record, node) {
-        var parentNode = node.parentNode;
-        while (node.firstChild) parentNode.insertBefore(node.firstChild, node);
-        parentNode.removeChild(node);
-        if (children(parentNode.firstChild)) resume();
-      }
-    , parameter: function (record, node) {
-        assignment(contextSnapshot(descent.caller), stack[1], record.attrs.select, record.attrs.name);
-        node.parentNode.removeChild(node);
-        resume();
-      }
-    , block: function (record, node) {
-        var name = node.getAttribute('name'), child, block, caller = descent.caller, callee;
-        for (child = descent.contents.firstChild; !block && child; child = child.nextSibling) {
-          if (child.namespaceURI == descent.namespaceURI && child.localName == name) {
-            block = child;
-          }
-        }
-        if (name && block) {
-          caller.stack.unshift(createElement(stencil.document.importNode(block, true)));
-          xmlify(stencil, caller, okay(function (nodes) {
-            caller.stack.shift();
-            var child;
-            record.node = { nextSibling: node.nextSibling };
-            while (child = nodes.firstChild) {
-              child = nodes.removeChild(child);
-              child.nextSibling = child.previousSibling = null;
-              child = node.ownerDocument.importNode(child, true);
-              node.parentNode.insertBefore(child, node);
-              record.node = child;
-            }
-            node.parentNode.removeChild(node);
-            resume();
-          }));
-        } else if (!name) {
-          var contents = stencil.document.importNode(descent.contents, true);
-          callee = createDescent( stencil
-                                , { url: caller.url
-                                  , namespaceURI: caller.namespaceURI
-                                  }
-                                , contents
-                                , { }
-                                );
-          callee.caller = descent;
-          callee.stack[0].includes[descent.namespaceURI] = { descent: descent, tags: {} };
-          for (child = node.firstChild; child; child = child.nextSibling) {
-            if (child.namespaceURI == "stencil") {
-              switch (child.localName) {
-              case "tag":
-                callee.stack[0].includes[descent.namespaceURI].tags[child.getAttribute('name')] = child;
-                break;
-              case "parameter":
-                contents.insertBefore(stencil.document.importNode(child, true), contents.firstChild);
-                break;
-              }
-            }
-          }
-          xmlify(stencil, callee, okay(function (nodes, subdirty) {
-            extend(dirty, subdirty);
-            while (nodes.firstChild) {
-              node.parentNode.insertBefore(nodes.firstChild, node); 
-            }
-            var parentNode = node.parentNode;
-            node.parentNode.removeChild(node);
-            resume();
-          }));
-        }
-      }
-    };
-
-    if (!~base.indexOf('/')) base = './';
-
-    if (children(stack[0].node.firstChild)) {
-      done(null, stack[0].node, dirty);
-    }
-
-    // Adding a space makes it easier for me to jump to the assignment.
-    function assignment (context, record, select, into) {
-      record.assignments[into] = { select: select, type: "parameter" };
-      record.context[into] = evaluate(context, select);
-    }
-
-    function prune (node) {
-      node.parentNode.removeChild(node);
-      resume();
-    }
-
-    function rootObject (context, object) {
-      object.descent = descentSnapshot(descent);
-      return object;
-    }
-
-    // @maxogden: jsonp is only for single origin policy restricted GETs
-    function requisite (attr) {
-      var record = stack.shift()
-        , into = attr.localName
-        , href = normalize(attr.nodeValue.replace(/^[^:]+:/, ''))
-        ;
-
-      href = normalize(base + href);
-      resolver(absolutize(stencil.base, href), "text/javascript", check(done, function (module) {
-        if (typeof module == 'function' && module.name == 'dynamic') {
-          var snapshot = descentSnapshot(descent, record);
-          var registration = module(true, x(stencil, { dependencies: [], href: href }, snapshot, function (dynamic) {
-            record.context[into] = dynamic.value;
-            record.assignments[into] = { index: dynamic.index, collection: 'dynamics' };
-            record.loading++;
-            if (visit(record)) resume();
-          }));
-          stencil.registrations.push(registration);
-        } else {
-          record.context[into] = module;
-          record.loading++;
-          if (visit(record)) resume();
-        }
-      }));
-
-      return false;
-    }
-
-    function include (record) {
-      var node = record.node
-        , attr = record.include
-        , href = normalize(base + attr.nodeValue.replace(/^[^:]+:/, ''))
-        ;
-
-      fetch(stencil.base, href, okay(function (template) {
-        var root = template.nodes
-          , child
-          ;
-
-        if (!template.tags) {
-          template.tags = {};
-          if (root.localName == 'include' && root.namespaceURI == NS_STENCIL) {
-            for (child = root.firstChild; child; child = child.nextSibling) {
-              if (child.localName == 'tag' && child.namespaceURI == NS_STENCIL) {
-                var nodes = stencil.document.importNode(root, false);
-                nodes.appendChild(stencil.document.importNode(child, true));
-                template.tags[child.getAttribute('name')] = nodes;
-              }
-            }
-          }
-        }
-
-        stack[0].includes[attr.nodeValue] = template;
-
-        record.include = false;
-        if (visit(stack.shift())) resume();
-      }));
-    }
-
-    function tagged (include, tag, record) {
-      var node = record.node
-        , href = normalize(base + normalize(node.namespaceURI.replace(/^[^:]+:/, '')))
-        , fragment = stencil.document.createDocumentFragment()
-        , callee
-        ;
-
-      fragment.appendChild(stencil.document.importNode(tag, true));
-
-      if (include.descent) {
-        callee = createDescent( stencil
-                              , { url: href
-                                , namespaceURI: node.namespaceURI
-                                }
-                              , fragment
-                              , {} );
-        // TODO: Also assignment.
-        callee.stack[0].context.attr = record.attrs;
-      } else {
-        callee = createDescent( stencil
-                              , { url: href
-                                , namespaceURI: node.namespaceURI
-                                , contents: node
-                                }
-                              , fragment
-                              , { source: { file: "foo.js", url: href }
-                                , attr: record.attrs
-                                }
-                              );
-      }
-
-      callee.caller = descent;
-
-      xmlify(stencil, callee, okay(function (nodes, subdirty) {
-        extend(dirty, subdirty);
-        var child, parentNode = node.parentNode;
-        record.node = { nextSibling: node.nextSibling };
-        while (child = nodes.firstChild) {
-          child = nodes.removeChild(child);
-          child.nextSibling = child.previousSibling = null;
-          child = node.ownerDocument.importNode(child, true);
-          parentNode.insertBefore(child, node);
-        }
-        parentNode.removeChild(node);
-        comments(stencil, parentNode);
-        resume();
-      }));
-    }
-
-    function resume () {
-      var record = stack.shift(), stopped;
-      while (stack.length != stop && children(record.node.nextSibling)) {
-        record = stack.shift();
-      }
-      if (!returned && stack.length == stop) {
-        returned = true;
-        done(null, record.node, dirty);
+      } else if ((parts[i] != '' || i == 0) && parts[i] != '.') {
+        normal.push(parts[i]);
       }
     }
-
-    function descentSnapshot (descent) {
-      var vargs = descent.stack.slice(0).reverse().concat(slice.call(arguments, 1))
-        , snapshot = { stack: [], url: descent.url, namespaceURI: descent.namespaceURI }
-        , i, I, include, tag, includes
-        ;
-      for (;;) {
-        if (descent.contents) {
-          snapshot.contents = descent.contents.getAttribute('id');
-        }
-        for (i = 0, I = vargs.length; i < I; i++) {
-          includes = {};
-          for (include in vargs[i].includes) {
-            includes[include] = { tags: {} };
-            for (tag in vargs[i].includes[include].tags) {
-              includes[include].tags[tag] = vargs[i].includes[include].tags[tag].getAttribute('id');
-            }
-          }
-          snapshot.stack.push({ assignments: extend({}, vargs[i].assignments), includes: includes });
-        }
-        if (!descent.caller) break;
-        descent = descent.caller;
-        vargs = descent.stack.slice(0).reverse();
-        snapshot = { callee: snapshot, stack: [], url: descent.url, namespaceURI: descent.namespaceURI };
-      }
-      return snapshot;
-    }
-
-    function children (child) {
-      for (; child != null; child = child.nextSibling) {
-        if (!visit(createElement(child))) return false;
-      }
-      return true;
-    }
-
-    function attribute () {
-      var record = stack.shift()
-        , node = record.node
-        , attr = record.unresolved.shift()
-        , isParameter = node.namespaceURI == 'stencil' && node.localName == 'parameter'
-        , result = evaluate(contextSnapshot(isParameter ? descent.caller : descent), attr.nodeValue.trim())
-        ;
-      node.removeAttributeNode(attr);
-      if (result != null) {
-        result = String(result);
-        node.setAttribute(attr.localName, result);
-        record.attrs[attr.localName] = result;
-      }
-      if (visit(record)) resume();
-    }
-
-    function visit (record) {
-      var node = record.node, completed, i, I, attr, attrs = record.attrs, protocol, tag, inc;
-      stack.unshift(record);
-      if (node.nodeType == 1) {
-        for (I = node.attributes.length; record.loading < I; record.loading++) {
-          attr = node.attributes.item(record.loading);
-          switch (attr.namespaceURI || 0) {
-          case "http://www.w3.org/2000/xmlns/":
-            if (protocol = attr.nodeValue.split(/:/).shift()) {
-              if (!"require".indexOf(protocol)) return requisite(attr);
-              if (!"include".indexOf(protocol)) record.include = attr;
-            }
-            break;
-          case "stencil":
-            record.unresolved.push(attr);
-            break;
-          case 0:
-            attrs[attr.localName] = attr.nodeValue;
-            break;
-          }
-        }
-        if (record.unresolved.length) {
-          return attribute();
-        }
-        if (record.include) {
-          return include(record);
-        }
-        if ("stencil" == node.namespaceURI && elements[node.localName]) {
-          return elements[node.localName](record, node); 
-        } else if (node.namespaceURI) {
-          for (i = 0, I = stack.length; i < I; i++) {
-            if ((inc = stack[i].includes[node.namespaceURI]) && (tag = inc.tags[node.localName])) {
-              return tagged(inc, tag, record);
-            }
-          }
-        }
-        for (attr in attrs) {
-          node.setAttributeNS(null, attr, String(attrs[attr]));
-        }
-      } else if (node.nodeType == 4) {
-        node.parentNode.replaceChild(document.createTextNode(node.nodeValue), node);
-      }
-      completed = children(node.firstChild);
-      stack.shift();
-      return completed;
-    }
+    return normal.join('/');
   }
 
   // We cache expressions compiled into functions by their trimmed source. We
@@ -549,421 +114,681 @@
   //
   // The nature of Stencils is such that the do not have much logic in their
   // expressions. Maybe our economies in assignment will survive application.
-  function evaluate (context, source) {
-    var parameters = [], values = [], callbacks = 0
-      , i, I, name, result, compiled;
+
+  //
+  var functions = {};
+
+  //
+  function evaluate (source, context, callback) {
+    var parameters = ['$'], values = [context], callbacks = 0,
+        i, I, name, result, compiled;
     source = source.trim();
     compiled = functions[source];
     if (!compiled) {
-      for (name in context) parameters.push(name);
-      functions[source] = compiled =
-      { parameters: parameters
-      , expression: Function.apply(Function, parameters.concat([ "return " + source ]))
+      parameters.push.apply(parameters, Object.keys(context));
+      functions[source] = compiled = {
+        parameters: parameters,
+        expression: Function.apply(Function, parameters.concat([ "return " + source ]))
       }
     } else {
       parameters = compiled.parameters;
     }
-    for (i = 0, I = parameters.length; i < I; i++) {
+    for (i = 1, I = parameters.length; i < I; i++) {
       values.push(context[parameters[i]]);
     }
+    invoke(compiled.expression.apply(this, values), context, callback);
+  }
+
+  function invoke (result, context, callback) {
     try {
-      result = compiled.expression.apply(this, values);
-    } catch (error) {
-      throw error;
-      done(error);
-    }
-    return result;
-  }
-
-  var templates = {};
-
-  function absolutize (base, url) {
-    return normalize(url[0] == '/' ? url : base + '/' + url);
-  }
-
-  function normalize (url) {
-    var parts = url.split('/'), i, I, normal = [];
-    for (i = 0, I = parts.length; i < I; i++) {
-      if (/\?#/.test(parts[i])) {
-        normal.push.apply(normal, parts.slice(i));
-        break;
-      } if (parts[i] == '..') {
-        if (normal.length && normal[normal.length - 1] != '..') {
-          if (normal.length == 1 && normal[0] == '') throw new Error('underflow');
-          normal.pop();
-        } else {
-          normal.push(parts[i]); 
-        }
-      } else if ((parts[i] != '' || i == 0) && parts[i] != '.') {
-        normal.push(parts[i]);
+      if (typeof result == "function") {
+        result(context, callback);
+      } else {
+        callback(null, result);
       }
+    } catch (e) {
+      callback(e);
     }
-    return normal.join('/');
   }
 
-  function fetch (base, url, callback) {
-    if (templates[url]) callback(null, templates[url]);
-    else resolver(absolutize(base, url), "text/xml", check(callback, function (document) {
-      // Give each Stencil element an `id` attribute that will be consistent on
-      // the server and in the browser.
-      var each = document.getElementsByTagName('*')
-        , namespaces = { stencil: true }
-        , id = 0
-        , element, i, I, j, attribute, protocol;
-      for (i = 0, I = each.length; i < I; i++) {
-        element = each.item(i);
-        for (j = element.attributes.length - 1; j != -1; j--) {
-          if (element.attributes[j].namespaceURI == XMLNS
-          && (protocol = element.attributes[j].nodeValue.split(/:/).shift())
-          && (!"include".indexOf(protocol))) {
-              namespaces[element.attributes[j].nodeValue] = true;
-          }
-        }
-        if (namespaces[element.namespaceURI])  {
-          element.setAttribute('id', url + '#' + (id++));
-        }
-      }
-      callback(null,  templates[url] =
-      { url: url
-      , document: document
-      , nodes: document.documentElement
-      });
-    }));
+  // Placeholders until issues in `xmldom` are resolved.
+  function insertBefore (parentNode, child, reference) {
+    if (child.nodeType == 11 && !child.firstChild) {
+      return child;
+    }
+    return parentNode.insertBefore(child, reference);
   }
 
-  function comments (stencil, child) {
-    for (;child;child = child.nextSibling) {
+  function removeChild (parentNode, child) {
+    child = parentNode.removeChild(child);
+    if (child.parentNode) child.parentNode = null;
+    if (child.nextSibling) child.nextSibling = null;
+    if (child.previousSibling) child.previousSibling = null;
+    return child;
+  }
+
+  function vivify (page, path, node) {
+    var child, parts;
+    for (child = node.firstChild; child; child = child.nextSibling) {
       if (child.nodeType == 8) {
-        if (/^\[\d+\]$/.test(child.nodeValue)) {
-          stencil.comments[child.nodeValue] = child;
+        if (/^[\w\/.-]+:\d+(?:;[\d\w%]+)?$/.test(child.nodeValue)) {
+          parts = child.nodeValue.split(/;/);
+          if (parts.length == 2) {
+            follow(page, path.concat(parts[0])).items[parts[1]] = true;
+          }
+          path.push(child.nodeValue);
+          follow(page, path).begin = child;
+        } else if (child.nodeValue == "?") {
+          follow(page, path).end = child;
+          path.pop();
+        }
+      }
+      vivify(page, path, child);
+    }
+  }
+
+  function reconstitute (document, callback) {
+    var okay = validator(callback), child, url;
+
+    for (child = document.documentElement.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType == 8) {
+        url = child.nodeValue.replace(/^stencil:/, '');
+        if (url.length != child.nodeValue.length) break;
+        url = null;
+      }
+    }
+
+    fetch(url, okay(fetched));
+
+    function fetched (template) {
+      var page = {
+        template: template,
+        document: document,
+        url: template.url,
+        directives: template.directives,
+        instanceId: 0,
+        markers: {}
+      }
+
+      vivify(page, [], document);
+
+      callback(null, page);
+    }
+  }
+
+  function copy (document, node, end) {
+    var fragment = document.createDocumentFragment();
+    while (node != end) {
+      insertBefore(fragment, document.importNode(node, true));
+      node = node.nextSibling;
+    }
+    return fragment;
+  }
+
+  function erase (node, end) {
+    var next;
+    while (node != end) {
+      next = node.nextSibling;
+      removeChild(node.parentNode, node);
+      node = next;
+    }
+  }
+
+  function empty (marker) {
+    return marker.begin.nextSibling == marker.end;
+  }
+
+  function fill (marker, node) {
+    insertBefore(marker.end.parentNode, node, marker.end);
+  }
+
+  function cut (marker) {
+    var fragment = marker.begin.ownerDocument.createDocumentFragment(),
+        node = marker.begin, end = marker.end.nextSibling, next;
+    while (node !== end) {
+      next = node.nextSibling;
+      insertBefore(fragment, removeChild(node.parentNode, node));
+      node = next;
+    }
+    return fragment;
+  }
+
+  var handlers = {
+    // The value directive replaces a value element with text from the current
+    // context.
+    value: function (parent, frames, page, template, includes,
+                     directive, element, context, path, generating, callback) {
+      var source = element.getAttribute("select").trim(), marker = follow(page, path);
+
+      evaluate(source, context, check(callback, function (value) {
+        // Delete the directive body.
+        erase(marker.begin.nextSibling, marker.end);
+
+        // Insert the text value.
+        fill(marker, page.document.createTextNode(value));
+
+        callback();
+      }));
+    },
+    if: function (parent, frames, page, template, includes,
+                  directive, element, context, path, generating, callback) {
+      var source = element.getAttribute("select").trim(), marker = follow(page, path);
+
+      evaluate(source, context, check(callback, function (value) {
+        parent.condition = !!value;
+        // If the directive body is already in the document, we have nothing to
+        // do, we continue and rewrite the body.
+        if (!value) {
+          erase(marker.begin.nextSibling, marker.end);
+          follow(page, path).markers = {};
+          callback();
         } else {
-          var json = child.nodeValue.replace(/^\/\/ Regions./, '');
-          if (json.length != child.nodeValue.length) {
-            extend(stencil, JSON.parse(json));
+          if (empty(marker)) {
+            var prototype = follow(template.page, directive.path),
+                fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+            vivify(page, path, fragment);
+            fill(marker, fragment);
+            generating = true;
           }
+          rewrite({}, frames, page, template, includes, directive.directives,
+                  path, context, generating, callback);
         }
-      }
-      comments(stencil, child.firstChild);
-    }
-  }
-
-  function x (stencil, dynamic, stack, initializer) {
-    if (dynamic.index == null) {
-      dynamic.index = stencil.dynamics.length;
-    }
-    stencil.dynamics[dynamic.index] = dynamic;
-    return function (error, object) {
-      dynamic.value = object;
-      if (initializer) {
-        initializer(dynamic);
-        initializer = null;
+      }));
+    },
+    else: function (parent, frames, page, template, includes,
+                    directive, element, context, path, generating, callback) {
+      element.setAttribute("select", "true");
+      handlers.elseif(parent, frames, page, template, includes,
+                      directive, element, context, path, generating, callback);
+    },
+    elseif: function (parent, frames, page, template, includes,
+                      directive, element, context, path, generating, callback) {
+      var marker = follow(page, path);
+      if (parent.condition) {
+        erase(marker.begin.nextSibling, marker.end);
+        follow(page, path).markers = {};
+        callback();
       } else {
-        update(stencil, dynamic.dependencies.slice(0));
+        handlers["if"](parent, frames, page, template, includes,
+                       directive, element, context, path, generating, callback);
       }
-    }
-  }
+    },
+    each: function (parent, frames, page, template, includes,
+                    directive, element, context, path, generating, callback) {
+      var source = element.getAttribute("select").trim(),
+          idSource = element.getAttribute("key").trim(),
+          into = element.getAttribute("into").trim(),
+          head = follow(page, path), items = head.items,
+          previous = head.end, parentNode = previous.parentNode,
+          base = path.slice(0, path.length - 2),
+          markers = follow(page, base).markers,
+          index = 0,
+          okay = validator(callback);
 
-  function assign (stencil, descent, i) {
-    stack[i].context = {};
-    var context = contextSnapshot(descent, i);
-    for (var key in stack[i].assignments) {
-      var assignment = stack[i].assignments[key];
-      if (assignment.index != null) {
-        stack[i].context[key] = stencil.dynamics[assignment.index].value;
-      } else if (assignment.value) {
-        stack[i].context[key] = assignment.value;
-      } else {
-        die(assignment); 
-      }
-    }
-  }
+      head.items = {};
 
-  function update (stencil, dependencies) {
-    var regions = {}, tables = {};
-
-    step();
-
-    // Probably not using snapshot.
-
-    function step () {
-      if (!dependencies.length) return;
-
-      var region = stencil.snippets[dependencies.shift()]
-        , descent = region.descent, includes = {}
-        , reversed, contexts = {}, context, entry
-        , include, tag, i, I;
-
-      while (descent) {
-        context = contexts[descent.url] = contexts[descent.url] || {};
-        reversed = { caller: reversed
-                   , stack: []
-                   , contents: descent.contents
-                   , url: descent.url
-                   , namespaceURI: descent.namespaceURI
-                   , includes: descent.includes
-                   };
-        for (i = 0, I = descent.stack.length; i < I; i++) {
-          var entry = descent.stack[i];
-          for (include in entry.includes) {
-            for (tag in entry.includes[include].tags) {
-              includes[entry.includes[include].tags[tag].replace(/\#\d+$/, '')] = true;
-            }
-          }
-          reversed.stack[i] = { context: {}, includes: entry.includes, assignments: entry.assignments };
-          for (var key in descent.stack[i].assignments) {
-            var assignment = descent.stack[i].assignments[key];
-            if (assignment.index != null) {
-              context[key] = reversed.stack[i].context[key] = stencil[assignment.collection][assignment.index].value;
-            } else {
-              die(assignment); 
-            }
-          }
-        }
-        reversed.stack.reverse();
-        descent = descent.callee;
+      if (!empty(head)) {
+        erase(head.begin.nextSibling, head.end);
+        follow(page, path).markers = {};
       }
 
-      var context = contexts[region.url]
-        , key = region.url + '#' + region.identifier, table;
+      evaluate(source, context, okay(function (value) {
+        if (!Array.isArray(value)) value = [ value ];
+        value = value.slice();
 
-      if (!(table = tables[key])) {
-        table = tables[key] = {}; 
-        evaluate(context, region.source).forEach(function (record) {
-          context[region.into] = record;
-          table[evaluate(context, region.unique.source)] = record;
-        });
-      }
+        shift();
 
-      includes = Object.keys(includes);
-
-      getIncludes();
-
-      function getIncludes (error, template) {
-        var iterator, i, I, include, element, tag, id;
-        if (error) throw error;
-        if (includes.length) fetch(stencil.base, includes.shift(), getIncludes);
-        else {
-          iterator = reversed;
-          while (iterator) {
-            for (i = iterator.stack.length - 1; i != -1; i--) {
-              for (include in iterator.stack[i].includes) {
-                for (tag in iterator.stack[i].includes[include].tags) {
-                  id = iterator.stack[i].includes[include].tags[tag]
-                  element = templates[id.replace(/#\d+$/, '')].document.getElementById(id);
-                  iterator.stack[i].includes[include].tags[tag] = element;
-                }
-              }
-            }
-            iterator = iterator.caller;
-          }
-          if (reversed.contents) {
-            fetch(stencil.base, reversed.contents.replace(/#\d+$/, ''), getTemplate);
+        function shift () {
+          var id, marker, part;
+          if (value.length) {
+            context[into] = value.shift();
+            if (idSource) evaluate(idSource, context, okay(scribble));
+            else scribble(index++);
           } else {
-            getTemplate();
+            for (id in items) {
+              part = directive.id + ";" + id;
+              marker = follow(page, base.concat([ part ]));
+              erase(marker.begin, marker.end.nextSibling);
+              delete markers[part];
+            }
+            callback();
           }
         }
-      }
 
-      function getTemplate (error, contents) {
-        if (error) throw error;
-        if (contents) {
-          reversed.contents = contents.document.getElementById(reversed.contents);
+        function scribble (id) {
+          id = escape(id);
+
+          delete items[id];
+          head.items[id] = true;
+
+          var qualified = directive.id + ";" + id,
+              path = base.concat([ qualified ]),
+              marker = follow(page, path);
+
+          if (marker.begin) {
+            if (previous.nextSibling !== marker.begin) {
+              insertBefore(previous.parentNode, cut(marker), previous.nextSibling);
+            }
+          } else {
+            var prototype = follow(template.page, directive.path),
+                fragment = copy(page.document, prototype.begin.nextSibling, prototype.end.nextSibling);
+            insertBefore(fragment, page.document.createComment(qualified), fragment.firstChild);
+            vivify(page, base, fragment);
+            insertBefore(previous.parentNode, fragment, previous.nextSibling);
+            generating = true;
+          }
+
+          previous = follow(page, path).end;
+
+          rewrite({}, frames, page, template, includes, directive.directives,
+                  path, context, generating, okay(shift));
         }
-        fetch(stencil.base, region.url, generate);
+      }));
+    },
+    block: function (parent, frames, page, template, includes, directive, element,
+                     context, path, generating, callback) {
+      var name = element.getAttribute("name"), marker, fragment, definition,
+          caller = frames[0], prototype, i, I;
+      if (name) {
+        definition = caller.directive.directives.filter(function (directive) {
+          return directive.element.localName == name
+              && directive.element.namespaceURI == caller.directive.element.namespaceURI;
+        }).shift();
+      } else {
+        definition = caller.directive;
       }
+      if (generating) {
+        prototype = follow(caller.template.page, definition.path);
+        if (prototype.begin.nextSibling != prototype.end) {
+          fragment = copy(page.document, prototype.begin.nextSibling, prototype.end);
+          marker = follow(page, path);
+          marker.markers = {};
+          vivify(page, path, fragment);
+          erase(marker.begin.nextSibling, marker.end);
+          insertBefore(marker.end.parentNode, fragment, marker.end);
+        }
+      }
+      frames = [{ template: template, directive: directive }].concat(frames);
+      rewrite({}, frames, page, caller.template, includes, definition.directives,
+              path, context, generating, callback);
+    },
+    tag: function (parent, frames, page, template, includes, directive, element,
+                   context, path, generating, callback) {
+      var marker = follow(page, path);
+      if (!empty(marker)) {
+        erase(marker.begin.nextSibling, marker.end);
+        follow(page, path).markers = {};
+      }
+      directive = extend({}, directive);
+      directive.frame = frames[0];
+      includes[includes[template.url]].tags[element.getAttribute("name")] = directive;
+      callback();
+    }
+  }
 
-      function generate (error, template) {
-        if (error) throw error;
-
-        //var descent = createDescent(stencil, { url: region.url });
-        //descent.stack = stack;
-        reversed.stack[0].context[region.into] = table[region.unique.value];
-        reversed.stack[0].node = stencil.document.importNode(template.document.getElementById(region.node), true);
-        reversed.url = region.url;
-
-        // TODO INDENT
-        xmlify(stencil, reversed, function (error, nodes, dirty) {
-          if (error) throw error;
-          // Somehow, I don't believe the counts will mismatch without this also
-          // mismatching.
-          var count = 0;
-          for (var key in dirty) {
-            if (region.dirty[key] === dirty[key]) {
-              count++;
-            }
-          }
-          if (Object.keys(region.dirty).length != count) {
-            var comment = stencil.comments[region.comment]
-              , parentNode = comment.parentNode
-              , factory = comment.ownerDocument
-              , count, removed, chars
-              ;
-            for (count = region.elements; count; count--) {
-              while (parentNode.removeChild(comment.nextSibling).nodeType != 1);
-            }
-            var length;
-            for (count = region.characters; count;) {
-              removed = parentNode.removeChild(comment.nextSibling)
-              count -= (length = Math.min(count, removed.nodeValue.length));
-            }
-            if (length < removed.nodeValue.length) {
-              var text = removed.nodeValue.slice(length);
-              parentNode.insertBefore(removed, comment.nextSibling);
-              removed.splitText(length);
-              parentNode.removeChild(removed.nextSibling);
-            }
-            stencil.comments[region.comment] = parentNode.insertBefore(parentNode.ownerDocument.createComment(comment.nodeValue), comment);
-            while (nodes.firstChild) {
-              parentNode.insertBefore(nodes.firstChild, comment);
-            }
-            parentNode.removeChild(comment);
-          }
-          step();
+  function rewrite (parent, frames, page, template, includes,
+                    directives, path, context, generating, callback) {
+    var okay = validator(callback), prefix = '$';
+    context = extend(Object.create({ $: function (url) {
+      return function (context, callback) {
+        json(absolutize(template.url + '/..', url), function (error, result) {
+          callback(error, result);
         });
       }
+    }}), context);
+    if (frames[0].attributes) {
+      frames[0].attributes.forEach(function (attributes) {
+        context[prefix + 'attributes'] = attributes;
+        prefix += '$';
+      });
+    } else {
+      while (context[prefix + 'attributes']) {
+        delete context.$attributes;
+        prefix += '$';
+      }
     }
-  }
+    directives = directives.slice(0);
 
-  // TODO: Cache it. Set it to `null` on assignment.
-  function contextSnapshot (descent) {
-    var stackStack = [], url = descent.url, context = [], stack, name, i;
-    while (descent) {
-      if (descent.url == url) stackStack.push(descent);
-      descent = descent.caller;
+    shift();
+
+    function shift (error) {
+      if (error) callback(error);
+      else if (directives.length) consume();
+      else callback();
     }
-    while (stackStack.length) {
-      stack = stackStack.pop().stack;
-      for (i = stack.length - 1; i != -1; i--) {
-        for (name in stack[i].context) {
-          context[name] = stack[i].context[name];
+
+    function consume () {
+      var directive = directives.shift(),
+          operations = directive.operations.slice(0),
+          sub = path, include,
+          attributed;
+
+      // **TODO**: Probably doesn't do much.
+      includes = extend({}, includes);
+
+      if (directive.id) {
+        sub = path.concat(directive.id);
+        var element = directive.element || follow(page, sub).end.nextSibling;
+      }
+
+      operate(operations.shift());
+
+      function operate (operation) {
+        switch (operation && operation.type) {
+        case "require":
+          javascript(absolutize(template.url + '/..', operation.href), okay(function (module) {
+            invoke(module, context, okay(function (value) {
+              context[operation.name] = value;
+              operate(operations.shift());
+            }));
+          }));
+          break;
+        case "include":
+          fetch(absolutize(template.url + '/..', operation.href), okay(function (included) {
+            // See `tag` directive handler for where we need to lookup the URL
+            // of the included document by the URI specified as the attribute
+            // value to the `xmlns:*` attribute.
+            included = extend({}, included);
+            included.tags = extend({}, included.tags);
+            includes[operation.uri] = included;
+            includes[included.url] = operation.uri;
+            operate(operations.shift());
+          }));
+          break;
+        case "attribute":
+          evaluate(operation.value, context, okay(function (value) {
+            if (value == null) {
+              element.removeAttribute(operation.name);
+            } else {
+              element.setAttribute(operation.name, value);
+            }
+            operate(operations.shift());
+          }));
+          break;
+        default:
+          var included;
+          if (directive.interpreter) {
+            directive.interpreter(parent, frames, page, template, includes,
+                                  directive, element, context, sub, generating, shift);
+          } else if (directive.element && (included = includes[directive.element.namespaceURI])) {
+            var attributes = {};
+            for (var i = 0, I = directive.element.attributes.length; i < I; i++) {
+              var attribute = directive.element.attributes[i];
+              if (attribute.namespaceURI == null) attributes[attribute.localName] = attribute.nodeValue;
+            }
+            var include = included.tags[directive.element.localName];
+            if (generating) {
+              var prototype = follow(included.page, include.path);
+                  var marker = follow(page, sub);
+                  var fragment = copy(page.document, prototype.begin, prototype.end.nextSibling);
+              vivify(page, sub, fragment);
+              erase(marker.begin.nextSibling, marker.end);
+              fill(marker, fragment);
+            }
+            sub.push(include.id);
+            var frame = include.frame || { attributes: [],
+                                           template: template,
+                                           directive: directive,
+                                           includes: includes }
+            frame.attributes.unshift(attributes);
+            frames = [frame].concat(frames);
+            rewrite({}, frames, page, included, includes, include.directives,
+                    sub, context, generating, okay(shift));
+          }
+          else {
+            rewrite({}, frames, page, template, includes, directive.directives,
+                    sub, context, generating, shift);
+          }
+          break;
         }
       }
     }
-    return context;
   }
 
-  var stencils = {}, stencilId = 0;
-  // STEP: NEEDS CALLBACK.
-  function deserialize (document) { 
-    var stencil = { comments: {}, registrations: [] };
-    comments(stencil, document.documentElement);
-    stencil.document = document;
-    stencil.base = base;
-    stencil.node = document.documentElement;
-    stencil.node.__stencil__ = stencilId++;
-    stencils[stencil.node.__stencil__] = stencil;
-    var dynamics = stencil.dynamics.slice(0);
+  // Compile the template at the given url and send it to the given callback.
+  function fetch (url, callback) {
+    var okay = validator(callback), identifier = 0;
 
-    relink();
+    // Send an pre-compiled template if we have one, otherwise compile the
+    // template and cache it.
+    if (templates[url]) callback(null, templates[url]);
+    else xml(url, okay(compile));
 
-    function relink() {
-      if (!dynamics.length) return;
+    // We compile the URL into a parallel tree of directives. The directives
+    // identify the elements that define them in the document using an
+    // automatically generated id.
+    //
+    // Some directives are directive attributes that can be applied to any
+    // element, not just a Stencil attribute. Directive attributes include
+    // include object constructors, template includes, and dynamic attributes.
+    // When they are applied to an element that is not in the Stencil namespace,
+    // we add a marker element as the element's first child, to mark the user
+    // element in the template document, without abusing the id of the user
+    // element, which would be visible in the output.
+    //
+    // With the markers in place, all of the element participants in the
+    // template can have a unique id, without overriding, or stepping around,
+    // any user specified ids on user elements. The user could still choose to
+    // use an id in her markup that collides with the auto generated ids, but
+    // that is a collision that is easy to avoid. The generated ids are a
+    // catenation of Stencil path and sequence number, unlikely to coincide
+    // with a desirable name for a section of web page.
+    //
+    // There is no need for a namespace stack, because we're emitting HTML5,
+    // which does not support namespaces. All namespaces will be stripped before
+    // serialization. The namespace declarations are removed from the template
+    // at they are encountered.
+    //
+    // We are using namespaces as part of the mechanics of the template
+    // language, of course, but we don't need to track namespace mappings. We're
+    // only using the namespace URLs as to locate our objects and templates.
+    // We're not actually using the namespace created in the document.
+    //
+    // Finally, note that we're not stripping namespaces if they are not special
+    // to stencil, so namespaces can be used in the document, but their might be
+    // problems with serialization if the document. We'll cross this bridge when
+    // we get to it.
+    //
+    // There are some applications of HTML5 that use XHTML5, so it may be
+    // crossed by people who adopt the library. Let me know if you care about
+    // XHTML5 and we'll talk.
 
-      var dynamic = dynamics.shift();
-      resolver(absolutize(stencil.base, dynamic.href), "text/javascript", function (error, module) {
-        if (error) throw error;
-        var registration = module(false, x(stencil, dynamic, []));
-        stencil.registrations.push(registration);
+    // Locate all of our directive elements and create a tree of them.
+    function compile (document) {
+      // Our directives and a temporary list of user elements with Stencil
+      // directive attributes.
+      var directives = [], tags = {},
+          fragment = document.createDocumentFragment(),
+          page = { markers: {}, document: document, fragment: fragment };
+
+      insertBefore(fragment, document.documentElement);
+
+      // Visit all the nodes creating a tree of directives.
+      unravel(page.document, { stencil: true }, tags, directives, [], fragment);
+      vivify(page, [], fragment);
+
+      // Create our template.
+      templates[url] = {
+        url: url, page: page, directives: directives, tags: tags
+      };
+
+      // Send the template to our caller.
+      callback(null, templates[url]);
+    }
+
+    // Create a directive structure from the node, if the node is a directive.
+    function directivize (namespaces, node) {
+      // Only elements can be directives.
+      if (node.nodeType != 1) return;
+
+      // Gather object constructors, template includes and dynamic attributes
+      // into our array of operations.
+      var operations = [], attributes = [], properties = {}, includes = [];
+      for (var i = 0; i < node.attributes.length; i++) {
+        var attr = node.attributes[i], protocol;
+        switch (attr.namespaceURI) {
+        case "http://www.w3.org/2000/xmlns/":
+          if (protocol = attr.nodeValue.split(/:/).shift()) {
+            var href = normalize(attr.nodeValue.substring(protocol.length + 1));
+            if (!"require".indexOf(protocol)) {
+              operations.unshift({ type: "require", href: href, name: attr.localName });
+              namespaces[attr.nodeValue] = true;
+            } else if (!"include".indexOf(protocol)) {
+              operations.unshift({ type: "include", href: href, uri: attr.nodeValue });
+              namespaces[attr.nodeValue] = true;
+            }
+          }
+          if (namespaces[attr.nodeValue]) {
+            node.removeAttributeNode(attr);
+            i--;
+          }
+          break;
+        case "stencil":
+          attributes.push({ type: "attribute", name: attr.localName, value: attr.nodeValue });
+          break;
+        }
+      }
+
+      // Clear out the calculated attribute declarations from the prototype.
+      attributes.forEach(function (attribute) {
+        node.removeAttributeNS("stencil", attribute.name);
       });
+
+      var directive = { operations: operations.concat(attributes), directives: [], tags: {} };
+
+      if (namespaces[node.namespaceURI]) {
+        directive.element = node;
+        directive.interpreter = handlers[node.localName];
+      }
+
+      // We have a directive if the namespace is the Stencil namespace, or we've
+      // discovered calculated attributes. If we're not a Stencil directive, we
+      // insert a placeholder marker as a child of the element.
+      if (namespaces[node.namespaceURI] || attributes.length) {
+        directive.id = url + ":" + (identifier++);
+      }
+
+      // Otherwise, we have operations that will alter the variable context, but
+      // no calculated attributes nor directives that rewrite the DOM.
+      if (directive.id || directive.operations.length) {
+        return directive;
+      }
     }
 
-    return stencil;
-  }
+    function unravel (document, namespaces, tags, directives, path, node) {
+      if (!tags) throw new Error();
+      var directive, child, parentNode, marker, end;
+      if (directive = directivize(namespaces, node)) {
+        if (directive.id) {
+          path = path.concat(directive.id);
+        }
+        directive.path = path;
 
-  function deregister (node) {
-    var stencil = stencils[node.__stencil__];
-    stencil.registrations.forEach(function (unlink) {
-      unlink();
-    });
-    delete stencils[node.__stencil__];
-  }
+        directives.push(directive);
+        directives = directive.directives;
 
-  // A structure that surrounds a DOM node, create a level in context stack.
-  function createDescent (stencil, descent, node, assignments) {
-    var key, actual = {};
-    extend(descent, { stack: [] });
-    descent.stack.unshift(createElement(node));
-    for (key in assignments) {
-      stencil.statics.push({ value: assignments[key] });
-      descent.stack[0].assignments[key] = { index: stencil.statics.length - 1, collection: 'statics' };
-      descent.stack[0].context[key] = assignments[key];
+        if (node.namespaceURI == "stencil" && node.localName == "tag") {
+          tags[node.getAttribute("name")] = directive;
+          tags = directive.tags;
+        }
+      }
+      for (child = node.firstChild; child; child = child.nextSibling) {
+        child = unravel(document, extend({}, namespaces), tags, directives, path, child);
+      }
+      if (directive && directive.id) {
+        end = node;
+        parentNode = node.parentNode;
+        insertBefore(parentNode, document.createComment(directive.id), node);
+        if (namespaces[node.namespaceURI]) {
+          end = node.nextSibling;
+          while (node.firstChild) {
+            insertBefore(parentNode, removeChild(node, node.firstChild), node);
+          }
+          removeChild(parentNode, node);
+        }
+        return insertBefore(parentNode, document.createComment("?"), end);
+      }
+      return node;
     }
-// TODO:    assign(stencil, descent, 0);
-    return descent;
   }
 
-  function generate (url, callback) {
-    url = normalize(url);
-    fetch(base, url, check(callback, function (template) {
+  function follow (marker, path) {
+    for (var i = 0, I = path.length; i < I; i++) {
+      if (!marker.markers[path[i]]) {
+        marker.markers[path[i]] = { markers: {}, items: {} };
+      }
+      marker = marker.markers[path[i]];
+    }
+    return marker;
+  }
+
+  function regenerate (page, parameters, callback) {
+    var okay = validator(callback);
+
+    if (typeof parameters == "function") {
+      callback = parameters;
+      parameters = {};
+    }
+
+    var url = normalize(page.template.url);
+    fetch(url, okay(rebase));
+
+    function rebase (template) {
+      rewrite({}, [{}], page, template, {}, template.directives,
+              [], parameters, false, okay(function () {
+        callback(null, page);
+      }));
+    }
+  }
+
+  function generate (url, parameters, callback) {
+    var okay = validator(callback);
+
+    if (typeof parameters == "function") {
+      callback = parameters;
+      parameters = {};
+    }
+
+    url = absolutize('/', normalize(url));
+    fetch(url, okay(paginate));
+
+    function paginate (template) {
       // We need a fragment because a document node can have only one element
       // child and some operations will replace the root, prepending the new
       // contents before the old root before removing it.
-      var fragment = template.document.createDocumentFragment();
-      fragment.appendChild(template.nodes.cloneNode(true));
-
-      //die(descent);
-
-      // We can wrap everything in a closure to get rid of this object, or else
-      // we go the other route and objectify everything. No! We need to get to
-      // xmlify from both generate and the push end points.
-      // 
-      // In fact, serialization and closures together are tricky. This is less
-      // tricky, but objects &mdash; data and function wrapped up together
-      // &mdash; are also tricky, for the same reasons. I'm learning to avoid
-      // objects and just pass structures around, which is something that was
-      // becoming apparent to me in way back in Java with cassettes.
-      var stencil =
-      { base: base
-      , comments: {}
-      , document: template.document
-      , dynamics: []
-      , statics: []
-      , identifier: 0
-      , snippets: {}
-      , registrations: []
+      //
+      // This is going to defeat a live update, so we'll have to fix it so that
+      // the node operations occur without it.
+      //
+      // Create a new document.
+      //
+      // TODO: This not likely to be portable. Need to determine how to create a
+      // clone of the document. Ah... I'm going to have to test how to import
+      // nodes generated from XML into documents built by parsing HTML5.
+      var fragment = template.page.fragment.ownerDocument
+                             .implementation.createDocument().createDocumentFragment(),
+          page = {
+        document: fragment.ownerDocument,
+        fragment: fragment,
+        template: template,
+        markers: {}
       };
+      insertBefore(fragment, page.document.importNode(template.page.fragment, true));
 
-      // TODO: Actual file names may at times be named something other than
-      // `foo.js`.
+      vivify(page, [], fragment);
 
-      // Start a descent.
-      var descent = createDescent(stencil, { url: url }, fragment,
-      // TODO: Still gets copied everywhere. Need to put in statics.
-      // TODO: Hey! Put the requested URL in dynamics. Make it so that a change
-      // to this one dynamic will propagate throughout the document.
-      { source: { file: "foo.js", url: template.url }
-      });
+      // Evaluate the template.
+      rewrite({}, [{}], page, template, {}, template.directives,
+              [], parameters, true, okay(result));
 
-      xmlify(stencil, descent, check(callback, function () {
-        var node;
-        // As noted above, template subsitutions can leave extra text in the
-        // document root.
-        while (fragment.firstChild.nodeType != 1)
-          fragment.removeChild(fragment.firstChild);
-
-        stencil.node = node = fragment.firstChild;
-
-        // We track outstanding documents using a application wide map, because
-        // we're going to return just the document in the future.
-        stencil.node.__stencil__ = stencilId++;
-        stencils[stencil.node.__stencil__] = stencil;
-
-        // If we have dynamic regions, we write out their definitions into a
-        // document comment. This could perhaps also be a placed in a script
-        // tag, but that would only work for HTML.
-        if (Object.keys(stencil.snippets).length) {
-          var serialize =
-          { snippets: stencil.snippets
-          , dynamics: stencil.dynamics
-          , statics: stencil.statics
-          };
-          node.appendChild(node.ownerDocument.createComment('// Regions.\n' + JSON.stringify(serialize, null, 2)));
-        }
-
-        callback(null, stencil)
-      }));
-    }));
+      function result () {
+        insertBefore(page.document, page.fragment);
+        var comment = page.document.createComment("stencil:" + url);
+        insertBefore(page.document.documentElement, comment, page.document.documentElement.firstChild);
+        callback(null, page);
+      }
+    }
   }
 
-  return { generate: generate, deserialize: deserialize, deregister: deregister };
-}; return { create: create } });
+  return { generate: generate, regenerate: regenerate, reconstitute: reconstitute }
+}});

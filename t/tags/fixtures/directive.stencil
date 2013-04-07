@@ -1,0 +1,5 @@
+<html xmlns:s="stencil" xmlns:d="inc:_directive.stencil">
+<body>
+<d:directive><p><s:value select="greeting"/></p></d:directive>
+</body>
+</html>

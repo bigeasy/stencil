@@ -1,5 +1,5 @@
-<html xmlns:s="stencil" xmlns:m="inc:_minimal.stencil"><!-- -->
+<html>
 <body>
-<!-- --><p>Hello, World!</p>
+<p>Hello, World!</p>
 </body>
 </html>

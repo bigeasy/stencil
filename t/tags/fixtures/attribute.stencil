@@ -1,0 +1,5 @@
+<html xmlns:s="stencil" xmlns:a="inc:_attribute.stencil">
+<body>
+<a:attribute greeting="Hello, World!"><p><s:value select="! $.$attributes"/></p></a:attribute>
+</body>
+</html>

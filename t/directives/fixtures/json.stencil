@@ -1,9 +1,0 @@
-<html xmlns:s="stencil" xmlns:watchers="req:watchers.js">
-<body>
-<ul>
-<s:each select="watchers" into="watcher" limit="10" unique="watcher.id">
-  <li><s:value select="watcher.login[0]"/></li>
-</s:each>
-</ul>
-</body>
-</html>

@@ -1,49 +1,46 @@
 #!/usr/bin/env node
 
-var context, fs = require('fs');
-require('./proof')(5, function (async) {
-  async(function (stencil, resolver) {
-    context = stencil.create(__dirname + '/', resolver.create());
-    context.generate('fixtures/elseif.stencil', { value: 'a' }, async());
-  },
-  
-  function (actual, fixture) {
-    fixture('fixtures/elseif-a.xml', async());
-  },
-  
-  function (a, actual, ok, compare) {
+require('./proof')(5, function (step, context, fixture, ok, compare) {
+  var fs = require('fs');
+
+  step(function () {
+
+    context.generate('fixtures/elseif.stencil', { value: 'a' }, step());
+    fixture('fixtures/elseif-a.xml', step());
+    fixture('fixtures/elseif-b.xml', step());
+    fixture('fixtures/elseif-c.xml', step());
+
+  }, function (actual, a, b, c) {
+
     ok(compare(actual.document, a), 'generate');
-    context.reconstitute(actual.document, async());
-  },
-  
-  function (actual) {
-    context.regenerate(actual, { value: 'a' }, async());
-  },
 
-  function (actual, a, compare, ok) {
-    ok(compare(actual.document, a), 'reconstitute');
-    context.regenerate(actual, { value: 'b' }, async());
-  },
+    step(function () {
 
-  function (actual, fixture) {
-    fixture('fixtures/elseif-b.xml', async());
-  },
+      context.reconstitute(actual.document, step());
 
-  function (b, actual, ok, compare) {
-    ok(compare(actual.document, b), 'b');
-    context.regenerate(actual, { value: 'c' }, async());
-  },
+    }, function (actual) {
 
-  function (actual, fixture) {
-    fixture('fixtures/elseif-c.xml', async());
-  },
-  
-  function (c, actual, ok, compare) {
-    ok(compare(actual.document, c), 'c');
-    context.regenerate(actual, { value: 'a' }, async());
-  },
+      context.regenerate(actual, { value: 'a' }, step());
 
-  function (actual, a, ok, compare) {
-    ok(compare(actual.document, a), 'a-after-scavenge');
+    }, function (actual) {
+
+      ok(compare(actual.document, a), 'reconstitute');
+      context.regenerate(actual, { value: 'b' }, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, b), 'b');
+      context.regenerate(actual, { value: 'c' }, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, c), 'c');
+      context.regenerate(actual, { value: 'a' }, step());
+
+    }, function (actual) {
+
+      ok(compare(actual.document, a), 'a-after-scavenge');
+
+    });
   });
 });

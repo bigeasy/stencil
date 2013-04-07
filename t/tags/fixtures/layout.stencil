@@ -1,0 +1,15 @@
+<s:include xmlns:s="stencil">
+  <s:tag name="document">
+    <html>
+    <head>
+      <title>Hello, World!</title>
+      <s:block name="head"/>
+    </head>
+    <body>
+      <title>Hello, World!</title>
+      <s:block name="body"/>
+    </body>
+    </html>
+  </s:tag>
+</s:include>
+

@@ -1,7 +1,5 @@
-<html xmlns:s="stencil"><!-- -->
+<html>
 <body>
-<!-- --><p>A: <!-- -->a</p>
-<!-- -->
-<!-- -->
+<p>A: a</p>
 </body>
 </html>

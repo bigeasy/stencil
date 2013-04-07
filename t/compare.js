@@ -4,10 +4,10 @@ function visit (array, element) {
   array.push({ start: true, element: element, nodeType: 1 });
   for (var child = element.firstChild; child; child = child.nextSibling) {
     if (child.nodeType == 1) {
-      visit(array, child);    
+      visit(array, child);
     } else {
       array.push(child);
-    } 
+    }
   }
   array.push({ start: false, element: element, nodeType: 1 });
   return array;
@@ -15,7 +15,6 @@ function visit (array, element) {
 
 function flatten (doc) {
   return visit([], doc.documentElement || doc);
-  
 }
 
 function attributes (element) {
@@ -32,7 +31,6 @@ function attributes (element) {
 function _name (node) {
   return node.localName + (node.namespaceURI ? '(' + node.namespaceURI + ')' : '');
 }
-
 
 function compare (actual, expected) {
   var _actual = actual, _expected = expected;
@@ -60,9 +58,10 @@ function compare (actual, expected) {
     e = expected.shift();
     switch (e.nodeType) {
     case 1:
-    case 8:
-      while (a.nodeType == 3 && actual.length) {
-        at.push(a.nodeValue);
+      while (a.nodeType != 1 && actual.length) {
+        if (a.nodeType == 3) {
+          at.push(a.nodeValue);
+        }
         a = actual.shift();
       }
       if (a.nodeType != e.nodeType) return abend(e);
@@ -76,13 +75,17 @@ function compare (actual, expected) {
         for (name in ea) {
           if (!aa[name]) return abend(e);
           if (ea[name].nodeValue != aa[name].nodeValue) return abend(e);
+          delete(aa[name]);
         }
+        if (Object.keys(aa).length) return abend(e);
       }
       at.length = et.length = 0;
       a = actual.shift();
       break;
     case 3:
       et.push(e.nodeValue);
+      break;
+    case 8:
       break;
     default:
       throw new Error("Unexpected nodeType: " + e.nodeType);

@@ -1,0 +1,10 @@
+<html xmlns:s="stencil">
+<body>
+<ul>
+<s:each select="watchers" into="watcher">
+  <li><s:value select="watcher.login"/></li>
+</s:each>
+</ul>
+</body>
+</html>
+

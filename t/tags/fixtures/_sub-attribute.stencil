@@ -1,0 +1,6 @@
+<s:include xmlns:s="stencil">
+  <s:tag name="greeting">
+    <s:tag name="target"><s:value select="$$attributes.salutation"/>, <s:value select="$attributes.name"/>!</s:tag>
+    <s:block/>
+  </s:tag>
+</s:include>

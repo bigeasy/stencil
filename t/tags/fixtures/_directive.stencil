@@ -1,0 +1,3 @@
+<s:include xmlns:s="stencil">
+  <s:tag name="directive"><s:block/></s:tag>
+</s:include>
