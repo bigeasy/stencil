@@ -790,5 +790,5 @@
     }
   }
 
-  return { generate: generate, regenerate: regenerate, reconstitute: reconstitute }
+  return { generate: generate, regenerate: regenerate, reconstitute: reconstitute, normalize: normalize }
 }});
