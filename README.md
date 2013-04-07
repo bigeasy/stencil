@@ -3,7 +3,7 @@ mufflevski, on Flickr"><img
 src="http://farm1.staticflickr.com/38/77864703_db8027986c_z.jpg?zz=1"
 width="850" height="638" alt="stencil"></a>
 
-# Stencil [![Build Status](https://secure.travis-ci.org/bigeasy/stencil.png?branch=master)](http://travis-ci.org/bigeasy/stencil)
+# Stencil [![Build Status](https://secure.travis-ci.org/bigeasy/stencil.png?branch=master)](http://travis-ci.org/bigeasy/stencil) [![Coverage Status](https://coveralls.io/repos/bigeasy/stencil/badge.png?branch=master)](https://coveralls.io/r/bigeasy/stencil)
 
 Asynchronous HTML5 templating for Node.js and the browser. Photo by <a
 href="http://www.flickr.com/people/74182631@N00/">mufflevski</a>.
