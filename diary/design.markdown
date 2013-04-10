@@ -96,3 +96,168 @@ the context to `$.$` means that we're not going to consume another variable name
 with something like `$resolver`.
 
 Maybe `_$` as the special variable disambiguates, can be used in the libraries.
+
+## [Recursive Templates](#recurse)
+
+Going to implement the style of reentrancy that is currently in my head, but
+here are some more.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<s:each select="directory" into="directory" id="directory">
+  <p><s:value select="directory.name"/></p>
+  <ul>
+    <s:each select="directory.children" into="child">
+      <li>
+        <s:recurse call="directory" select="child"/>
+      </li>
+    </s:each>
+  </ul>
+</s:each>
+</body>
+</html>
+```
+
+Often times you need to write out information that has a tree-like structure, it
+could be your site navigation, an organization chart, or folders and the files
+and folders inside them. When you do you're going to want to create a template
+that can call itself. In computerese something that calls itself is called
+recursive &mdash; think recurring which has the same latin root; recurrere. We
+call these templates recursive template.
+
+You create a recusive block by defining a block with the `each/with` directive,
+giving it an `id` attribute. Within the block, when you want to invoke the block
+again you use a `recurse` directive. The `recurse` directive has a `call`...
+
+You are allowed only one `recurse`.
+
+Okay, I can see it.
+
+What I'm doing now...
+
+```xml
+<html xmlns:s="stencil" xmlns:r="recurse">
+<body>
+<r:directory select="directory">
+  <p><r:name/></p>
+  <ul>
+    <r:children>
+      <li>
+        <r:directory select="child"/>
+      </li>
+    </r:children>
+  </ul>
+</r:directory>
+</body>
+</html>
+```
+
+Given this template...
+
+```xml
+<s:include xmlns:s="stencil">
+<s:tag name="directory" evaluated="select">
+  <s:tag name="name"><s:value select="$$attribute.select.name"/></s:tag>
+  <s:tag name="children"><s:value select="$$attribute.select.children"/></s:tag>
+  <s:block/>
+</s:tag>
+</s:include>
+</body>
+</html>
+```
+
+Which could as easily be...
+
+```xml
+<html xmlns:s="stencil" xmlns:r="recurse">
+<body>
+<r:directory select="directory" id="directory">
+  <p><r:name/></p>
+  <ul>
+    <r:children>
+      <li>
+        <s:recurse call="directory" select="child" into="directory"/>
+      </li>
+    </r:children>
+  </ul>
+</r:directory>
+</body>
+</html>
+```
+
+Or maybe...
+
+```xml
+<html xmlns:s="stencil" xmlns:r="recurse">
+<body>
+<r:directory select="directory" id="directory">
+  <p><r:name/></p>
+  <ul>
+    <r:children>
+      <li>
+        <!-- Oh, we're tracking namespaces in attributes? Bloat! -->
+        <s:recurse call="r:directory" select="child" into="directory"/>
+        <!-- How is this different than what I had? -->
+        <r:subdirectory select="child"/>
+      </li>
+    </r:children>
+  </ul>
+</r:directory>
+</body>
+</html>
+```
+
+Recursive is a concept that is complicated. Here I'm pushing recursive into
+tags, but they don't break out of the tags. There's no good way to have a tag
+layout recursion for you, is there? Ah, that's a layout. Oh, boy, here it is...
+
+```xml
+<s:include xmlns:s="stencil">
+<s:tag name="directory" evaluated="select" name="directory">
+  <s:with select="$attribute.select" into="directory" name="directory">
+    <s:tag name="name"><s:value select="directory.name"/></s:tag>
+    <s:tag name="children">
+      <s:each select="$$attribute.select.children" into="child">
+        <s:tag name="subdirectory">
+          <s:recurse call="directory" select="child" into="directory"/>
+        </s:tag>
+        <s:block inherit="child"/>
+      </s:each>
+    </s:tag>
+    <s:block inherit="directory"/>
+  </s:with>
+</s:tag>
+</s:include>
+</body>
+</html>
+```
+
+And then the template author gets to say...
+
+```xml
+<html xmlns:s="stencil" xmlns:r="recurse">
+<body>
+<r:directory select="directory">
+  <p><r:name/></p>
+  <ul>
+    <r:children>
+      <li><r:subdirectory/></li>
+    </r:children>
+  </ul>
+</r:directory>
+</body>
+</html>
+```
+
+## Evaluated Attributes
+
+Currently, there is no concept of an evaluated attribute, but it will be
+necessary. It is either the case that `select` is by default always evaluated
+and that other attributes require an `s:`, which doesn't make sense. Only if it
+is also the case that you only ever want one and only one evaluated property per
+tag, because it ruins the don't-think-about-it-ness of 
+
+## Incoming
+
+ * Do underbars disappear?
