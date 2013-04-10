@@ -97,7 +97,7 @@ with something like `$resolver`.
 
 Maybe `_$` as the special variable disambiguates, can be used in the libraries.
 
-## <a id="head1234"></a>Recursive Templates
+## Recursive Templates
 
 Going to implement the style of reentrancy that is currently in my head, but
 here are some more.
