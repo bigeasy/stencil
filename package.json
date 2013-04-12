@@ -21,6 +21,6 @@
   , "connect": "~2"
   }
 , "dependencies":
-  { "xmldom": "git://github.com/jindw/xmldom.git#8417be2f5be412cc531d299c9fa9a13564b073f5"
+  { "xmldom": "0.1.15"
   }
 }
