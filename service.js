@@ -14,7 +14,9 @@ exports.create = function (base, context) {
   find(base, 'stencil').forEach(function (route) {
     reactor.get(route.route, function (params, request, response, next) {
       var pathInfo = params.pathInfo ? '/' + params.pathInfo : '';
-      context.generate(route.script, { pathInfo: pathInfo }, function (error, stencil) {
+      context.generate(route.script, {
+        request: request, response: response, pathInfo: pathInfo
+      }, function (error, stencil) {
         if (error) {
           next(error);
         } else {
