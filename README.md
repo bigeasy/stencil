@@ -96,4 +96,6 @@ Changes for each release.
 
 ### Version 0.0.4
 
+Tue Apr 16 14:15:19 UTC 2013
+
  * Add `request` and `response` to Stencil service. #106.
