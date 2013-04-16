@@ -1,7 +1,7 @@
 { "name": "stencil"
 , "description": "Asynchronous HTML5 and XML templates for Node.js and the browser."
 , "author": "Alan Gutierrez"
-, "version": "0.0.3"
+, "version": "0.0.4"
 , "keywords": [ "template", "html", "xml", "text", "xhtml", "async", "asynchronous" ]
 , "licenses": [
   { "type": "MIT"
