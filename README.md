@@ -89,3 +89,11 @@ wonder in the latter role.
 An application developer creates APIs that the web developer can query. The web
 developer wraps those APIs in tag libraries, so that the web designer can focus
 on semantic layout.
+
+## Change log
+
+Changes for each release.
+
+### Version 0.0.4
+
+ * Add `request` and `response` to Stencil service. #106.
