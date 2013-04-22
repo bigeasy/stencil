@@ -96,6 +96,8 @@ Changes for each release.
 
 ### Version 0.0.5
 
+Mon Apr 22 19:07:43 UTC 2013
+
  * Fix non-directive with attribute child directives. #108.
 
 ### Version 0.0.4
