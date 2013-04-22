@@ -1,5 +1,5 @@
 <html>
 <body>
-<img src="nurse.png" alt="Hello, Nurse!">
+<a href="nurse.png"><img src="nurse.png" alt="Hello, Nurse!"></a>
 </body>
 </html>

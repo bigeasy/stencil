@@ -537,7 +537,7 @@
           }
           else {
             rewrite({}, frames, page, template, includes, directive.directives,
-                    sub, context, generating, shift);
+                    path, context, generating, shift);
           }
           break;
         }
