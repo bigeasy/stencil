@@ -94,6 +94,10 @@ on semantic layout.
 
 Changes for each release.
 
+### Version 0.0.5
+
+ * Fix non-directive with attribute child directives. #108.
+
 ### Version 0.0.4
 
 Tue Apr 16 14:15:19 UTC 2013
