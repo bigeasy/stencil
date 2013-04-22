@@ -50,7 +50,10 @@ it isn't a lie, you know, like Windows 95, which is pointless without Office 95.
 
 Actually, there are a lot of applications where you might push information into
 a template, without having the template pull in other resources, like command
-line applications.
+line applications. More to the point, the Stencil template function itself never
+uses JSON resources, it loads JavaScript modules, it loads XML, but it does not
+load JSON resources. That should be set in the context by the application or the
+application framework, then pushed through Stencil to the scaffolds that use it.
 
 ## Module Loading
 
