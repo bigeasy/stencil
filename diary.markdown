@@ -12,7 +12,7 @@ about serving from the file system, or naming things, or what.
 
 Key to the Stencil strategy is the notion that your scripts run identically on
 the server as they do in the browser, but we're going to say with the exception
-of module loading, becuase I don't want to replace Node.js module loading, which
+of module loading, because I don't want to replace Node.js module loading, which
 works fine on the browser, with AMD.
 
 When using Stencil off-line, the current `resolver.js` is what it needs to be.
@@ -20,7 +20,7 @@ It loads everything off of the file system.
 
 For the browser, I do want a minimalist implementation, one that uses XHR for
 JSON and XML, using it directly because it is there, then I'm using RequireJS
-AMD, which is odd, becuase Stencil 3.37k and no RequireJS AMD is 6.18k. It makes
+AMD, which is odd, because Stencil 3.37k and no RequireJS AMD is 6.18k. It makes
 me want to consider a lighter alternative, but there probably are none, it is a
 another rabbit hole and I'm tired of rabbit holes, I want to be building web
 applications, not forever building web scaffolding.
@@ -40,7 +40,7 @@ loading, to come to design decision on this right now.
  * [modulr-node](https://github.com/tobie/modulr-node/tree/v0.6.1).
  * [Lazy evaluation of CommonJS modules](http://calendar.perfplanet.com/2011/lazy-evaluation-of-commonjs-modules/).
 
-Having gone a couple rounds with resource loading, here's what I've disovered.
+Having gone a couple rounds with resource loading, here's what I've discovered.
 
 The JSON resource loading is not needed by Stencil itself, therefore it doesn't
 belong in Stencil itself. However, there is hardly ever going to be a Stencil
@@ -129,7 +129,7 @@ that can call itself. In computerese something that calls itself is called
 recursive &mdash; think recurring which has the same latin root; recurrere. We
 call these templates recursive template.
 
-You create a recusive block by defining a block with the `each/with` directive,
+You create a recursive block by defining a block with the `each/with` directive,
 giving it an `id` attribute. Within the block, when you want to invoke the block
 again you use a `recurse` directive. The `recurse` directive has a `call`...
 
@@ -297,7 +297,7 @@ You can serialize at any point and you'll capture the state of the page. After
 every regeneration, the HTML5 DOM will contain everything you need to rebuild
 the page if you send it over the wire.
 
-Stencil uses XML to express it's template langauge, but only for the sake of the
+Stencil uses XML to express it's template language, but only for the sake of the
 parser. I don't like XML any more than you do. It is a meager idea taken far too
 far. I built Stencil using knowledge I wish I didn't have, and I'm using XML in
 ways that where not intended, and I pray these abuses offend the XML purists,
@@ -308,7 +308,7 @@ to send it one. These XML parsers are old and hardened and usually pretty fast.
 They produce a DOM that can be imported in the HTML5 DOM.
 
 Because XML is strict, there's a good chance that the DOM we manipulate on the
-server is almost identical to the one that we maniuplate in the browser.
+server is almost identical to the one that we manipulate in the browser.
 
 Stencil uses XML with namespaces, it rides on the behavior of namespaces, using
 XML namespaces to create namespaces for tag libraries and required JavaScript
