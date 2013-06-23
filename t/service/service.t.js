@@ -7,7 +7,6 @@ require('proof')(1, function (step, equal) {
       service = require('../../service'),
       app;
   step(function () {
-    var on = step('on');
     var fixtures = path.join(__dirname, 'fixtures'),
         javascript = require('../../javascript/common').create(fixtures),
         xml = require('../../xml/file').create(fixtures),
@@ -21,13 +20,13 @@ require('proof')(1, function (step, equal) {
   }, function () {
     var on = step('on');*/
     var req = http.get("http://127.0.0.1:8082/hello");
-    on(req, 'response');
-    on(req, 'error');
+    req.on('response', step.event());
+    req.on('error', step.error());
   }, function (message) {
-    var on = step('on');
     message.setEncoding('utf8');
-    on(message, 'data', []);
-    on(message, 'end');
+    message.on('data', step.event([]));
+    message.on( 'end', step.event());
+    message.on( 'error', step.error());
   }, function (data) {
     equal(data.join(''), '<html><!--stencil:/hello.stencil-->\n<body>\n<p>Hello, World!</p>\n</body>\n</html>', 'connect');
     app.close();
