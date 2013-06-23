@@ -332,3 +332,8 @@ For the JSON loving HTML5ers out there, please give it a whirl.
 
 The XML nausea is minimal. Just close your tags and match them, that's all there
 it too it. I swear.
+
+## Conditional Templates
+
+This would simply be adding a "when" to the `each` or `with` directive, or maybe
+having a `when` directive, explicitly.
