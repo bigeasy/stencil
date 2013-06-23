@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// Also tests the isolation of contexts.
+
 var fs = require('fs');
 require('./proof')(3, function (step, context, fixture, ok, compare) {
 
