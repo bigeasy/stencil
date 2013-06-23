@@ -3,7 +3,7 @@
 ## Stencil from the File System
 
 Using Register, Stencil can be served like static HTML files, like PHP, off of
-the file system. While considering the implementation of this, 
+the file system. While considering the implementation of this,
 
 Totally lost the clarity I had that I wanted to record. Not even sure if it is
 about serving from the file system, or naming things, or what.
@@ -16,7 +16,7 @@ of module loading, because I don't want to replace Node.js module loading, which
 works fine on the browser, with AMD.
 
 When using Stencil off-line, the current `resolver.js` is what it needs to be.
-It loads everything off of the file system. 
+It loads everything off of the file system.
 
 For the browser, I do want a minimalist implementation, one that uses XHR for
 JSON and XML, using it directly because it is there, then I'm using RequireJS
@@ -259,7 +259,7 @@ Currently, there is no concept of an evaluated attribute, but it will be
 necessary. It is either the case that `select` is by default always evaluated
 and that other attributes require an `s:`, which doesn't make sense. Only if it
 is also the case that you only ever want one and only one evaluated property per
-tag, because it ruins the don't-think-about-it-ness of 
+tag, because it ruins the don't-think-about-it-ness of
 
 ## Incoming
 
