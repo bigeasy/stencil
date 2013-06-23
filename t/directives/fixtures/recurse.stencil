@@ -1,0 +1,19 @@
+<html xmlns:s="stencil">
+<body>
+<p>Hello</p>
+<ul><li>
+<s:each select="directory" into="directory" name="directory">
+  <p><s:value select="directory.name"/></p>
+  <s:if select="directory.children">
+    <ul>
+      <s:each select="directory.children" into="child">
+        <li>
+          <s:recurse upto="directory" select="child"/>
+        </li>
+      </s:each>
+    </ul>
+  </s:if>
+</s:each>
+</li></ul>
+</body>
+</html>

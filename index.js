@@ -253,10 +253,88 @@
     return fragment;
   }
 
+  function each (source, parent, frames, page, template, includes, named,
+           directive, element, context, path, generating, callback) {
+    var idSource = element.getAttribute("key").trim(),
+        into = element.getAttribute("into").trim(),
+        name = element.getAttribute("name").trim(),
+        head = follow(page, path), items = head.items,
+        previous = head.end, parentNode = previous.parentNode,
+        base = path.slice(0, path.length - 1),
+        markers = follow(page, base).markers,
+        index = 0,
+        okay = validator(callback);
+
+    if (name) {
+      named = extend({}, named);
+      named[name] = directive;
+    }
+
+    head.items = {};
+
+    if (!empty(head)) {
+      erase(head.begin.nextSibling, head.end);
+      follow(page, path).markers = {};
+    }
+
+    evaluate(source, context, okay(function (value) {
+      if (!Array.isArray(value)) value = [ value ];
+      value = value.slice();
+
+      shift();
+
+      function shift () {
+        var id, marker, part;
+        if (value.length) {
+          context[into] = value.shift();
+          if (idSource) evaluate(idSource, context, okay(scribble));
+          else scribble(index++);
+        } else {
+          for (id in items) {
+            part = directive.id + ";" + id;
+            marker = follow(page, base.concat([ part ]));
+            erase(marker.begin, marker.end.nextSibling);
+            delete markers[part];
+          }
+          callback();
+        }
+      }
+
+      function scribble (id) {
+        id = escape(id);
+
+        delete items[id];
+        head.items[id] = true;
+
+        var qualified = directive.id + ";" + id,
+            path = base.concat([ qualified ]),
+            marker = follow(page, path);
+
+        if (marker.begin) {
+          if (previous.nextSibling !== marker.begin) {
+            insertBefore(previous.parentNode, cut(marker), previous.nextSibling);
+          }
+        } else {
+          var prototype = follow(template.page, directive.path),
+              fragment = copy(page.document, prototype.begin.nextSibling, prototype.end.nextSibling);
+          insertBefore(fragment, page.document.createComment(qualified), fragment.firstChild);
+          vivify(page, base, fragment);
+          insertBefore(previous.parentNode, fragment, previous.nextSibling);
+          generating = true;
+        }
+
+        previous = follow(page, path).end;
+
+        rewrite({}, frames, page, template, includes, named, directive.directives,
+                path, context, generating, okay(shift));
+      }
+    }));
+  }
+
   var handlers = {
     // The value directive replaces a value element with text from the current
     // context.
-    value: function (parent, frames, page, template, includes,
+    value: function (parent, frames, page, template, includes, named,
                      directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
@@ -270,7 +348,7 @@
         callback();
       }));
     },
-    if: function (parent, frames, page, template, includes,
+    if: function (parent, frames, page, template, includes, named,
                   directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
@@ -290,18 +368,18 @@
             fill(marker, fragment);
             generating = true;
           }
-          rewrite({}, frames, page, template, includes, directive.directives,
+          rewrite({}, frames, page, template, includes, named, directive.directives,
                   path, context, generating, callback);
         }
       }));
     },
-    else: function (parent, frames, page, template, includes,
+    else: function (parent, frames, page, template, includes, named,
                     directive, element, context, path, generating, callback) {
       element.setAttribute("select", "true");
-      handlers.elseif(parent, frames, page, template, includes,
+      handlers.elseif(parent, frames, page, template, includes, named,
                       directive, element, context, path, generating, callback);
     },
-    elseif: function (parent, frames, page, template, includes,
+    elseif: function (parent, frames, page, template, includes, named,
                       directive, element, context, path, generating, callback) {
       var marker = follow(page, path);
       if (parent.condition) {
@@ -309,83 +387,24 @@
         follow(page, path).markers = {};
         callback();
       } else {
-        handlers["if"](parent, frames, page, template, includes,
+        handlers["if"](parent, frames, page, template, includes, named,
                        directive, element, context, path, generating, callback);
       }
     },
-    each: function (parent, frames, page, template, includes,
+    each: function (parent, frames, page, template, includes, named,
                     directive, element, context, path, generating, callback) {
-      var source = element.getAttribute("select").trim(),
-          idSource = element.getAttribute("key").trim(),
-          into = element.getAttribute("into").trim(),
-          head = follow(page, path), items = head.items,
-          previous = head.end, parentNode = previous.parentNode,
-          base = path.slice(0, path.length - 2),
-          markers = follow(page, base).markers,
-          index = 0,
-          okay = validator(callback);
-
-      head.items = {};
-
-      if (!empty(head)) {
-        erase(head.begin.nextSibling, head.end);
-        follow(page, path).markers = {};
-      }
-
-      evaluate(source, context, okay(function (value) {
-        if (!Array.isArray(value)) value = [ value ];
-        value = value.slice();
-
-        shift();
-
-        function shift () {
-          var id, marker, part;
-          if (value.length) {
-            context[into] = value.shift();
-            if (idSource) evaluate(idSource, context, okay(scribble));
-            else scribble(index++);
-          } else {
-            for (id in items) {
-              part = directive.id + ";" + id;
-              marker = follow(page, base.concat([ part ]));
-              erase(marker.begin, marker.end.nextSibling);
-              delete markers[part];
-            }
-            callback();
-          }
-        }
-
-        function scribble (id) {
-          id = escape(id);
-
-          delete items[id];
-          head.items[id] = true;
-
-          var qualified = directive.id + ";" + id,
-              path = base.concat([ qualified ]),
-              marker = follow(page, path);
-
-          if (marker.begin) {
-            if (previous.nextSibling !== marker.begin) {
-              insertBefore(previous.parentNode, cut(marker), previous.nextSibling);
-            }
-          } else {
-            var prototype = follow(template.page, directive.path),
-                fragment = copy(page.document, prototype.begin.nextSibling, prototype.end.nextSibling);
-            insertBefore(fragment, page.document.createComment(qualified), fragment.firstChild);
-            vivify(page, base, fragment);
-            insertBefore(previous.parentNode, fragment, previous.nextSibling);
-            generating = true;
-          }
-
-          previous = follow(page, path).end;
-
-          rewrite({}, frames, page, template, includes, directive.directives,
-                  path, context, generating, okay(shift));
-        }
-      }));
+      var source = element.getAttribute("select");
+      each(source, parent, frames, page, template, includes, named,
+           directive, element, context, path, generating, callback);
     },
-    block: function (parent, frames, page, template, includes, directive, element,
+    recurse: function (parent, frames, page, template, includes, named, directive, element,
+                   context, path, generating, callback) {
+      var directive = named[element.getAttribute("upto")],
+          source = element.getAttribute("select");
+      each(source, parent, frames, page, template, includes, named,
+            directive, directive.element, context, path, generating, callback);
+    },
+    block: function (parent, frames, page, template, includes, named, directive, element,
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
           caller = frames[0], prototype, i, I;
@@ -409,10 +428,10 @@
         }
       }
       frames = [{ template: template, directive: directive }].concat(frames);
-      rewrite({}, frames, page, caller.template, includes, definition.directives,
+      rewrite({}, frames, page, caller.template, includes, named, definition.directives,
               path, context, generating, callback);
     },
-    tag: function (parent, frames, page, template, includes, directive, element,
+    tag: function (parent, frames, page, template, includes, named, directive, element,
                    context, path, generating, callback) {
       var marker = follow(page, path);
       if (!empty(marker)) {
@@ -426,7 +445,7 @@
     }
   }
 
-  function rewrite (parent, frames, page, template, includes,
+  function rewrite (parent, frames, page, template, includes, named,
                     directives, path, context, generating, callback) {
     var okay = validator(callback), prefix = '$';
     context = extend(Object.create({ $: function (url) {
@@ -508,7 +527,7 @@
         default:
           var included;
           if (directive.interpreter) {
-            directive.interpreter(parent, frames, page, template, includes,
+            directive.interpreter(parent, frames, page, template, includes, named,
                                   directive, element, context, sub, generating, shift);
           } else if (directive.element && (included = includes[directive.element.namespaceURI])) {
             var attributes = {};
@@ -532,11 +551,11 @@
                                            includes: includes }
             frame.attributes.unshift(attributes);
             frames = [frame].concat(frames);
-            rewrite({}, frames, page, included, includes, include.directives,
+            rewrite({}, frames, page, included, includes, named, include.directives,
                     sub, context, generating, okay(shift));
           }
           else {
-            rewrite({}, frames, page, template, includes, directive.directives,
+            rewrite({}, frames, page, template, includes, named, directive.directives,
                     path, context, generating, shift);
           }
           break;
@@ -734,7 +753,7 @@
     fetch(url, okay(rebase));
 
     function rebase (template) {
-      rewrite({}, [{}], page, template, {}, template.directives,
+      rewrite({}, [{}], page, template, {}, {}, template.directives,
               [], parameters, false, okay(function () {
         callback(null, page);
       }));
@@ -778,7 +797,7 @@
       vivify(page, [], fragment);
 
       // Evaluate the template.
-      rewrite({}, [{}], page, template, {}, template.directives,
+      rewrite({}, [{}], page, template, {}, {}, template.directives,
               [], parameters, true, okay(result));
 
       function result () {
