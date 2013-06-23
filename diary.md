@@ -113,7 +113,7 @@ here are some more.
   <ul>
     <s:each select="directory.children" into="child">
       <li>
-        <s:recurse call="directory" select="child"/>
+        <s:recurse upto="directory" select="child"/>
       </li>
     </s:each>
   </ul>
@@ -121,6 +121,12 @@ here are some more.
 </body>
 </html>
 ```
+
+Note: Coming back to change `call` to `upto`. It conveys the recursion, that the
+template is supposed to repeat. The attribute `call` makes it seem like you
+would be able to invoke any named `each` or `with` in the template. That may be
+desirable, but not at this point. That could easily be done using tags.
+(Recursion can easily be done using tags in any case.)
 
 Often times you need to write out information that has a tree-like structure, it
 could be your site navigation, an organization chart, or folders and the files
@@ -180,7 +186,7 @@ Which could as easily be...
   <ul>
     <r:children>
       <li>
-        <s:recurse call="directory" select="child" into="directory"/>
+        <s:recurse upto="directory" select="child" into="directory"/>
       </li>
     </r:children>
   </ul>
@@ -200,7 +206,7 @@ Or maybe...
     <r:children>
       <li>
         <!-- Oh, we're tracking namespaces in attributes? Bloat! -->
-        <s:recurse call="r:directory" select="child" into="directory"/>
+        <s:recurse upto="r:directory" select="child" into="directory"/>
         <!-- How is this different than what I had? -->
         <r:subdirectory select="child"/>
       </li>
@@ -223,7 +229,7 @@ layout recursion for you, is there? Ah, that's a layout. Oh, boy, here it is...
     <s:tag name="children">
       <s:each select="$$attribute.select.children" into="child">
         <s:tag name="subdirectory">
-          <s:recurse call="directory" select="child" into="directory"/>
+          <s:recurse upto="directory" select="child" into="directory"/>
         </s:tag>
         <s:block inherit="child"/>
       </s:each>
