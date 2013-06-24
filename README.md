@@ -61,7 +61,7 @@ Using the same language as used in templates, Stencil supports the creation of
 tag libraries. With tag libraries you can doe more to hide the complexity of a
 template. You can create tags that name collections in application domain.
 
-## Creating Evaluated Tag Properties
+### Creating Evaluated Tag Properties
 
 Sometimes you will want to specify an evaluated property in your tags. We have a
 tricky trick for your tag defintion that will give you want you want. When you
