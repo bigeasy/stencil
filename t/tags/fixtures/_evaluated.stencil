@@ -1,0 +1,9 @@
+<s:include xmlns:s="stencil">
+  <s:tag name="loop">
+    <ul>
+      <s:each s:select="$attributes.select" s:into="$attributes.as">
+        <li><s:value s:select="$attributes.display"/></li>
+      </s:each>
+    </ul>
+  </s:tag>
+</s:include>

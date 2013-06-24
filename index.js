@@ -126,6 +126,7 @@
     compiled = functions[source];
     if (!compiled) {
       parameters.push.apply(parameters, Object.keys(context));
+      console.log(parameters, source);
       functions[source] = compiled = {
         parameters: parameters,
         expression: Function.apply(Function, parameters.concat([ "return " + source ]))

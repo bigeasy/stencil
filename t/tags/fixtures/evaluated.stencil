@@ -1,0 +1,5 @@
+<html xmlns:s="stencil" xmlns:e="inc:_evaluated.stencil">
+<body>
+<e:loop select="items" as="item" display="item.value"/>
+</body>
+</html>
