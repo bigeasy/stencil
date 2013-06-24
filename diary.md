@@ -381,3 +381,13 @@ want to create a bunch of parameters? One object will do. What if the name of
 context object, which make more sense, a context object, than special tags,
 maybe the name of the context object is the name of tag? If you want to reassign
 it you use `as`.
+
+## Streaming
+
+It occurs to me that, with a slight update to the interface, one could do
+streaming. At the end of every directive, emit the end node, which would be the
+ending comment. Then serialized the document in document order up to that
+comment, so now Stencil is async and streaming, so that's a big win. I hope it
+doesn't cost too much in girth.
+
+**TODO**: Do this. I don't see why not.
