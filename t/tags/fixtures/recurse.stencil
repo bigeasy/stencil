@@ -1,0 +1,14 @@
+<html xmlns:s="stencil" xmlns:r="inc:_recurse.stencil">
+<body>
+<r:directory select="directory.children">
+  <p><r:name/></p>
+  <r:has-children>
+    <ul>
+      <r:children>
+        <li><r:subdirectory/></li>
+      </r:children>
+    </ul>
+  </r:has-children>
+</r:directory>
+</body>
+</html>

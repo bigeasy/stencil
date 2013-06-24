@@ -267,7 +267,7 @@
 
     if (name) {
       named = extend({}, named);
-      named[name] = directive;
+      named[name] = { directive: directive, frame: frames[0] };
     }
 
     head.items = {};
@@ -399,10 +399,11 @@
     },
     recurse: function (parent, frames, page, template, includes, named, directive, element,
                    context, path, generating, callback) {
-      var directive = named[element.getAttribute("upto")],
+      var visit = named[element.getAttribute("upto")],
           source = element.getAttribute("select");
+      frames = [visit.frame].concat(frames);
       each(source, parent, frames, page, template, includes, named,
-            directive, directive.element, context, path, generating, callback);
+            visit.directive, visit.directive.element, context, path, generating, callback);
     },
     block: function (parent, frames, page, template, includes, named, directive, element,
                      context, path, generating, callback) {
@@ -545,10 +546,10 @@
               fill(marker, fragment);
             }
             sub.push(include.id);
-            var frame = include.frame || { attributes: [],
-                                           template: template,
-                                           directive: directive,
-                                           includes: includes }
+            var frame = extend({}, include.frame || { attributes: [],
+                                                      template: template,
+                                                      includes: includes });
+            frame.directive = directive;
             frame.attributes.unshift(attributes);
             frames = [frame].concat(frames);
             rewrite({}, frames, page, included, includes, named, include.directives,
