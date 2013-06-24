@@ -238,8 +238,6 @@ layout recursion for you, is there? Ah, that's a layout. Oh, boy, here it is...
   </s:with>
 </s:tag>
 </s:include>
-</body>
-</html>
 ```
 
 And then the template author gets to say...
@@ -265,7 +263,24 @@ Currently, there is no concept of an evaluated attribute, but it will be
 necessary. It is either the case that `select` is by default always evaluated
 and that other attributes require an `s:`, which doesn't make sense. Only if it
 is also the case that you only ever want one and only one evaluated property per
-tag, because it ruins the don't-think-about-it-ness of
+tag, because it ruins the don't-think-about-it-ness of...
+
+Evaluated attributes differ from regular attributes. Regular attributes can be
+evaluated, but they will only add a name value pair to the `$attributes` hash.
+User tags are going to want the ability to extract objects and arrays from the
+context, so that is the difference. Not only do they get evaluated, but they can
+produced any type of JSON structure, not just primitives.
+
+Do I evaluate these on behalf of the directive, or to I create a function that
+can be invoked in any context? This would allow a directive to create a
+complicated structure like an `each`.
+
+When defining a tag, their is no way to define an evaluated attribute. I'm going
+to make them explicit, so how would they work? They could get evaluated at the
+same time...
+
+Okay, I was wandering around and I remembered exactly how this is supposed to be
+done, so I wrote documentation for it, so I won't revisit it and resolve it.
 
 ## Incoming
 
@@ -337,3 +352,32 @@ it too it. I swear.
 
 This would simply be adding a "when" to the `each` or `with` directive, or maybe
 having a `when` directive, explicitly.
+
+## Block Parameters
+
+I thought of a simple notation for creating an object that can appear in scope.
+
+```javascript
+<s:include xmlns:s="stencil" xmlns:layout="req:layout.js">
+  <s:tag name="document">
+    <html>
+    <head>
+      <title>Hello, World!</title>
+      <s:with select="layout.entitle" as="entitle">
+        <s:block name="head" params="{ title: entitle.title }"/>
+      </s:with>
+    </head>
+    <body>
+      <title>Hello, World!</title>
+      <s:block name="body"/>
+    </body>
+    </html>
+  </s:tag>
+</s:include>
+```
+
+Something like that. I don't have layouts all figured out yet, do I? Do I really
+want to create a bunch of parameters? One object will do. What if the name of
+context object, which make more sense, a context object, than special tags,
+maybe the name of the context object is the name of tag? If you want to reassign
+it you use `as`.
