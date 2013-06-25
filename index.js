@@ -266,6 +266,7 @@
         base = path.slice(0, path.length - 1),
         markers = follow(page, base).markers,
         index = 0,
+        wrap = element.localName == "with",
         okay = validator(callback);
 
     if (name) {
@@ -281,7 +282,7 @@
     }
 
     evaluate(source, context, okay(function (value) {
-      if (!Array.isArray(value)) value = [ value ];
+      if (wrap || !Array.isArray(value)) value = [ value ];
       value = value.slice();
 
       shift();
@@ -395,6 +396,12 @@
       }
     },
     each: function (parent, frames, page, template, includes, named,
+                    directive, element, context, path, generating, callback) {
+      var source = element.getAttribute("select");
+      each(source, parent, frames, page, template, includes, named,
+           directive, element, context, path, generating, callback);
+    },
+    with: function (parent, frames, page, template, includes, named,
                     directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select");
       each(source, parent, frames, page, template, includes, named,

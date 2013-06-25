@@ -55,6 +55,44 @@ serialize to older HTML flavors for older browsers.
 On the browser, when we generate Stencil XML, we simply import it into the
 existing DOM using `Document.adoptNode`.
 
+### The `with` Directive
+
+The `with` directive is almost exactly like the `each` directive, except that it
+always operates on an object. When you pass an object or scalar, it will assign
+the value to the variable named in the `as` property.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<s:with select="companies['Acme'].departments['Trucks'].manager" as="manager">
+  <li><s:value select="manager.firstName"/> <s:value select="manager.lastName"/></li>
+</s:with>
+</body>
+</html>
+```
+
+The `each` directive also does this, treating an object or scalar as an array of
+one item, but `with` is going to make a lot more sense when you read your
+templates.
+
+Note that when you use `with` to select an Array value, the array is not
+iterated. The array is assigned to the variable specified by the `as` attribute;
+not the array values.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<s:with select="companies['Acme'].departments['Trucks'].personnel" as="personnel">
+  <ul>
+    <s:each select="personnel" as="employee">
+      <li><s:value select="employee.firstName"/> <s:value select="employee.lastName"/></li>
+    </s:each>
+  </ul>
+</s:with>
+</body>
+</html>
+```
+
 ### The `when` Directive
 
 The `when` directive is used to only update a section of a template if the data
