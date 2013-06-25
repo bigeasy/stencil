@@ -393,6 +393,59 @@ What does the template author see?
 </html>
 ```
 
+You have `(context, callback)` as you convention, but what about `this`? What is
+`this`? Are people allowed to use objects and they are invoked such that `this`
+is assigned correctly? I don't believe so. Wow. Nope, it just falls right out of
+the sheer awesomeness of it all.
+
+```javascript
+<s:include xmlns:s="stencil">
+<s:tag name="parameterized">
+  <s:block params="{ one: 1, two: function (context, callback) { callback(null, this.one + 1) } }"/>
+</s:tag>
+</s:include>
+```
+
+No, it doesn't, because you evaluate and return a function. It is then invoked
+using `apply`. The `this` may as well be the context. You're not able to get to
+the other properties because you're not sure of the name. The only way to be
+sure of the name is to add it to the context.
+
+```javascript
+<s:include xmlns:s="stencil">
+<s:tag name="parameterized">
+  <s:block params="{ one: 1, two: function (callback) { callback(null, this.$parameterized.one + 1) } }"/>
+</s:tag>
+</s:include>
+```
+
+We can provide `$parameterized` as it is expected in the evaluation, adding it
+to the context when we build the parameters map, then someone could do something
+with it, wait, what? We haven't created it yet. Bonehead!
+
+We don't want to rebind these, because they may actually be functions that are
+meant to be evaluated, so we don't want to rebind them automagically, that would
+be a lot of rules. We could make `$parameterized` the name, or heck, during the
+construction of the parameter we can have `$name`.
+
+```javascript
+<s:include xmlns:s="stencil">
+<s:tag name="parameterized">
+  <s:block params="{ one: 1, two: function (callback) { callback(null, this[$name].one + 1) } }"/>
+</s:tag>
+</s:include>
+```
+
+And we remove the `context` as the first argument since all it is is `this`.
+That keeps me from wrestling with what `this` should be. It makes me think
+objects. You can put them in there, yeah, and they'll work just fine all right,
+but you need to invoke them as objects member functions with parens.
+
+**TODO**: Now I'm wondering about named blocks, how those work again. They're
+pretty cool, so I don't want to break them, but maybe, just maybe, there is
+some way to fold them into tags, but no, they are different aren't they? They're
+the guts of the tag, either the default guts or else structured guts.
+
 ## Streaming
 
 It occurs to me that, with a slight update to the interface, one could do
@@ -402,3 +455,5 @@ comment, so now Stencil is async and streaming, so that's a big win. I hope it
 doesn't cost too much in girth.
 
 **TODO**: Do this. I don't see why not.
+
+## Inbox

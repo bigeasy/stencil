@@ -408,7 +408,7 @@
     block: function (parent, frames, page, template, includes, named, directive, element,
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
-          caller = frames[0], prototype, i, I;
+          caller = frames[0], prototype, i, I, params, tmp = {};
       if (name) {
         definition = caller.directive.directives.filter(function (directive) {
           return directive.element.localName == name
@@ -428,9 +428,20 @@
           insertBefore(marker.end.parentNode, fragment, marker.end);
         }
       }
-      frames = [{ template: template, directive: directive }].concat(frames);
-      rewrite({}, frames, page, caller.template, includes, named, definition.directives,
-              path, context, generating, callback);
+      if (params = element.getAttribute('params')) {
+        tmp = extend(tmp, context);
+        if (!(tmp.$name = definition.element.getAttribute('as'))) {
+          tmp.$name  = '$' + (name || frames[0].directive.element.localName);
+        }
+      } else {
+        params = 'null';
+      }
+      evaluate(params, tmp, check(callback, function (value) {
+        if (tmp.$name) context[tmp.$name] = value;
+        frames = [{ template: template, directive: directive }].concat(frames);
+        rewrite({}, frames, page, caller.template, includes, named, definition.directives,
+                path, context, generating, callback);
+      }));
     },
     tag: function (parent, frames, page, template, includes, named, directive, element,
                    context, path, generating, callback) {
@@ -548,6 +559,7 @@
             sub.push(include.id);
             var frame = extend({}, include.frame || { attributes: [],
                                                       template: template,
+                                                      name: directive.element.localName,
                                                       includes: includes });
             frame.directive = directive;
             frame.attributes.unshift(attributes);

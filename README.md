@@ -61,6 +61,90 @@ Using the same language as used in templates, Stencil supports the creation of
 tag libraries. With tag libraries you can doe more to hide the complexity of a
 template. You can create tags that name collections in application domain.
 
+### Passing Parameters to Blocks
+
+When you create tags you're going to want to have them add values to the
+caller's template context, TK what? blech! ... many useful tags are going to
+fetch data and then expose it to the caller. This is done with a `params`
+attribute on the `block` directive. Use the `params` directive to define a
+single JavaScript object that will be visible to the caller.
+
+```javascript
+<s:include xmlns:s="stencil">
+<s:tag name="numbers">
+  <s:block params="{ one: 1, two: 2, three: 3 }"/>
+</s:tag>
+</s:include>
+```
+
+You can all this tag from your template and it will create a property in the
+template context named `$numbers`, that is, the tag name with dollar sign `$` in
+front of it.
+
+```javascript
+<html xmlns:s="stencil" xmlns:t="inc:_params.stencil">
+<body>
+<t:numbers>
+<ul>
+  <li><s:value select="$numbers.one"/></li>
+  <li><s:value select="$numbers.two"/></li>
+  <li><s:value select="$numbers.three"/></li>
+</ul>
+</t:numbers>
+</html>
+</body>
+```
+
+The output of this template is, of course:
+
+```html
+<html>
+<body>
+<ul>
+  <li>1</li>
+  <li>2</li>
+  <li>3</li>
+</ul>
+</html>
+</body>
+```
+
+The caller can always rename the reserved attribute `as`.
+
+```javascript
+<html xmlns:s="stencil" xmlns:t="inc:_params.stencil">
+<body>
+<t:numbers as="digits">
+<ul>
+  <li><s:value select="digits.one"/></li>
+  <li><s:value select="digits.two"/></li>
+  <li><s:value select="digits.three"/></li>
+</ul>
+</t:numbers>
+</html>
+</body>
+```
+
+Note that the object is only visible inside the body of the tag.
+
+When you define your parameter object inside the tag library, there's maybe a
+bit of a problem in that you won't know it's name, which may or may not matter,
+it is so early in the life of Stencil for me to know. So, when you define your
+object, you can reference the user provided name of the object using `$name`.
+
+```javascript
+<s:include xmlns:s="stencil">
+<s:tag name="numbers">
+  <s:block params="{ one: 1,
+                     two: function (callback) { callback(null, this[$name].one + 1) },
+                     three: 3 }"/>
+</s:tag>
+</s:include>
+```
+
+The above calculates the value of `two` using the value of `one`, referencing
+the generated object in the context using the special variable `name`.
+
 ### Creating Evaluated Tag Properties
 
 Sometimes you will want to specify an evaluated property in your tags. We have a
