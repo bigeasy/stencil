@@ -69,7 +69,7 @@ fetch data and then expose it to the caller. This is done with a `params`
 attribute on the `block` directive. Use the `params` directive to define a
 single JavaScript object that will be visible to the caller.
 
-```javascript
+```xml
 <s:include xmlns:s="stencil">
 <s:tag name="numbers">
   <s:block params="{ one: 1, two: 2, three: 3 }"/>
@@ -81,7 +81,7 @@ You can all this tag from your template and it will create a property in the
 template context named `$numbers`, that is, the tag name with dollar sign `$` in
 front of it.
 
-```javascript
+```xml
 <html xmlns:s="stencil" xmlns:t="inc:_params.stencil">
 <body>
 <t:numbers>
@@ -111,7 +111,7 @@ The output of this template is, of course:
 
 The caller can always rename the reserved attribute `as`.
 
-```javascript
+```xml
 <html xmlns:s="stencil" xmlns:t="inc:_params.stencil">
 <body>
 <t:numbers as="digits">
@@ -132,7 +132,7 @@ bit of a problem in that you won't know it's name, which may or may not matter,
 it is so early in the life of Stencil for me to know. So, when you define your
 object, you can reference the user provided name of the object using `$name`.
 
-```javascript
+```xml
 <s:include xmlns:s="stencil">
 <s:tag name="numbers">
   <s:block params="{ one: 1,
