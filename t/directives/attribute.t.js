@@ -5,7 +5,7 @@ require('./proof')(2, function (step, context, fixture, ok, compare) {
 
   step(function () {
 
-    context.generate('fixtures/attribute.stencil', { src: "world.png", alt: "Hello, World!" }, step());
+    context.generate('fixtures/attribute.stencil', { target: null, src: "world.png", alt: "Hello, World!" }, step());
     fixture('fixtures/attribute-generate.xml', step());
     fixture('fixtures/attribute-regenerate.xml', step());
 
@@ -14,7 +14,7 @@ require('./proof')(2, function (step, context, fixture, ok, compare) {
     step(function () {
 
       ok(compare(actual.document, generate), 'generate');
-      context.regenerate(actual, { src: "nurse.png", alt: "Hello, Nurse!" }, step());
+      context.regenerate(actual, { target: "_self", src: "nurse.png", alt: "Hello, Nurse!" }, step());
 
     }, function (actual) {
 

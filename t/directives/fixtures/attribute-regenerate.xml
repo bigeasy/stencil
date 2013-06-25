@@ -1,5 +1,5 @@
 <html>
 <body>
-<a href="nurse.png"><img src="nurse.png" alt="Hello, Nurse!"></a>
+<a href="nurse.png" target="_self"><img src="nurse.png" alt="Hello, Nurse!"></a>
 </body>
 </html>
