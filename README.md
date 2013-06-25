@@ -148,14 +148,14 @@ the generated object in the context using the special variable `name`.
 ### Creating Evaluated Tag Properties
 
 Sometimes you will want to specify an evaluated property in your tags. We have a
-tricky trick for your tag defintion that will give you want you want. When you
+tricky trick for your tag definition that will give you want you want. When you
 want the user to provide you with a statement that you can use in an `each` or
 `value` directive, do a double evaluation in your tag library.
 
 Here is a minimal example, we're going to create an alias for the `value`
 directive named `say` that has an evaluated called `stuff`. As you can see, we
 use an evaluated attribute for the `select` attribute of the `value` directive
-in the tag. The evaulated select attribute will use the `stuff` attribute passed
+in the tag. The evaluated select attribute will use the `stuff` attribute passed
 to the tag.
 
 ```xml
@@ -221,10 +221,10 @@ we pass in the string `"numbers"` in a select attribute. It does not get
 evaluated. It is passed into the tag as the property `$attributes.select`. The
 value of `$attributes.select` will be the string `"numbers"`.
 
-When we use an evaluated `select` attibute with the `each` directive, it
-evaluates to the value of `$attibute.select` with is `"numbers"`. That creates a
-select value for the `each` directive that is `"numbers"`. That is evaluated by
-the `each` directive to obtain the numbers array.
+When we use an evaluated `select` attribute with the `each` directive, it
+evaluates to the value of `$attribute.select` with is `"numbers"`. That creates
+a select value for the `each` directive that is `"numbers"`. That is evaluated
+by the `each` directive to obtain the numbers array.
 
 ```xml
 <html xmlns:s="stencil" xmlns:t="inc:_tags.xml">
