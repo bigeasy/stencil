@@ -757,11 +757,6 @@
   function regenerate (page, parameters, callback) {
     var okay = validator(callback);
 
-    if (typeof parameters == "function") {
-      callback = parameters;
-      parameters = {};
-    }
-
     var url = normalize(page.template.url);
     fetch(url, okay(rebase));
 
@@ -775,11 +770,6 @@
 
   function generate (url, parameters, callback) {
     var okay = validator(callback);
-
-    if (typeof parameters == "function") {
-      callback = parameters;
-      parameters = {};
-    }
 
     url = absolutize('/', normalize(url));
     fetch(url, okay(paginate));
