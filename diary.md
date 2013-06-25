@@ -382,6 +382,17 @@ context object, which make more sense, a context object, than special tags,
 maybe the name of the context object is the name of tag? If you want to reassign
 it you use `as`.
 
+What does the template author see?
+
+```javascript
+<html xmlns:s="stencil" xmlns:t="inc:_twitter.stencil">
+<body>
+<t:tweets id="bigeasy">
+</t:tweets>
+</body>
+</html>
+```
+
 ## Streaming
 
 It occurs to me that, with a slight update to the interface, one could do
