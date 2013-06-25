@@ -85,6 +85,9 @@ Here's my thinking so far.
 I've chosen `$` to be special, to mean the current context. With it, you can
 inspect the local context to see if a variable is set.
 
+**TODO**: Hey, bonehead. What about `this`? Isn't that a special variable to
+maen the current context. (What a bonehead.)
+
 The other special variable is `$attributes`, which I don't believe anyone would
 begrudge me. There currently is no concept of a parent context. but we do have
 parent attributes, if a tag is declared within a tag, the parent attributes are

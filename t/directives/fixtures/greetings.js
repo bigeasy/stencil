@@ -1,3 +1,3 @@
-module.exports = function (context, callback) {
-  callback(null, context.greeting);
+module.exports = function (callback) {
+  callback(null, this.greeting);
 }

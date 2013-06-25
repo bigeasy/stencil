@@ -136,13 +136,13 @@
     for (i = 1, I = parameters.length; i < I; i++) {
       values.push(context[parameters[i]]);
     }
-    invoke(compiled.expression.apply(this, values), context, callback);
+    invoke(compiled.expression.apply(context, values), context, callback);
   }
 
   function invoke (result, context, callback) {
     try {
       if (typeof result == "function") {
-        result(context, callback);
+        result.call(context, callback);
       } else {
         callback(null, result);
       }
@@ -461,7 +461,7 @@
                     directives, path, context, generating, callback) {
     var okay = validator(callback), prefix = '$';
     context = extend(Object.create({ $: function (url) {
-      return function (context, callback) {
+      return function (callback) {
         json(absolutize(template.url + '/..', url), function (error, result) {
           callback(error, result);
         });
