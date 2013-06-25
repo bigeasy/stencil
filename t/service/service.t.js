@@ -28,7 +28,7 @@ require('proof')(1, function (step, equal) {
     message.on( 'end', step.event());
     message.on( 'error', step.error());
   }, function (data) {
-    equal(data.join(''), '<html><!--stencil:/hello.stencil-->\n<body>\n<p>Hello, World!</p>\n</body>\n</html>', 'connect');
+    equal(data.join(''), '<!DOCTYPE html>\n<html><!--stencil:/hello.stencil-->\n<body>\n<p>Hello, World!</p>\n</body>\n</html>', 'connect');
     app.close();
   });
 });
