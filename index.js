@@ -479,7 +479,8 @@
   function rewrite (parent, frames, page, template, includes, named,
                     directives, path, context, generating, callback) {
     var okay = validator(callback), prefix = '$';
-    context = extend(Object.create(template.context), context);
+    context = extend({}, context);
+    context.stencil = template.stencil;
     if (frames[0].attributes) {
       frames[0].attributes.forEach(function (attributes) {
         context[prefix + 'attributes'] = attributes;
@@ -655,10 +656,8 @@
       // Create our template.
       templates[url] = {
         url: url, page: page, directives: directives, tags: tags,
-        context: {
-          stencil: {
-            url: url, absolutize: absolutize, normalize: normalize, json: json
-          }
+        stencil: {
+          url: url, absolutize: absolutize, normalize: normalize, json: json
         }
       };
 

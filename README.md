@@ -146,28 +146,26 @@ pleasing.
 But, again, why? Only because I'm doing this stupid thing with prototypes that
 I'm going to try to document right here...
 
-### The `stencil` Variable
+### The `stencil` Object
 
-The `stencil` variable is a special object added to the context by the Stencil
-that has properties of the current template. It is not visible in the ordinary
-scope of template, (why? why not? I mean really, why was this important? now you
-have to add a paragraph explaining special properties? Are you just being a
-bonehead? Didn't we talk about that? No really, I can't wait to see this...)
+The `stencil` variable contains a special object added to the context by the
+Stencil that has properties of the current template. The `stencil` variable is
+constantly reset and overrides and variable assignments by the user.
 
-You can distinguish the context variables set by the Stencil engine from the
-context variables set by your application using `hasOwnProperty`. I'm not sure
-if this is useful, but it's there.
+The `stencil` Object offers the following properties and methods.
 
-(Oh, you're a real prize. Can we please [kill this
-poodle](http://www.lileks.com/bleats/archive/03/0103/010301.html#010303)? You
-know how else you could distinguish between a property set by the Stencil engine
-and a property provided by your application? `key == "stencil"`. Yes. You are a
-bonehead. TODO: Don't be such a bonehead. Then you don't have to document this.
-You might not be able to accept this right now, but there are people in this
-world how are smart enough to figure that out for themselves, I know, hard to
-accept that world won't embrace the genius of your using object prototypes to do
-something, that you know what you're doing, but there are object prototypes
-involved and that's really special, so, I can't even, I can't.)
+ * `url` &mdash; The URL of the current Stencil.
+ * `absolutize(base, path)` &mdash; Creates an absolute path using the given
+   base and sub-path. If the sub-path begins with a `/`, it is treated as a full
+   qualified path.
+ * `normalize(path)` &mdash; Normalizes a file path so that
+   `/docs/./articles/../posts/post.html` is normalized to
+   `/docs/posts/post.html`.
+ * `json(url)` &mdash; Returns a Stencil callback that will fetch the given URL
+   and parse it as JSON.
+
+TK: Find a place to write more about `json(url)` and send the readers of this
+section to that place.
 
 ## Tag Libraries
 
