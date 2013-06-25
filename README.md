@@ -55,6 +55,59 @@ serialize to older HTML flavors for older browsers.
 On the browser, when we generate Stencil XML, we simply import it into the
 existing DOM using `Document.adoptNode`.
 
+### The `when` Directive
+
+The `when` directive is used to only update a section of a template if the data
+is available. When the `when` directive is encountered during an update, the
+`select` attribute is evaluated, if it evaluates to `true`, then the contents of
+the `when` directive are re-evaluated. It it evaluates to `false`, then the
+contents are left as they are.
+
+This is useful if you have generated a page and are checking the server for
+updates, but only to certain dynamic sections of the page.
+
+If, for example, you have a blog page that has an article and a sidebar, you
+might be updating the sidebar with recent comments. You want to push a new
+collection of recent comments through your Stencil, but if you don't also
+provide the article, the Stencil will erase your article.
+
+Here's how we avoid that.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<s:when select="this.article">
+  <div class="article">
+    <h1><s:value select="article.title"/></h1>
+    <p class="sub-title">
+      By <s:value select="article.author"/>
+      on <s:value select="article.publishedAt"/></p>
+    <div>
+      <s:value select="article.body" type="html"/>
+    </div>
+  </div>
+</s:when>
+<div class="sidebar">
+  <h2>Recent Comments</h2>
+  <ul>
+    <s:each select="recents" as="comment">
+      <li><s:value select="comment.snippet"/> ~
+          <s:value select="comment.author"/> on <s:value select="comment.articleTitle"/></li>
+    </s:each>
+  </ul>
+</div>
+</body>
+</html>
+```
+
+The `when` directive is primarily for updates, since it is assumed that you'll
+have all your data on hand when you first generate the page on the server side.
+However, if during generation a `when` directive evaluates to `false`, it
+behaves as an `if` directive, removing the content. It will then generate the
+content on the next update where the `when` directive evaluates to `true`.
+
+TODO: Should the `when` directive support `else`?
+
 ### The Context Object
 
 From within your templates you can reference the context object itself either by

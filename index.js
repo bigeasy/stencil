@@ -408,6 +408,22 @@
       each(source, parent, frames, page, template, includes, named,
             visit.directive, visit.directive.element, context, path, generating, callback);
     },
+    when: function (parent, frames, page, template, includes, named, directive, element,
+                     context, path, generating, callback) {
+      var source = element.getAttribute("select").trim(), marker = follow(page, path);
+      evaluate(source, context, check(callback, function (value) {
+        if (value) {
+          handlers["if"](parent, frames, page, template, includes, named, directive, element,
+                         context, path, generating, callback);
+        } else {
+          if (generating) {
+            erase(marker.begin.nextSibling, marker.end);
+            follow(page, path).markers = {};
+          }
+          callback();
+        }
+      }));
+    },
     block: function (parent, frames, page, template, includes, named, directive, element,
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
