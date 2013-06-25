@@ -1,7 +1,7 @@
 <s:include xmlns:s="stencil">
   <s:tag name="loop">
     <ul>
-      <s:each s:select="$attributes.select" s:into="$attributes.as">
+      <s:each s:select="$attributes.select" s:as="$attributes.as">
         <li><s:value s:select="$attributes.display"/></li>
       </s:each>
     </ul>

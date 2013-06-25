@@ -256,7 +256,7 @@
   function each (source, parent, frames, page, template, includes, named,
            directive, element, context, path, generating, callback) {
     var idSource = element.getAttribute("key").trim(),
-        into = element.getAttribute("into").trim(),
+        as = element.getAttribute("as").trim(),
         name = element.getAttribute("name").trim(),
         head = follow(page, path), items = head.items,
         previous = head.end, parentNode = previous.parentNode,
@@ -286,7 +286,7 @@
       function shift () {
         var id, marker, part;
         if (value.length) {
-          context[into] = value.shift();
+          context[as] = value.shift();
           if (idSource) evaluate(idSource, context, okay(scribble));
           else scribble(index++);
         } else {
