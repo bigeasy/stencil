@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 require('./proof')(2, function (step, context, ok, compare, fixture) {
-  var fs = require('fs');
+  var fs = require('fs'), json = require('../../json/file').create(__dirname);
 
   step(function (stencil, resolver) {
     context.generate('fixtures/resolver.stencil', {}, step());

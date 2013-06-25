@@ -55,6 +55,67 @@ serialize to older HTML flavors for older browsers.
 On the browser, when we generate Stencil XML, we simply import it into the
 existing DOM using `Document.adoptNode`.
 
+### The Context Object
+
+From within your templates you can reference the context object itself either by
+referencing `this` or the special variable dollar sign `$` with is an alias for
+for `this`.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<dl>
+<s:each select="Object.keys(this)" as="key">
+  <dt><s:value select="key"/></dt>
+  <dd><s:value select="this[key]"/></dd>
+</s:each>
+</dl>
+</body>
+</html>
+```
+
+You can also use the dollar sign `$` alias, if you find that more aesthetically
+pleasing.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<dl>
+<s:each select="Object.keys($)" as="key">
+  <dt><s:value select="key"/></dt>
+  <dd><s:value select="$[key]"/></dd>
+</s:each>
+</dl>
+</body>
+</html>
+```
+
+But, again, why? Only because I'm doing this stupid thing with prototypes that
+I'm going to try to document right here...
+
+### The `stencil` Variable
+
+The `stencil` variable is a special object added to the context by the Stencil
+that has properties of the current template. It is not visible in the ordinary
+scope of template, (why? why not? I mean really, why was this important? now you
+have to add a paragraph explaining special properties? Are you just being a
+bonehead? Didn't we talk about that? No really, I can't wait to see this...)
+
+You can distinguish the context variables set by the Stencil engine from the
+context variables set by your application using `hasOwnProperty`. I'm not sure
+if this is useful, but it's there.
+
+(Oh, you're a real prize. Can we please [kill this
+poodle](http://www.lileks.com/bleats/archive/03/0103/010301.html#010303)? You
+know how else you could distinguish between a property set by the Stencil engine
+and a property provided by your application? `key == "stencil"`. Yes. You are a
+bonehead. TODO: Don't be such a bonehead. Then you don't have to document this.
+You might not be able to accept this right now, but there are people in this
+world how are smart enough to figure that out for themselves, I know, hard to
+accept that world won't embrace the genius of your using object prototypes to do
+something, that you know what you're doing, but there are object prototypes
+involved and that's really special, so, I can't even, I can't.)
+
 ## Tag Libraries
 
 Using the same language as used in templates, Stencil supports the creation of

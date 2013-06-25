@@ -1,7 +1,7 @@
 <html xmlns:s="stencil">
 <body>
 <ul>
-<s:each select="$.$('items.json')" as="item">
+<s:each select="$.stencil.json('items.json')" as="item">
 <li><s:value select="item.name"/></li>
 </s:each>
 </ul>

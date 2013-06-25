@@ -32,11 +32,14 @@
   }
 
   if (!json) {
-    json = function (url, callback) {
-      get(url, 'responseText', function (error, body) {
-        if (error) callback(error);
-        else callback(null, JSON.parse(body));
-      });
+    json = function (url) {
+      return function (callback) {
+        url = this.stencil.absolutize(this.stencil.url + '/..', url);
+        get(url, 'responseText', function (error, body) {
+          if (error) callback(error);
+          else callback(null, JSON.parse(body));
+        });
+      }
     }
   }
 
@@ -460,13 +463,7 @@
   function rewrite (parent, frames, page, template, includes, named,
                     directives, path, context, generating, callback) {
     var okay = validator(callback), prefix = '$';
-    context = extend(Object.create({ $: function (url) {
-      return function (callback) {
-        json(absolutize(template.url + '/..', url), function (error, result) {
-          callback(error, result);
-        });
-      }
-    }}), context);
+    context = extend(Object.create(template.context), context);
     if (frames[0].attributes) {
       frames[0].attributes.forEach(function (attributes) {
         context[prefix + 'attributes'] = attributes;
@@ -641,7 +638,12 @@
 
       // Create our template.
       templates[url] = {
-        url: url, page: page, directives: directives, tags: tags
+        url: url, page: page, directives: directives, tags: tags,
+        context: {
+          stencil: {
+            url: url, absolutize: absolutize, normalize: normalize, json: json
+          }
+        }
       };
 
       // Send the template to our caller.

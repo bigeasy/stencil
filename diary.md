@@ -55,6 +55,18 @@ uses JSON resources, it loads JavaScript modules, it loads XML, but it does not
 load JSON resources. That should be set in the context by the application or the
 application framework, then pushed through Stencil to the scaffolds that use it.
 
+**Umdate**: Um, but, how are you going to market Stencil? As a command line
+application or as a the cure for a noder's Rails envy? Oh, hai, yes, you just
+bolt on the only way your program will ever work if you need it, but it wasn't
+necessary because in theory, Stencil could be used in burgeoning command line
+generated HTML5 field of applications.
+
+Have you stopped to think about how the one thing everyone has to swallow is
+that stencil generates **hideous** HTML? Stencil is a DOM templating language,
+not a string templating language, they'll hear you say, and then your going to
+waggle your ***hideous*** HTML in their face by spewing it all over their
+console? People are not going to like you as a person.
+
 ## Module Loading
 
 I'm not loving having all that cladding wrapped around a Stencil scaffold, when
