@@ -123,7 +123,7 @@
 
   //
   function evaluate (source, context, callback) {
-    var parameters = ['$'], values = [context], callbacks = 0,
+    var parameters = [], values = [], callbacks = 0,
         i, I, name, result, compiled;
     source = source.trim();
     compiled = functions[source];
@@ -136,7 +136,7 @@
     } else {
       parameters = compiled.parameters;
     }
-    for (i = 1, I = parameters.length; i < I; i++) {
+    for (i = 0, I = parameters.length; i < I; i++) {
       values.push(context[parameters[i]]);
     }
     invoke(compiled.expression.apply(context, values), context, callback);
