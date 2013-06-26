@@ -55,6 +55,92 @@ serialize to older HTML flavors for older browsers.
 On the browser, when we generate Stencil XML, we simply import it into the
 existing DOM using `Document.adoptNode`.
 
+### The `value` Directive
+
+The `value` directive inserts a value from the context into the DOM. The `value`
+attribute takes a `select` property. The `select` property is evaluated as a
+JavaScript statement. The return value of the statement is converted to string
+and added to the DOM.
+
+Here we evaluate the JavaScript expression `1 + 1`.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<p><s:value select="1 + 1"/></p>
+</body>
+</html>
+```
+
+This generates a document with the statement calculated.
+
+```html
+<html>
+<body>
+<p>2</p>
+</body>
+</html>
+```
+
+Of course, in practice, you're going to want to insert the values from the
+object you've pushed through the stencil.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<p>
+  Greetings <s:value select="person.lastName"/>, <s:value select="person.firstName"/>
+  and welcome to the bureaucracy.
+</p>
+</body>
+</html>
+```
+
+This template assumes a `person` property has been added to the context object.
+
+```html
+<html xmlns:s="stencil">
+<body>
+<p>
+  Greetings Kafka, Franz
+  and welcome to the bureaucracy.
+</p>
+</body>
+</html>
+```
+
+You can also insert HTML into your document using the `value` directive by
+setting its `type` attribute to `html`. Generally, you want to put your HTML in
+your stencil, not in your data, but there are some exceptions. You might be
+generating HTML from user supplied markdown, or you might be rendering data that
+has been edited by a rich-text editor, like in a content management system.
+
+Here's a ridiculous example, we've placed a JavaScript string with HTML in the
+`select` attribute and set the `type` attribute to `html`.
+
+```xml
+<html xmlns:s="stencil">
+<body>
+<p><s:value select="'<em>Hello</em>, World!'" type="html"/></p>
+</body>
+</html>
+```
+
+The `select` attribute value is evaluated as JavaScript, so we need the inner
+quotes, because it is a JavaScript string. The string is then parsed as HTML and
+the HTML is inserted into the document.
+
+```html
+<html xmlns:s="stencil">
+<body>
+<p><em>Hello</em>, World!</p>
+</body>
+</html>
+```
+
+Of course, you're not going to hard code HTML into a `value` directive like this
+but instead insert HTML from a property in your context object.
+
 ### The `with` Directive
 
 The `with` directive is almost exactly like the `each` directive, except that it

@@ -1,7 +1,7 @@
 ! function (definition) {
   if (typeof module == "object" && module.exports) definition(require, module.exports, module);
   else if (typeof define == "function" && typeof define.amd == "object") define(definition);
-} (function (require, exports, module) { exports.create = function (javascript, xml, json) {
+} (function (require, exports, module) { exports.create = function (javascript, xml, json, html) {
   var slice = [].slice, templates = {};
 
   if (!javascript) {
@@ -40,6 +40,18 @@
           else callback(null, JSON.parse(body));
         });
       }
+    }
+  }
+
+  if (!html) {
+    html = function (document, html) {
+      var frag = document.createDocumentFragment(),
+          div = document.createElement('div');
+      div.innerHTML = html;
+      while (div.firstChild) {
+        frag.appendChild(div.firstChild);
+      }
+      return frag;
     }
   }
 
@@ -343,11 +355,14 @@
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
+        var value = element.getAttribute("type") == "html"
+                  ? html(page.document, value)
+                  : page.document.createTextNode(value);
         // Delete the directive body.
         erase(marker.begin.nextSibling, marker.end);
 
         // Insert the text value.
-        fill(marker, page.document.createTextNode(value));
+        fill(marker, value);
 
         callback();
       }));
