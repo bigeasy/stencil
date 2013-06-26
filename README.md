@@ -527,6 +527,25 @@ on semantic layout.
 
 Changes for each release.
 
+### Version 0.0.6
+
+ * Implement HTML values. #43.
+ * Print `DOCTYPE` when serializing. #84.
+ * Implement `with` directive. #103.
+ * Remove `$` variable. #109. #107.
+ * Create and document `stencil` object. #119.
+ * Implement `when` directive. #61.
+ * Remove `context` from callback signature. #116.
+ * Remove used parameter fix ups. #117.
+ * Test `null` to remove an attribute. #115.
+ * Implement block parameters. #114.
+ * Rename `into` attribute to `as`. #105.
+ * Recursion inside a tag definition. #112.
+ * Test and document evaluated tag attributes. #113.
+ * Bodied sub-tag and reentering caller scope. #89. #85. #59. #51. #25.
+ * Implement `recurse` directive. #102.
+ * Fix aspect ratio of image. #111.
+
 ### Version 0.0.5
 
 Mon Apr 22 19:07:43 UTC 2013
