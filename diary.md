@@ -472,3 +472,14 @@ doesn't cost too much in girth.
 **TODO**: Do this. I don't see why not.
 
 ## Inbox
+
+Going to let go of the notion that Stencil is a MicroJS library. That is
+confusing. When are you going to use Stencil outside of the context of this
+directory structure I'm creating?
+
+Probably do need to get back to the notion of having a single directory, with
+register scripts in them as well as Stencil scripts. If you add the `.cgi.js`
+suffix, then it is a server-side only script.
+
+And now I can use the Stencil project to build out the support for Stencil.
+
