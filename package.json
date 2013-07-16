@@ -9,6 +9,7 @@
   }]
 , "homepage": "https://github.com/bigeasy/stencil"
 , "main": "index.js"
+, "bin": "./stencil.bin.js"
 , "repository":
   { "type": "git"
   , "url": "http://github.com/bigeasy/stencil.git"
@@ -23,5 +24,7 @@
   }
 , "dependencies":
   { "xmldom": "0.1.15"
+  , "arguable": "0.0.9"
+  , "cadence": "0.0.23"
   }
 }
