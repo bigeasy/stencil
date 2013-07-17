@@ -515,3 +515,9 @@ Yup.
   <% end %>
 <% end %>
 ```
+
+Path to a compiler:
+
+ * Use htmlparser2, create a specialized Tokenizer, and get it in there somehow.
+ * Emit an htmlparser2 DOM.
+ * Rewrite to our XML.
