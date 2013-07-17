@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(1, function (step, fixture, compare, equal, ok) {
+require('./proof')(2, function (step, fixture, compare, equal, ok) {
     var stream = require('stream')
     var path = require('path')
 
@@ -20,6 +20,10 @@ require('./proof')(1, function (step, fixture, compare, equal, ok) {
             request('http://127.0.0.1:' + server.address().port + '/', step())
         }, function (response, body) {
             ok(compare(body, expected), 'get')
+        }, function () {
+            request('http://127.0.0.1:' + server.address().port + '/index.xml', step())
+        }, function (response, body) {
+            ok(compare(body, expected), 'get xml')
             server.on('close', step(-1))
             server.close()
         })

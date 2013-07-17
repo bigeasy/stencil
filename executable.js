@@ -2,14 +2,43 @@ var cadence = require('cadence')
 
 exports.createServer = function (port, directory, probe, callback) {
     var http = require('http')
+    var connect = require('connect')
+
     var server = http.createServer()
 
     var routes = exports.routes(directory)
-    server.on('request', function (request, response) {
-        routes(request, response, function (error) {
-            if (error) throw error
+    var app = connect()
+        .use(connect.logger('dev'))
+        .use(connect.favicon())
+        .use(function (request, response, next) {
+            routes(request, response, function (error, found) {
+                if (error) next(error)
+                else if (!found) next()
+            })
         })
-    })
+        .use(connect.static(directory))
+                       /*
+                            if (req.url == "/routes.json") {
+                                res.setHeader("Content-Type", "application/json");
+                                res.end(JSON.stringify(routes));
+                            } else {
+                                next();
+                            }
+                                            })
+                                              .use(require("connect-npm")({
+                                                  modules: [ "reactor", "stencil" ],
+                                                      require: require,
+                                                          format: "/npm/%s.js"
+                                                            }))
+                                                              .use(function(req, res, next){
+                                                                  var url = parse(req.url, true);
+                                                                      if (!reactor.react(req.method, url.pathname, req, res)) next();
+                                                                         })
+                                                                           .listen(8079);
+*/
+
+    var routes = exports.routes(directory)
+    server.on('request', app)
 
     server.on('error', nextPort)
 
@@ -56,6 +85,7 @@ exports.routes = function routes (base) {
         }, function (generated) {
             response.setHeader("Content-Type", "text/html; charset=utf8");
             response.end(serializer(generated.document.documentElement));
+            step(null, true)
         })(matches)
     })
 }
