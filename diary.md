@@ -483,3 +483,35 @@ suffix, then it is a server-side only script.
 
 And now I can use the Stencil project to build out the support for Stencil.
 
+## Stencil Language
+
+Need to get rid of the XML.
+
+```html
+<% require 'helpers.js' as helpers %>
+<% include 'tags.stencil' as tags %>
+<html include 'tags.stencil' as tags>
+  <% each [ 0, 1, 2 ]  as number %>
+    <% if number % 2 %>
+      <p style=(number % 3 ? 'blue' : 'black')><%= number %> is even.
+    <% else %>
+      <p><%= number %> is odd.
+    <% end %>
+  <% end %>
+</html>
+```
+
+Yup.
+
+```html
+<% module %>
+  <% tag name="loop" %>
+    <ul>
+      <% each $($attributes.select) as $(attributes.as) %>
+        <li><%= $($attributes.display) %></li>
+      <% end %>
+    </ul>
+    <p><%= $attr.person.lastName %>
+  <% end %>
+<% end %>
+```
