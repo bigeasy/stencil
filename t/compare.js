@@ -47,6 +47,9 @@ function compare (actual, expected) {
     } while ((e = e.parentNode) && e.nodeType == 1);
     throw new Error(stack.join('/'));
   }
+  if (typeof actual == "string") {
+    actual = new (xmldom.DOMParser)().parseFromString(actual).documentElement;
+  }
   if (typeof expected == "string") {
     expected = new (xmldom.DOMParser)().parseFromString(expected).documentElement;
   }
