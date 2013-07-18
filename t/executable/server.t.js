@@ -6,15 +6,15 @@ require('proof')(2, function (step, equal, ok) {
     var directory = path.join(__dirname, '/fixtures')
 
     step(function () {
-        createServer(8386, directory, true, step())
+        createServer({ port: 8386, directory: directory, probe: true }, step())
     }, function (first) {
         var port = first.address().port
         step(function () {
-            createServer(8386, directory, true, step())
+            createServer({ port: 8386, directory: directory, probe: true }, step())
         }, [function (second) {
             ok(port < second.address().port, 'probed')
             second.close()
-            createServer(8386, directory, false, step())
+            createServer({ port: 8386, directory: directory, probe: false }, step())
         }, function (_, error) {
             equal(error.code, 'EADDRINUSE', 'address in use')
             first.close()

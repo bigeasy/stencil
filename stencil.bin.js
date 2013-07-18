@@ -5,8 +5,9 @@
   ___ usage: en_US ___
   usage: register <options> [path?name=value] [name=value] [name=value]
 
-    -p, --port              port number, default 8386
-    -h, --help              display this message
+    -p, --port      <number>    port number, default 8386
+    -h, --host      <string>    host address, default all interfaces
+        --help                  display this message
 
   ___ strings ___
 

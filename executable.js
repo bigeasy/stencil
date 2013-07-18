@@ -1,12 +1,13 @@
 var cadence = require('cadence')
 
-exports.createServer = function (port, directory, probe, callback) {
+exports.createServer = function (options, callback) {
     var http = require('http')
     var connect = require('connect')
+    var port = options.port
 
     var server = http.createServer()
 
-    var routes = exports.routes(directory)
+    var routes = exports.routes(options.directory)
     var app = connect()
         .use(connect.logger('dev'))
         .use(connect.favicon())
@@ -16,7 +17,7 @@ exports.createServer = function (port, directory, probe, callback) {
                 else if (!found) next()
             })
         })
-        .use(connect.static(directory))
+        .use(connect.static(options.directory))
                        /*
                             if (req.url == "/routes.json") {
                                 res.setHeader("Content-Type", "application/json");
@@ -37,14 +38,14 @@ exports.createServer = function (port, directory, probe, callback) {
                                                                            .listen(8079);
 */
 
-    var routes = exports.routes(directory)
+    var routes = exports.routes(options.directory)
     server.on('request', app)
 
     server.on('error', nextPort)
 
     function nextPort (e) {
-        if (!probe || e.code != 'EADDRINUSE') callback(e)
-        else server.listen(++port, '127.0.0.1')
+        if (!options.probe || e.code != 'EADDRINUSE') callback(e)
+        server.listen(++port, options.host)
     }
 
     server.on('listening', function () {
@@ -52,7 +53,7 @@ exports.createServer = function (port, directory, probe, callback) {
         callback(null, server)
     })
 
-    server.listen(port, '127.0.0.1')
+    server.listen(port, options.host)
 }
 
 exports.routes = function routes (base) {
@@ -100,6 +101,11 @@ exports.runner = cadence(function (step, options, stdin, stdout, stderr) {
     if (options.params.help) options.help()
     var argv = exports.argvParser(options.argv)
     step(function () {
-        exports.createServer(('port' in options.params) ? options.params.port : 8386, argv.directory, false, step())
+        exports.createServer({
+            port: ('port' in options.params) ? options.params.port : 8386,
+            host: options.params.host,
+            directory: argv.directory,
+            probe: false 
+        }, step())
     })
 })
