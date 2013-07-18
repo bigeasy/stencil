@@ -92,7 +92,8 @@ exports.routes = function routes (base) {
 
 // obviously, need to put some more thought into this
 exports.argvParser = function (argv) {
-    return { directory: argv[0] }
+    var path = require('path')
+    return { directory: path.resolve(process.cwd(), argv[0]) }
 }
 
 exports.runner = cadence(function (step, options, stdin, stdout, stderr) {
