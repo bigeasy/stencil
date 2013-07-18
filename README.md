@@ -527,6 +527,10 @@ on semantic layout.
 
 Changes for each release.
 
+### Version 0.0.7
+
+ * Specify port at command line. #123.
+
 ### Version 0.0.6
 
  * Implement HTML values. #43.

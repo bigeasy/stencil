@@ -100,6 +100,6 @@ exports.runner = cadence(function (step, options, stdin, stdout, stderr) {
     if (options.params.help) options.help()
     var argv = exports.argvParser(options.argv)
     step(function () {
-        exports.createServer(8386, argv.directory, false, step())
+        exports.createServer(('port' in options.params) ? options.params.port : 8386, argv.directory, false, step())
     })
 })

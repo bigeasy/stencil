@@ -5,6 +5,7 @@
   ___ usage: en_US ___
   usage: register <options> [path?name=value] [name=value] [name=value]
 
+    -p, --port              port number, default 8386
     -h, --help              display this message
 
   ___ strings ___
