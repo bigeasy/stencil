@@ -521,3 +521,8 @@ Path to a compiler:
  * Use htmlparser2, create a specialized Tokenizer, and get it in there somehow.
  * Emit an htmlparser2 DOM.
  * Rewrite to our XML.
+
+Document the intermediate HTML. That woudl be, divs with the
+class "__$stencil$__" and attributes on any type of item named "__$stencil$__".
+
+No need to random generate to avoid, or anything like that.
