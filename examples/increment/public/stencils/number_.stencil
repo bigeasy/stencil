@@ -1,0 +1,13 @@
+<html xmlns:s="stencil" xmlns:increment="req:increment.js">
+<head>
+<script data-main="/scripts/main.js" src="/scripts/require.js"></script>
+<link rel="stylesheet" type="text/css" href="/increment.css"/>
+</head>
+<body>
+<div id="container" class="clearfix">
+<a id="back" s:href="increment.previous">&#171;</a>
+<p id="number"><s:value select="increment.value"/></p>
+<a id="forward" s:href="increment.next">&#187;</a>
+</div>
+</body>
+</html>
