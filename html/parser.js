@@ -1,4 +1,4 @@
-var htmlparser = require("htmlparser");
+var htmlparser = require("htmlparser2");
 
 function copy (document, parent, dom) {
   dom.forEach(function (node) {
