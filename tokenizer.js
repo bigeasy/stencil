@@ -66,6 +66,10 @@ var i = 0,
     AFTER_STYLE_3 = i++, //L
     AFTER_STYLE_4 = i++; //E
 
+	BEFORE_DIRECTIVE = i++
+	BEFORE_TEXT_DIRECTIVE = i++
+	IN_TEXT_DIRECTIVE = i++
+	AFTER_TEXT_DIRECTIVE = i++
 
 function whitespace(c){
 	return c === " " || c === "\t" || c === "\r" || c === "\n";
@@ -101,7 +105,10 @@ Tokenizer.prototype.write = function(chunk){
 				this._state = TEXT;
 			} else {
 				if(whitespace(c));
-				else if(c === "!"){
+				else if(c === "%"){
+					this._state = BEFORE_DIRECTIVE;
+					this._sectionStart = this._index + 1;
+				} else if(c === "!"){
 					this._state = BEFORE_DECLARATION;
 					this._sectionStart = this._index + 1;
 				} else if(c === "?"){
@@ -236,6 +243,41 @@ Tokenizer.prototype.write = function(chunk){
 			}
 		}
 
+		/*
+		*   directives
+		*/
+		else if(this._state === BEFORE_DIRECTIVE) {
+			if(c === "=") {
+				this._state = BEFORE_TEXT_DIRECTIVE;
+				this._cbs.onopentagname("div");
+			}
+		}
+		else if (this._state === BEFORE_TEXT_DIRECTIVE) {
+			if (!whitespace(c)) {
+				this._state = IN_TEXT_DIRECTIVE
+				this._sectionStart = this._index
+			}
+		}
+		else if (this._state === IN_TEXT_DIRECTIVE) {
+			if(c === "%" || whitespace(c)) {
+				this._state = AFTER_TEXT_DIRECTIVE;
+			} else {
+				this._sectionEnd = this._index + 1;
+			}
+		}
+		else if (this._state === AFTER_TEXT_DIRECTIVE) {
+			if(c === ">") {
+				this._emitAttributes({
+					"data-stencil": true,
+					"data-stencil-directive": "text-value",
+					"data-stencil-select": this._buffer.substring(this._sectionStart, this._sectionEnd)
+				})
+				this._cbs.onopentagend();
+				this._cbs.onclosetag("div")
+				this._state = TEXT;
+				this._sectionStart = this._index + 1;
+			}
+		}
 		/*
 		*	declarations
 		*/
@@ -543,6 +585,13 @@ Tokenizer.prototype.reset = function(){
 	Tokenizer.call(this, this._options, this._cbs);
 };
 
+Tokenizer.prototype._emitAttributes = function(attributes) {
+	for (var name in attributes) {
+		this._cbs.onattribname(name)
+		this._cbs.onattribvalue(attributes[name])
+	}
+}
+
 Tokenizer.prototype._emitToken = function(name){
 	this._cbs[name](this._buffer.substring(this._sectionStart, this._index));
 	this._sectionStart = -1;
@@ -554,3 +603,5 @@ Tokenizer.prototype._emitIfToken = function(name){
 	}
 	this._sectionStart = -1;
 };
+
+/* vim: set noet: */

@@ -488,20 +488,32 @@ And now I can use the Stencil project to build out the support for Stencil.
 Need to get rid of the XML.
 
 ```html
-<% require 'helpers.js' as helpers %>
-<% include 'tags.stencil' as tags %>
-<html include 'tags.stencil' as tags>
-  <% each [ 0, 1, 2 ]  as number %>
-    <% if number % 2 %>
-      <p style=(number % 3 ? 'blue' : 'black')><%= number %> is even.
+<html %tags=(include: tags.stencil) %helpers=(require: helpers.js)>
+  <% each ([ 0, 1, 2 ]) |number| %>
+    <% if (number % 2) %>
+      <p style=(number % 3 ? 'blue' : 'black')><%= (number) %> is even.
     <% else %>
-      <p><%= number %> is odd.
+      <p><%= (number) %> is odd.
     <% end %>
   <% end %>
+  <% tags.loop ([ 0, 1, 2 ]) |number| person=(helpers.person) end %>
 </html>
 ```
 
 Yup.
+
+```html
+<% module %>
+  <% tag name="loop" %>
+    <ul>
+      <% each $($attributes.select) as $($attributes.as) %>
+        <li><%= $($attributes.display) %></li>
+      <% end %>
+    </ul>
+    <p><%= $attributes.person.lastName %>
+  <% end %>
+<% end %>
+```
 
 ```html
 <% module %>
@@ -512,6 +524,7 @@ Yup.
       <% end %>
     </ul>
     <p><%= $attr.person.lastName %>
+    <% block name="body" ({ one: 1 }) %>
   <% end %>
 <% end %>
 ```
