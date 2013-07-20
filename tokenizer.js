@@ -69,6 +69,7 @@ var i = 0,
 	BEFORE_DIRECTIVE = i++
 	BEFORE_TEXT_DIRECTIVE = i++
 	IN_TEXT_DIRECTIVE = i++
+	IN_TEXT_DIRECTIVE_WHITESPACE = i++
 	AFTER_TEXT_DIRECTIVE = i++
 
 function whitespace(c){
@@ -259,23 +260,38 @@ Tokenizer.prototype.write = function(chunk){
 			}
 		}
 		else if (this._state === IN_TEXT_DIRECTIVE) {
-			if(c === "%" || whitespace(c)) {
+			if(c === "%") {
 				this._state = AFTER_TEXT_DIRECTIVE;
+			} else if(whitespace(c)) {
+				this._state = IN_TEXT_DIRECTIVE_WHITESPACE;
 			} else {
+				this._sectionEnd = this._index + 1;
+			}
+		}
+		else if (this._state === IN_TEXT_DIRECTIVE_WHITESPACE) {
+			if(c === "%") {
+				this._state = AFTER_TEXT_DIRECTIVE;
+			}
+			else if (!whitespace(c)) {
+				this._state = IN_TEXT_DIRECTIVE;
 				this._sectionEnd = this._index + 1;
 			}
 		}
 		else if (this._state === AFTER_TEXT_DIRECTIVE) {
 			if(c === ">") {
 				this._emitAttributes({
-					"data-stencil": true,
-					"data-stencil-directive": "text-value",
+					"data-stencil": "true",
+					"data-stencil-directive": "value",
+					"data-stencil-attribute-type": "text",
 					"data-stencil-select": this._buffer.substring(this._sectionStart, this._sectionEnd)
 				})
 				this._cbs.onopentagend();
 				this._cbs.onclosetag("div")
 				this._state = TEXT;
 				this._sectionStart = this._index + 1;
+			} else {
+				this._state = IN_TEXT_DIRECTIVE;
+				this._sectionEnd = this._index + 1;
 			}
 		}
 		/*
