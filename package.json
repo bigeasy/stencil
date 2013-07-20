@@ -21,11 +21,11 @@
   , "reactor": "0.0.6"
   , "connect": "~2"
   , "request": ">=0"
-  , "htmlparser": ">=0"
   }
 , "dependencies":
   { "xmldom": "0.1.15"
   , "arguable": "0.0.9"
   , "cadence": "0.0.23"
+  , "htmlparser2": "3.1.4"
   }
 }
