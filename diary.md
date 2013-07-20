@@ -488,7 +488,7 @@ And now I can use the Stencil project to build out the support for Stencil.
 Need to get rid of the XML.
 
 ```html
-<html %tags=(include: tags.stencil) %helpers=(require: helpers.js)>
+<html %tags=(stencil: tags.stencil) %tags=(xstencil: xtags.stencil) %helpers=(require: helpers.js)>
   <% each ([ 0, 1, 2 ]) |number| %>
     <% if (number % 2) %>
       <p style=(number % 3 ? 'blue' : 'black')><%= (number) %> is even.
