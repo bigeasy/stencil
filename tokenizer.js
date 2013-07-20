@@ -64,13 +64,13 @@ var i = 0,
     AFTER_STYLE_1 = i++, //T
     AFTER_STYLE_2 = i++, //Y
     AFTER_STYLE_3 = i++, //L
-    AFTER_STYLE_4 = i++; //E
+    AFTER_STYLE_4 = i++, //E
 
-	BEFORE_DIRECTIVE = i++
-	BEFORE_TEXT_DIRECTIVE = i++
-	IN_TEXT_DIRECTIVE = i++
-	IN_TEXT_DIRECTIVE_WHITESPACE = i++
-	AFTER_TEXT_DIRECTIVE = i++
+	BEFORE_DIRECTIVE = i++,
+	BEFORE_TEXT_DIRECTIVE = i++,
+	IN_TEXT_DIRECTIVE = i++,
+	IN_TEXT_DIRECTIVE_WHITESPACE = i++,
+	AFTER_TEXT_DIRECTIVE = i++;
 
 function whitespace(c){
 	return c === " " || c === "\t" || c === "\r" || c === "\n";

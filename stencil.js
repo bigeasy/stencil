@@ -2,13 +2,9 @@ var fs = require('fs')
 var domutils = require('domutils')
 var xmldom = require('xmldom')
 
+var index = require('./index')
+
 var cadence = require('cadence')
-
-// for a change of pace, let's use actual objects. we can change it back to
-// somehting functional later if we dont' like it.
-function Stencil () {
-
-}
 
 function createXMLTemplate (document, object) {
     function descend (element, object) {
@@ -49,34 +45,34 @@ function createXMLTemplate (document, object) {
     console.log(document.documentElement.toString())
 }
 
+var htmlparser = require('htmlparser2');
+var path = require('path');
+
 // new problem, how does our xml engine resolve these? how do we get them to the
-// browser to be resolved?
-Stencil.prototype.parse = cadence(function (step, source) {
-    var htmlparser = require('htmlparser2');
-    
-    step(function () {
-        fs.readFile(source, 'utf8', step())
-    }, function (body) {
-        var handler = new htmlparser.DefaultHandler()
-        var tokenizer = new (require('./tokenizer'))
-        var parser = new htmlparser.Parser(handler);
-        tokenizer._cbs = parser._tokenizer._cbs
-        parser._tokenizer = tokenizer
-        parser.parseComplete(body)
-        // great. now it's time for a serializer.
-        //console.log(domutils.getOuterHTML(handler.dom[0]))
-        //console.log(require('util').inspect(handler.dom, false, null))
-        var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
-        actual.documentElement.parentNode.removeChild(actual.documentElement)
-        createXMLTemplate(actual, handler.dom[0])
+// browser to be resolved? We have stencil and xstencil. We need to bundle to
+// get these back down to the browser, or serve the XML.
+exports.createParser = function (base) {
+    return cadence(function (step, source) {
+        
+        step(function () {
+            fs.readFile(path.join(base, source), 'utf8', step())
+        }, function (body) {
+            var handler = new htmlparser.DefaultHandler()
+            var tokenizer = new (require('./tokenizer'))
+            var parser = new htmlparser.Parser(handler);
+            tokenizer._cbs = parser._tokenizer._cbs
+            parser._tokenizer = tokenizer
+            parser.parseComplete(body)
+            // great. now it's time for a serializer.
+            //console.log(domutils.getOuterHTML(handler.dom[0]))
+            //console.log(require('util').inspect(handler.dom, false, null))
+            var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
+            actual.documentElement.parentNode.removeChild(actual.documentElement)
+            createXMLTemplate(actual, handler.dom[0])
+            return actual
+        })
     })
-})
+}
 
 // maybe it's time to start testing through HTTP, instead of trying to unit
 // test, because you're not getting around to the HTTP part of it.
-//
-var stencil = new Stencil
-
-stencil.parse('t/directives/fixtures/value.stencil', function (error) {
-    if (error) throw error
-})
