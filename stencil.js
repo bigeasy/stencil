@@ -1,5 +1,5 @@
 var fs = require('fs')
-var domutils = require('domutils')
+//var domutils = require('domutils')
 var xmldom = require('xmldom')
 
 var index = require('./index')
