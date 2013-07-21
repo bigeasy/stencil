@@ -1,26 +1,26 @@
 #!/usr/bin/env node
 
-require('./proof')(4, function (step, stencil, context, fixture, ok, compare) {
+require('./proof')(4, function (step, stencil, xstencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
+    xstencil.generate('fixtures/value.xml', { greeting: "Hello, World!" }, step());
     stencil.generate('fixtures/value.stencil', { greeting: "Hello, World!" }, step());
-    context.generate('fixtures/value.xml', { greeting: "Hello, World!" }, step());
     fixture('fixtures/value-generate.xml', step());
     fixture('fixtures/value-regenerate.xml', step());
 
-  }, function (value, xvalue, generate, regenerate) {
+  }, function (xvalue, value, generate, regenerate) {
 
     ok(compare(xvalue.document, generate), 'xstencil generate');
 
     step(function () {
 
-      context.reconstitute(xvalue.document, step());
+      xstencil.reconstitute(xvalue.document, step());
 
     }, function (reconstituted) {
 
-      context.regenerate(reconstituted, { greeting: "Hello, Nurse!" }, step());
+      xstencil.regenerate(reconstituted, { greeting: "Hello, Nurse!" }, step());
 
     }, function (regenerated) {
 
