@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-require('./proof')(2, function (step, context, fixture, ok, compare) {
+require('./proof')(2, function (step, stencil, xstencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
-    context.generate('fixtures/html.stencil', {
+    xstencil.generate('fixtures/html.xml', {
       greeting: "Hello, <br/><a href='index.html'><em>World</em></a>!"
     }, step());
     fixture('fixtures/html-generate.xml', step());
@@ -17,11 +17,11 @@ require('./proof')(2, function (step, context, fixture, ok, compare) {
 
     step(function () {
 
-      context.reconstitute(actual.document, step());
+      xstencil.reconstitute(actual.document, step());
 
     }, function (actual) {
 
-      context.regenerate(actual, { greeting: "Hello, Nurse!" }, step());
+      xstencil.regenerate(actual, { greeting: "Hello, Nurse!" }, step());
 
     }, function (actual) {
 
