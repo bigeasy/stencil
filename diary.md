@@ -540,6 +540,11 @@ class "__$stencil$__" and attributes on any type of item named "__$stencil$__".
 
 No need to random generate to avoid, or anything like that.
 
+## XStencil Versus Stencil
+
+I'm thinking, file extension, and that is all there is too it. No special extra
+require, so we can push that logic out into the loader.
+
 ## Require
 
 Note that, `require` is for static loading. Can you build using ESprima?
