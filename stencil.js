@@ -42,7 +42,7 @@ function createXMLTemplate (document, object) {
     //console.log(object) 
     document.appendChild(element)
     descend(element, object);
-    console.log(document.documentElement.toString())
+    //console.log(document.documentElement.toString())
 }
 
 var htmlparser = require('htmlparser2');
@@ -64,7 +64,7 @@ exports.createParser = function (base) {
             parser._tokenizer = tokenizer
             parser.parseComplete(body)
             // great. now it's time for a serializer.
-            //console.log(domutils.getOuterHTML(handler.dom[0]))
+            //console.log('here', domutils.getOuterHTML(handler.dom[0]))
             //console.log(require('util').inspect(handler.dom, false, null))
             var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
             actual.documentElement.parentNode.removeChild(actual.documentElement)

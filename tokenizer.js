@@ -248,15 +248,21 @@ Tokenizer.prototype.write = function(chunk){
 		*   directives
 		*/
 		else if(this._state === BEFORE_DIRECTIVE) {
-			if(c === "=") {
+			if(c === "=" || c === "-") {
+			// todo: abend if we never see a closing `%`.
 				this._state = BEFORE_TEXT_DIRECTIVE;
 				this._cbs.onopentagname("div");
+				this._attributes = {
+					"data-stencil": "true",
+					"data-stencil-directive": "value",
+					"data-stencil-attribute-type": c === "=" ? "text" : "html",
+				};
 			}
 		}
 		else if (this._state === BEFORE_TEXT_DIRECTIVE) {
 			if (!whitespace(c)) {
-				this._state = IN_TEXT_DIRECTIVE
-				this._sectionStart = this._index
+				this._state = IN_TEXT_DIRECTIVE;
+				this._sectionStart = this._index;
 			}
 		}
 		else if (this._state === IN_TEXT_DIRECTIVE) {
@@ -279,12 +285,9 @@ Tokenizer.prototype.write = function(chunk){
 		}
 		else if (this._state === AFTER_TEXT_DIRECTIVE) {
 			if(c === ">") {
-				this._emitAttributes({
-					"data-stencil": "true",
-					"data-stencil-directive": "value",
-					"data-stencil-attribute-type": "text",
-					"data-stencil-select": this._buffer.substring(this._sectionStart, this._sectionEnd)
-				})
+				this._attributes["data-stencil-select"] =
+					this._buffer.substring(this._sectionStart, this._sectionEnd)
+				this._emitAttributes(this._attributes);
 				this._cbs.onopentagend();
 				this._cbs.onclosetag("div")
 				this._state = TEXT;
@@ -576,6 +579,13 @@ Tokenizer.prototype.resume = function(){
 
 Tokenizer.prototype.end = function(chunk){
 	if(chunk) this.write(chunk);
+
+	switch (this._state) {
+	case IN_TEXT_DIRECTIVE:
+	case IN_TEXT_DIRECTIVE_WHITESPACE:
+	case AFTER_TEXT_DIRECTIVE:
+		throw new Error("unclosed text directive")
+	}
 
 	//if there is remaining data, emit it in a reasonable way
 	if(this._sectionStart > this._index){

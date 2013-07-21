@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(2, function (step, stencil, xstencil, fixture, ok, compare) {
+require('./proof')(4, function (step, stencil, xstencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
@@ -8,24 +8,43 @@ require('./proof')(2, function (step, stencil, xstencil, fixture, ok, compare) {
     xstencil.generate('fixtures/html.xml', {
       greeting: "Hello, <br/><a href='index.html'><em>World</em></a>!"
     }, step());
+    stencil.generate('fixtures/html.stencil', {
+      greeting: "Hello, <br/><a href='index.html'><em>World</em></a>!"
+    }, step());
     fixture('fixtures/html-generate.xml', step());
     fixture('fixtures/html-update.xml', step());
 
-  }, function (actual, generate, regenerate) {
+  }, function (xhtml, html, generate, regenerate) {
 
-    ok(compare(actual.document, generate), 'generate');
+    ok(compare(xhtml.document, generate), 'generate');
 
     step(function () {
 
-      xstencil.reconstitute(actual.document, step());
+      xstencil.reconstitute(xhtml.document, step());
 
-    }, function (actual) {
+    }, function (xhtml) {
 
-      xstencil.regenerate(actual, { greeting: "Hello, Nurse!" }, step());
+      xstencil.regenerate(xhtml, { greeting: "Hello, Nurse!" }, step());
 
-    }, function (actual) {
+    }, function (xhtml) {
 
-      ok(compare(actual.document, regenerate), 'regenerate');
+      ok(compare(xhtml.document, regenerate), 'regenerate');
+
+    });
+
+    ok(compare(html.document, generate), 'generate');
+
+    step(function () {
+
+      stencil.reconstitute(html.document, step());
+
+    }, function (html) {
+
+      stencil.regenerate(html, { greeting: "Hello, Nurse!" }, step());
+
+    }, function (html) {
+
+      ok(compare(html.document, regenerate), 'regenerate');
 
     });
   });
