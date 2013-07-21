@@ -5,7 +5,7 @@ require('./proof')(4, function (step, stencil, xstencil, fixture, ok, compare) {
 
   step(function () {
 
-    xstencil.generate('fixtures/html.xml', {
+    xstencil.generate('fixtures/html.xstencil', {
       greeting: "Hello, <br/><a href='index.html'><em>World</em></a>!"
     }, step());
     stencil.generate('fixtures/html.stencil', {
