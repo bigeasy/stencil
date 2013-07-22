@@ -69,6 +69,7 @@ exports.createParser = function (base) {
             var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
             actual.documentElement.parentNode.removeChild(actual.documentElement)
             createXMLTemplate(actual, handler.dom[0])
+            //console.log(actual.toString())
             return actual
         })
     })

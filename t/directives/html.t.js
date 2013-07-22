@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(4, function (step, stencil, xstencil, fixture, ok, compare) {
+require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
