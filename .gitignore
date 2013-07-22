@@ -6,3 +6,4 @@
 
 /example/increment/_*
 /example/increment/bundle.js
+/**/node_modules
