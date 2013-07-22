@@ -1,43 +1,43 @@
 #!/usr/bin/env node
 
-require('./proof')(5, function (step, context, fixture, ok, compare) {
+require('./proof')(5, function (step, xstencil, fixture, ok, compare) {
   var fs = require('fs');
 
-  step(function (stencil, resolver) {
+  step(function () {
 
-    context.generate('fixtures/else.stencil', { value: true }, step());
+    xstencil.generate('fixtures/else.xstencil', { value: true }, step());
     fixture('fixtures/else-true.xml', step());
     fixture('fixtures/else-false.xml', step());
 
-  }, function (actual, truthy, falsey) {
+  }, function (xelse, truthy, falsey) {
 
-    ok(compare(actual.document, truthy), 'generate');
+    ok(compare(xelse.document, truthy), 'generate');
 
     step(function () {
 
-      context.reconstitute(actual.document, step());
+      xstencil.reconstitute(xelse.document, step());
 
-    }, function (actual) {
+    }, function (xelse) {
 
-      context.regenerate(actual, { value: true }, step());
+      xstencil.regenerate(xelse, { value: true }, step());
 
-    }, function (actual) {
+    }, function (xelse) {
 
-      ok(compare(actual.document, truthy), 'reconstitute');
-      context.regenerate(actual, { value: false }, step());
+      ok(compare(xelse.document, truthy), 'reconstitute');
+      xstencil.regenerate(xelse, { value: false }, step());
 
-    }, function (actual) {
+    }, function (xelse) {
 
-      ok(compare(actual.document, falsey), 'false');
-      context.regenerate(actual, { value: true }, step());
+      ok(compare(xelse.document, falsey), 'false');
+      xstencil.regenerate(xelse, { value: true }, step());
 
-    }, function (actual) {
-      ok(compare(actual.document, truthy), 'true-scavenge');
-      context.regenerate(actual, { value: false }, step());
+    }, function (xelse) {
+      ok(compare(xelse.document, truthy), 'true-scavenge');
+      xstencil.regenerate(xelse, { value: false }, step());
 
-    }, function (actual) {
+    }, function (xelse) {
 
-      ok(compare(actual.document, falsey), 'false-after-scavenge');
+      ok(compare(xelse.document, falsey), 'false-after-scavenge');
 
     });
   });
