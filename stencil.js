@@ -64,9 +64,10 @@ function TokenizerProxy (cbs) {
 })
 
 TokenizerProxy.prototype.ondirective = function (directive) {
-    if (directive.name === 'end') {
+    if (/^(end|else)$/.test(directive.name)) {
         this._cbs.onclosetag('div')
-    } else {
+    }
+    if ('end' !== directive.name) {
         this._cbs.onopentagname("div")
         this._cbs.onattribname("data-stencil")
         this._cbs.onattribvalue("true")
