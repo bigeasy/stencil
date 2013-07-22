@@ -548,3 +548,23 @@ require, so we can push that logic out into the loader.
 ## Require
 
 Note that, `require` is for static loading. Can you build using ESprima?
+
+I'm not going to require AMD, nor am I going to require a particular module
+loader. I'm going to start with Browserify. I'll start there because it is
+popular and it ought to be reassuring to noders. I'm impressed with its support
+for source maps, CoffeeScript, and handling other package management protocols.
+
+It's also nice that it is bound to NPM, but that might also be a drawback.
+
+Let's start by seeing if we can create a bundle.
+
+Need to add an explicit bundle directive. If you don't provide the directive,
+you are on your own, the source passes thorugh.
+
+For now, Stencil is going to depend on jQuery, because it's what I know and it
+gets me to where I need to go as quickly as possible.
+
+What do I need from jQuery. *Only*, DOM ready, so it can be swapped out.
+
+Would be nice if bundled JavaScript could also have, no, not important. You can
+just generate JSON if that's what you need. How hard it it?

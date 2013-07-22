@@ -692,6 +692,11 @@
       // Only elements can be directives.
       if (node.nodeType != 1) return;
 
+      // todo: not good enough, how are we tracking repeats?
+      if (node.localName == 'script') {
+        node.setAttribute('src', '/_assets/bundle.js')
+      }
+
       // Gather object constructors, template includes and dynamic attributes
       // into our array of operations.
       var operations = [], attributes = [], properties = {}, includes = [];

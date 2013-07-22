@@ -1,6 +1,6 @@
 <html xmlns:s="stencil" xmlns:increment="req:increment.js">
 <head>
-<script data-main="/scripts/main.js" src="/scripts/require.js"></script>
+<script src="/number.js"></script>
 <link rel="stylesheet" type="text/css" href="/increment.css"/>
 </head>
 <body>

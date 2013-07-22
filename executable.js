@@ -82,7 +82,7 @@ exports.routes = function routes (base) {
 
             delete match.params.pathInfo
 
-            stencils.generate(match.script, { pathInfo: pathInfo }, step());
+            stencils.generate(match.route.script, { pathInfo: pathInfo }, step());
         }, function (generated) {
             response.setHeader("Content-Type", "text/html; charset=utf8");
             response.end(serializer(generated.document.documentElement));
