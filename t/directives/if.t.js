@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-require('./proof')(5, function (step, context, fixture, ok, compare) {
+require('./proof')(5, function (step, xstencil, fixture, ok, compare) {
   var fs = require('fs');
 
-  step(function (stencil, resolver) {
+  step(function () {
 
-    context.generate('fixtures/if.stencil', { value: true }, step());
+    xstencil.generate('fixtures/if.xstencil', { value: true }, step());
     fixture('fixtures/if-true.xml', step());
     fixture('fixtures/if-false.xml', step());
 
@@ -15,26 +15,26 @@ require('./proof')(5, function (step, context, fixture, ok, compare) {
 
     step(function() {
 
-      context.reconstitute(actual.document, step());
+      xstencil.reconstitute(actual.document, step());
 
     }, function (actual) {
 
-      context.regenerate(actual, { value: true }, step());
+      xstencil.regenerate(actual, { value: true }, step());
 
     }, function (actual) {
 
       ok(compare(actual.document, truthy), 'reconstitute');
-      context.regenerate(actual, { value: false }, step());
+      xstencil.regenerate(actual, { value: false }, step());
 
     }, function (actual) {
 
       ok(compare(actual.document, falsey), 'false');
-      context.regenerate(actual, { value: true }, step());
+      xstencil.regenerate(actual, { value: true }, step());
 
     }, function (actual) {
 
       ok(compare(actual.document, truthy), 'true-scavenge');
-      context.regenerate(actual, { value: false }, step());
+      xstencil.regenerate(actual, { value: false }, step());
 
     }, function (actual) {
 
