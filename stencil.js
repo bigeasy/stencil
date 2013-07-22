@@ -1,10 +1,12 @@
 var fs = require('fs')
-//var domutils = require('domutils')
+var domutils = require('domutils')
 var xmldom = require('xmldom')
 
 var index = require('./index')
 
 var cadence = require('cadence')
+
+var __slice = [].slice
 
 function createXMLTemplate (document, object) {
     function descend (element, object) {
@@ -20,7 +22,6 @@ function createXMLTemplate (document, object) {
                             append.setAttribute($[1], value);
                         }
                     }
-                    append.setAttribute('select', child.attribs['data-stencil-select'])
                 } else {
                     var append = element.ownerDocument.createElement(child.name)
                     for (var name in child.attribs) {
@@ -48,6 +49,40 @@ function createXMLTemplate (document, object) {
 var htmlparser = require('htmlparser2');
 var path = require('path');
 
+
+function TokenizerProxy (cbs) {
+    this._cbs = cbs 
+}
+
+'onattribname onattribvalue oncdataend oncdatastart \
+ onclosetag oncomment \
+ oncommentend onerror onopentagname onopentagend \
+ onprocessinginstruction onreset ontext onend'.split(/\s+/).forEach(function (method) {
+    TokenizerProxy.prototype[method] = function () {
+        this._cbs[method].apply(this._cbs, __slice.call(arguments))
+    }
+})
+
+TokenizerProxy.prototype.ondirective = function (directive) {
+    if (directive.name === 'end') {
+        this._cbs.onclosetag('div')
+    } else {
+        this._cbs.onopentagname("div")
+        this._cbs.onattribname("data-stencil")
+        this._cbs.onattribvalue("true")
+        this._cbs.onattribname("data-stencil-directive")
+        this._cbs.onattribvalue(directive.name)
+        for (var name in directive.attributes) {
+            this._cbs.onattribname("data-stencil-attribute-" + name)
+            this._cbs.onattribvalue(directive.attributes[name])
+        }
+        this._cbs.onopentagend()
+        if (directive.name == 'value') {
+            this._cbs.onclosetag('div')
+        }
+    }
+}
+
 // new problem, how does our xml engine resolve these? how do we get them to the
 // browser to be resolved? We have stencil and xstencil. We need to bundle to
 // get these back down to the browser, or serve the XML.
@@ -60,16 +95,16 @@ exports.createParser = function (base) {
             var handler = new htmlparser.DefaultHandler()
             var tokenizer = new (require('./tokenizer'))
             var parser = new htmlparser.Parser(handler);
-            tokenizer._cbs = parser._tokenizer._cbs
+            tokenizer._cbs = new TokenizerProxy(parser._tokenizer._cbs)
             parser._tokenizer = tokenizer
             parser.parseComplete(body)
             // great. now it's time for a serializer.
-            //console.log('here', domutils.getOuterHTML(handler.dom[0]))
+            console.log('here', domutils.getOuterHTML(handler.dom[0]))
             //console.log(require('util').inspect(handler.dom, false, null))
             var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
             actual.documentElement.parentNode.removeChild(actual.documentElement)
             createXMLTemplate(actual, handler.dom[0])
-            //console.log(actual.toString())
+            console.log(actual.toString())
             return actual
         })
     })

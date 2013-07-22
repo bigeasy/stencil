@@ -257,11 +257,11 @@ Tokenizer.prototype.write = function(chunk){
 			if(c === "=" || c === "-") {
 			// todo: abend if we never see a closing `%`.
 				this._state = BEFORE_TEXT_DIRECTIVE;
-				this._cbs.onopentagname("div");
-				this._attributes = {
-					"data-stencil": "true",
-					"data-stencil-directive": "value",
-					"data-stencil-attribute-type": c === "=" ? "text" : "html",
+				this._directive = {
+					name: "value",
+					attributes: {
+						type: c === "=" ? "text" : "html"
+					}
 				};
 			} else if(whitespace(c)) {
 				this._state = BEFORE_DIRECTIVE_NAME;
@@ -270,8 +270,7 @@ Tokenizer.prototype.write = function(chunk){
 		// todo: unforgiving for now, whitespace is required.
 		else if(this._state === BEFORE_DIRECTIVE_NAME) {
 			if(!whitespace(c)) {
-				this._cbs.onopentagname("div");
-				this._attributes = { "data-stencil": "true" };
+				this._directive = { attributes: {} };
 				this._state = IN_DIRECTIVE_NAME;
 				this._sectionStart = this._index;
 			}
@@ -287,8 +286,7 @@ Tokenizer.prototype.write = function(chunk){
 			if (done) {
 			// todo: valid directive? um, actually, no, can't, unless I'm also
 			// tracking tag names.
-				this._directive =
-				this._attributes["data-stencil-directive"] =
+				this._directive.name =
 					this._buffer.substring(this._sectionStart, this._index)
 				this._sectionStart = this._index;
 				done = false;
@@ -311,7 +309,8 @@ Tokenizer.prototype.write = function(chunk){
 			}
 			if (this._depth === 0) {
 				this._state = IN_DIRECTIVE;
-				this._attributes["data-stencil-select"] =
+				console.log(this._directive)
+				this._directive.attributes["select"] =
 					this._buffer.substring(this._sectionStart, this._index)
 			}
 
@@ -320,12 +319,8 @@ Tokenizer.prototype.write = function(chunk){
 			if(c !== ">") {
 				throw new Error("unexpected character: " + c)
 			}
-			if (this._attributes["data-stencil-directive"] === "end") {
-				this._cbs.onclosetag("div")
-			} else {
-				this._emitAttributes(this._attributes);
-				this._cbs.onopentagend();
-			}
+			this._cbs.ondirective(this._directive);
+			this._directive = null;
 			this._state = TEXT;
 			this._sectionStart = this._index + 1;
 		}
@@ -355,11 +350,9 @@ Tokenizer.prototype.write = function(chunk){
 		}
 		else if (this._state === AFTER_TEXT_DIRECTIVE) {
 			if(c === ">") {
-				this._attributes["data-stencil-select"] =
+				this._directive.attributes["select"] =
 					this._buffer.substring(this._sectionStart, this._sectionEnd)
-				this._emitAttributes(this._attributes);
-				this._cbs.onopentagend();
-				this._cbs.onclosetag("div")
+				this._cbs.ondirective(this._directive)
 				this._state = TEXT;
 				this._sectionStart = this._index + 1;
 			} else {
