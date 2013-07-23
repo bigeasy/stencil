@@ -1,45 +1,77 @@
 #!/usr/bin/env node
 
-require('./proof')(5, function (step, context, fixture, ok, compare) {
+require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
-    context.generate('fixtures/elseif.stencil', { value: 'a' }, step());
+    xstencil.generate('fixtures/elseif.xstencil', { value: 'a' }, step());
+    stencil.generate('fixtures/elseif.stencil', { value: 'a' }, step());
     fixture('fixtures/elseif-a.xml', step());
     fixture('fixtures/elseif-b.xml', step());
     fixture('fixtures/elseif-c.xml', step());
 
-  }, function (actual, a, b, c) {
+  }, function (xelseif, elseif, a, b, c) {
 
-    ok(compare(actual.document, a), 'generate');
+    ok(compare(xelseif.document, a), 'xstencil generate');
 
     step(function () {
 
-      context.reconstitute(actual.document, step());
+      xstencil.reconstitute(xelseif.document, step());
 
-    }, function (actual) {
+    }, function (xelseif) {
 
-      context.regenerate(actual, { value: 'a' }, step());
+      xstencil.regenerate(xelseif, { value: 'a' }, step());
 
-    }, function (actual) {
+    }, function (xelseif) {
 
-      ok(compare(actual.document, a), 'reconstitute');
-      context.regenerate(actual, { value: 'b' }, step());
+      ok(compare(xelseif.document, a), 'xstencil reconstitute');
+      xstencil.regenerate(xelseif, { value: 'b' }, step());
 
-    }, function (actual) {
+    }, function (xelseif) {
 
-      ok(compare(actual.document, b), 'b');
-      context.regenerate(actual, { value: 'c' }, step());
+      ok(compare(xelseif.document, b), 'xstencil b');
+      xstencil.regenerate(xelseif, { value: 'c' }, step());
 
-    }, function (actual) {
+    }, function (xelseif) {
 
-      ok(compare(actual.document, c), 'c');
-      context.regenerate(actual, { value: 'a' }, step());
+      ok(compare(xelseif.document, c), 'xstencil c');
+      xstencil.regenerate(xelseif, { value: 'a' }, step());
 
-    }, function (actual) {
+    }, function (xelseif) {
 
-      ok(compare(actual.document, a), 'a-after-scavenge');
+      ok(compare(xelseif.document, a), 'xstencil a-after-scavenge');
+
+    });
+
+    ok(compare(elseif.document, a), 'stencil generate');
+
+    step(function () {
+
+      stencil.reconstitute(elseif.document, step());
+
+    }, function (elseif) {
+
+      stencil.regenerate(elseif, { value: 'a' }, step());
+
+    }, function (elseif) {
+
+      ok(compare(elseif.document, a), 'stencil reconstitute');
+      stencil.regenerate(elseif, { value: 'b' }, step());
+
+    }, function (elseif) {
+
+      ok(compare(elseif.document, b), 'stencil b');
+      stencil.regenerate(elseif, { value: 'c' }, step());
+
+    }, function (elseif) {
+
+      ok(compare(elseif.document, c), 'stencil c');
+      stencil.regenerate(elseif, { value: 'a' }, step());
+
+    }, function (elseif) {
+
+      ok(compare(elseif.document, a), 'stencil a-after-scavenge');
 
     });
   });

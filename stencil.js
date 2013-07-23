@@ -1,5 +1,5 @@
 var fs = require('fs')
-var domutils = require('domutils')
+//var domutils = require('domutils')
 var xmldom = require('xmldom')
 
 var index = require('./index')
@@ -55,7 +55,7 @@ function TokenizerProxy (cbs) {
 }
 
 'onattribname onattribvalue oncdataend oncdatastart \
- onclosetag oncomment \
+ onclosetag oncomment onselfclosingtag \
  oncommentend onerror onopentagname onopentagend \
  onprocessinginstruction onreset ontext onend'.split(/\s+/).forEach(function (method) {
     TokenizerProxy.prototype[method] = function () {
@@ -100,12 +100,12 @@ exports.createParser = function (base) {
             parser._tokenizer = tokenizer
             parser.parseComplete(body)
             // great. now it's time for a serializer.
-            console.log('here', domutils.getOuterHTML(handler.dom[0]))
+            //console.log('here', domutils.getOuterHTML(handler.dom[0]))
             //console.log(require('util').inspect(handler.dom, false, null))
             var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
             actual.documentElement.parentNode.removeChild(actual.documentElement)
             createXMLTemplate(actual, handler.dom[0])
-            console.log(actual.toString())
+            //console.log(actual.toString())
             return actual
         })
     })
