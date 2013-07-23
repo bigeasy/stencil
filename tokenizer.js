@@ -70,6 +70,8 @@ var i = 0,
 	BEFORE_DIRECTIVE_NAME = i++,
 	IN_DIRECTIVE_NAME = i++,
 	IN_DIRECTIVE_SELECT = i++,
+	IN_DIRECTIVE_AS = i++,
+	IN_DIRECTIVE_KEY = i++,
 	IN_DIRECTIVE = i++,
 	BEFORE_DIRECTIVE_END = i++,
 	BEFORE_TEXT_DIRECTIVE = i++,
@@ -279,6 +281,12 @@ Tokenizer.prototype.write = function(chunk){
 			if ("(" === c) {
 				this._state = IN_DIRECTIVE_SELECT;
 				done = true;
+			} else if("[" === c) {
+				this._state = IN_DIRECTIVE_KEY;
+				done = true;
+			} else if("|" === c) {
+				this._state = IN_DIRECTIVE_AS;
+				done = true;
 			} else if(whitespace(c)) {
 				done = true;
 				this._state = IN_DIRECTIVE;
@@ -293,8 +301,16 @@ Tokenizer.prototype.write = function(chunk){
 			}
 		}
 		else if (this._state === IN_DIRECTIVE) {
-			if ("(" === c) {
+			if("(" === c) {
 				this._state = IN_DIRECTIVE_SELECT;
+				this._sectionStart = this._index + 1;
+				this._depth = 1;
+			} else if("[" === c) {
+				this._state = IN_DIRECTIVE_KEY;
+				this._sectionStart = this._index + 1;
+				this._depth = 1;
+			} else if("|" === c) {
+				this._state = IN_DIRECTIVE_AS;
 				this._sectionStart = this._index + 1;
 				this._depth = 1;
 			} else if("%" === c) {
@@ -309,8 +325,30 @@ Tokenizer.prototype.write = function(chunk){
 			}
 			if (this._depth === 0) {
 				this._state = IN_DIRECTIVE;
-				console.log(this._directive)
 				this._directive.attributes["select"] =
+					this._buffer.substring(this._sectionStart, this._index)
+			}
+
+		}
+		else if (this._state === IN_DIRECTIVE_KEY) {
+			if ("[" === c) {
+				this._depth++;
+			} else if ("]" === c) {
+				this._depth--;
+			}
+			if (this._depth === 0) {
+				this._state = IN_DIRECTIVE;
+				this._directive.attributes["key"] =
+					this._buffer.substring(this._sectionStart, this._index)
+			}
+
+		}
+		else if (this._state === IN_DIRECTIVE_AS) {
+			// todo: need to assert that it is a valid JavaScript identifier
+			// char, here or in the proxy.
+			if(c === "|") {
+				this._state = IN_DIRECTIVE;
+				this._directive.attributes["as"] =
 					this._buffer.substring(this._sectionStart, this._index)
 			}
 
