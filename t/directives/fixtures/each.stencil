@@ -1,9 +1,9 @@
-<html xmlns:s="stencil">
+<html>
 <body>
 <ul>
-<s:each select="watchers" as="watcher" key="watcher.id">
-  <li><s:value select="watcher.login"/></li>
-</s:each>
+<% each (watchers) |watcher| [watcher.id] %>
+  <li><%= watcher.login %></li>
+<% end %>
 </ul>
 </body>
 </html>
