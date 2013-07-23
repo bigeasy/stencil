@@ -19,20 +19,102 @@
 <h1>Stencil</h1>
 </div>
 <!-- todo: code font is too small for body text font -->
-<div class="unit description markdown hydrate-comments" data-inner-text="index.md"><p>Asynchronous HTML5 templating for Node.js and the browser. Photo by <a href="&#x6d;&#x61;&#x69;&#x6c;&#116;&#x6f;&#58;&#x61;&#10;&#104;&#114;&#101;&#x66;&#61;&#x22;&#104;&#x74;&#x74;&#112;&#x3a;&#x2f;&#x2f;&#x77;&#119;&#x77;&#46;&#102;&#x6c;&#105;&#x63;&#107;&#x72;&#x2e;&#99;&#x6f;&#x6d;&#x2f;&#112;&#x65;&#111;&#x70;&#108;&#101;&#x2f;&#55;&#52;&#x31;&#56;&#50;&#54;&#x33;&#49;&#x40;&#x4e;&#48;&#x30;&#x2f;&#x22;">&#x61;&#10;&#104;&#114;&#101;&#x66;&#61;&#x22;&#104;&#x74;&#x74;&#112;&#x3a;&#x2f;&#x2f;&#x77;&#119;&#x77;&#46;&#102;&#x6c;&#105;&#x63;&#107;&#x72;&#x2e;&#99;&#x6f;&#x6d;&#x2f;&#112;&#x65;&#111;&#x70;&#108;&#101;&#x2f;&#55;&#52;&#x31;&#56;&#50;&#54;&#x33;&#49;&#x40;&#x4e;&#48;&#x30;&#x2f;&#x22;</a>mufflevski.</p>
-<p>Thoughts on Stencil? Join the
-<a href="https://github.com/bigeasy/stencil/issues/11">Discussion</a>.</p>
+<div class="unit description markdown hydrate-comments" data-inner-text="index.md"><p>Asynchronous, streaming HTML templating for Node.js and the browser. The same
+templates that pre-generate your HTML5 and stream the results are then run in
+the browser. You can push data through them and they&#39;ll update the DOM.</p>
+<p>Routing is file system driven. The directory path is the URL path.</p>
+<p>Routes are transported to the browser so you can have a single page <code>pushState</code>
+application <em>and</em> SEO friendly server-side generated pages on the first visit.</p>
+<p>What does all this cost you? Not much. The template and routing engine are tiny
+at less than &lt;5k. The same engine that runs in the browser runs in the server
+in Node.js and it runs fast. No PhantomJS trickery.</p>
+<p>The template engine is both asynchronous and streaming. </p>
+<p>And the best part about Stencil; there&#39;s not a <strong><em>thing</em></strong> MVC about it!</p>
+<p>You don&#39;t need to build an object to feed the template engine. If you add a tag
+that needs an asynchronous data, the call is made by the template. If you remove
+that tag, the call is removed. You don&#39;t have to update three artifacts to
+remove the call.</p>
+<p>Asynchronous calls are transparent. There are no callbacks expressed in the
+template themselves. Anyone familiar with PHP ought to be able to author
+templates.</p>
+<p>Plus, you get tag libraries and layout libraries to further encapsulate
+asynchronous calls. You can build a tag library to hand off to a web team
+familiar with PHP or JSP. They&#39;ll be writing highly-asynchronous Node.js
+programs and they won&#39;t even know it.</p>
+<p>Managing resources is simple and done via Browserify so that of the plumbing of
+your Stencil application has a Node.js feel to it. Browserify bundles your
+application JavaScript and Stencil templates and sends it in a single request to
+overcome latency.</p>
+<p>Finally, Stencil is an API first web framework. Templates on pull their data
+from your API whether they run on the server or in the browser. You can build
+your API right along side your Stencils using Register, a CGI-like API framework
+that uses the same file system based routing logic as Stencil.</p>
+<h2>And We&#39;re Done</h2>
+<p>I&#39;m updating Stencil now. Here&#39;s where I&#39;m at...</p>
+<p>I build Stencil as a <a href="http://microjs.com">MicroJS</a> template library, but the
+main goal was templates that run on both the browser and server. The server part
+makes Stencil silly as a MicroJS templating language. The Stencil engine
+supports tags and layouts organized into libraries. That organization needs an
+organizational convention. The Stencil engine can run on the server, which
+implies a default Stencil server. They Stencil engine can run in the browser,
+which implies a <code>pushState</code> library to invoke the Stencils.</p>
+<p>Thus, I find myself writing a web framework. The core is still a MicroJS
+library, but the Stencil template engine is not a simple string templating
+engine. No one would ever use it without scaffolding.</p>
+<p>Now the base engine is so small because it is built on top of XML. The templates
+are XML templates. The based template language is an XML language. Here&#39;s
+another problem for adoption. People hate XML. No one more than myself.</p>
+<p>Thus, the current state of Stencil is that I&#39;m writing a template language
+called the Stencil language that compiles into XStencil. The Stencil language
+looks like ERB and I hope will feel like some of ye olde Perl templating
+languages that I once loved (I yearn for you tragically, Mason.)</p>
+<h2>Your Input Is Welcome</h2>
+<p>Thoughts on Stencil? Join the <a href="https://github.com/bigeasy/stencil/issues/11">Discussion</a>.</p>
 <h2>Synopsis</h2>
+<p>Minimal.</p>
+<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
+<span class="x">&lt;body&gt;</span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">if</span> <span class="p">(</span><span class="n">personnel</span><span class="o">.</span><span class="n">length</span><span class="p">)</span> <span class="cp">%&gt;</span><span class="x"> </span>
+<span class="x">    &lt;p&gt;Employee directory:</span>
+<span class="x">    &lt;ul&gt;</span>
+<span class="x">      </span><span class="cp">&lt;%</span> <span class="n">each</span> <span class="p">(</span><span class="n">personnel</span><span class="p">)</span> <span class="o">|</span><span class="n">employee</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">        &lt;li&gt;&lt;a href=(&#39;mailto:&#39; + employee.email)&gt;</span><span class="cp">&lt;%=</span> <span class="n">employee</span><span class="o">.</span><span class="n">name</span> <span class="cp">%&gt;</span><span class="x">&lt;/a&gt;</span>
+<span class="x">      </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">    &lt;/ul&gt;</span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">else</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">    &lt;p&gt;Downsizing successful!</span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">&lt;/body&gt;</span>
+<span class="x">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
 <p>Layouts.</p>
+<pre><code class="lang-erb"><div class="highlight"><pre><span class="cp">&lt;%</span> <span class="n">library</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">tag</span> <span class="n">document</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">    &lt;html&gt;</span>
+<span class="x">    &lt;head&gt;</span>
+<span class="x">      &lt;title&gt;</span><span class="cp">&lt;%=</span> <span class="vg">$attributes</span><span class="o">.</span><span class="n">title</span> <span class="cp">%&gt;</span><span class="x">&lt;/title&gt;</span>
+<span class="x">      </span><span class="cp">&lt;%</span> <span class="n">block</span> <span class="n">head</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">    &lt;/head&gt;</span>
+<span class="x">    &lt;body&gt;</span>
+<span class="x">      &lt;h1&gt;</span><span class="cp">&lt;%=</span> <span class="vg">$attributes</span><span class="o">.</span><span class="n">title</span> <span class="cp">%&gt;</span><span class="x">&lt;/h1&gt;</span>
+<span class="x">      </span><span class="cp">&lt;%</span> <span class="n">block</span> <span class="n">body</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">    &lt;/body&gt;</span>
+<span class="x">    &lt;/html&gt;</span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+</pre></div>
+</code></pre>
+<p>As XStencil, which you won&#39;t have to see ever if you don&#39;t want to.</p>
 <pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;s:include</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
   <span class="nt">&lt;s:tag</span> <span class="na">name=</span><span class="s">&quot;document&quot;</span><span class="nt">&gt;</span>
     <span class="nt">&lt;html&gt;</span>
     <span class="nt">&lt;head&gt;</span>
-      <span class="nt">&lt;title&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;attr.title&quot;</span><span class="nt">/&gt;&lt;/title&gt;</span>
+      <span class="nt">&lt;title&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;$attributes.title&quot;</span><span class="nt">/&gt;&lt;/title&gt;</span>
       <span class="nt">&lt;s:block</span> <span class="na">name=</span><span class="s">&quot;head&quot;</span><span class="nt">/&gt;</span>
     <span class="nt">&lt;/head&gt;</span>
     <span class="nt">&lt;body&gt;</span>
-      <span class="nt">&lt;h1&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;attr.title&quot;</span><span class="nt">/&gt;&lt;/h1&gt;</span>
+      <span class="nt">&lt;h1&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;$attributes.title&quot;</span><span class="nt">/&gt;&lt;/h1&gt;</span>
       <span class="nt">&lt;s:block</span> <span class="na">name=</span><span class="s">&quot;body&quot;</span><span class="nt">/&gt;</span>
     <span class="nt">&lt;/body&gt;</span>
     <span class="nt">&lt;/html&gt;</span>
@@ -41,14 +123,40 @@
 </pre></div>
 </code></pre>
 <p>Pages laid out.</p>
-<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;o:document</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span> <span class="na">xmlns:o=</span><span class="s">&quot;inc:layout.stencil&quot;</span> <span class="na">title=</span><span class="s">&quot;Hello, World!&quot;</span><span class="nt">&gt;</span>
-  <span class="nt">&lt;o:head&gt;&lt;meta</span> <span class="na">http-equiv=</span><span class="s">&quot;Content-Type&quot;</span> <span class="na">content=</span><span class="s">&quot;text/html; charset=UTF-8&quot;</span><span class="nt">/&gt;&lt;/o:head&gt;</span>
-  <span class="nt">&lt;o:body&gt;&lt;p&gt;</span>Hello, World!<span class="nt">&lt;/p&gt;&lt;/o:body&gt;</span>
+<pre><code class="lang-erb"><div class="highlight"><pre><span class="cp">&lt;%</span> <span class="n">o</span><span class="o">.</span><span class="n">document</span> <span class="o">%</span><span class="kp">include</span><span class="o">=</span><span class="p">(</span><span class="n">o</span><span class="p">:</span> <span class="s2">&quot;./layout.stencil&quot;</span><span class="p">)</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Hello, World!&quot;</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">o</span><span class="o">.</span><span class="n">head</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot;&gt;</span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">o</span><span class="o">.</span><span class="n">body</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">    &lt;p&gt;Hello, World!&lt;/p&gt;</span>
+<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+</pre></div>
+</code></pre>
+<p>XStencil again, which will be moved to a separate page.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;o:document</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span>
+            <span class="na">xmlns:o=</span><span class="s">&quot;inc:layout.stencil&quot;</span>
+            <span class="na">title=</span><span class="s">&quot;Hello, World!&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;o:head&gt;</span>
+    <span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">&quot;Content-Type&quot;</span> <span class="na">content=</span><span class="s">&quot;text/html; charset=UTF-8&quot;</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/o:head&gt;</span>
+  <span class="nt">&lt;o:body&gt;</span>
+    <span class="nt">&lt;p&gt;</span>Hello, World!<span class="nt">&lt;/p&gt;</span>
+  <span class="nt">&lt;/o:body&gt;</span>
 <span class="nt">&lt;/o:document&gt;</span>
 </pre></div>
 </code></pre>
 <p>The same templates run on the browser and in Node.js, so you can use the same
 logic you use to serve a generate page to refresh that page.</p>
+<h2>The Rest is XStencil</h2>
+<p>Sorry, folks. The rest is XStencil. I&#39;m going to create Stencil and XStencil
+examples of everything and let you toggle between languages. You&#39;ll want to use
+Stencil, but there are some applications, Facebook I believe, that still use
+XHTML, so until I sort out support for Facebook, I&#39;m going to keep all the
+XStencil examples I created, and consider how to serve XHMTL.</p>
+<p>But, I hate XML more than a pocket full of angry bees, so if I can make XML go
+away completely, I shall. (But, it won&#39;t. The Stencil engine is tiny because of
+XML.)</p>
 <h2>Stencil on the Server</h2>
 <p>On the server, we create a template and serialize it to HTML5. You can also
 serialize to older HTML flavors for older browsers.</p>

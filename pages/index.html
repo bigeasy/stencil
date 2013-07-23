@@ -19,45 +19,178 @@
 <h1>Stencil</h1>
 </div>
 <!-- todo: code font is too small for body text font -->
-<div class="unit description markdown hydrate-comments" data-inner-text="index.md"><!--
-Asynchronous HTML5 templating for Node.js and the browser. Photo by <a
-href="http://www.flickr.com/people/74182631@N00/">mufflevski</a>.
+<div class="unit description markdown hydrate-comments" data-inner-text="index.md">
+Asynchronous, streaming HTML templating for Node.js and the browser. The same
+templates that pre-generate your HTML5 and stream the results are then run in
+the browser. You can push data through them and they'll update the DOM.
 
-Thoughts on Stencil? Join the
-[Discussion](https://github.com/bigeasy/stencil/issues/11).
+Routing is file system driven. The directory path is the URL path.
+
+Routes are transported to the browser so you can have a single page `pushState`
+application *and* SEO friendly server-side generated pages on the first visit.
+
+What does all this cost you? Not much. The template and routing engine are tiny
+at less than &lt;5k. The same engine that runs in the browser runs in the server
+in Node.js and it runs fast. No PhantomJS trickery.
+
+The template engine is both asynchronous and streaming. 
+
+And the best part about Stencil; there's not a ***thing*** MVC about it!
+
+You don't need to build an object to feed the template engine. If you add a tag
+that needs an asynchronous data, the call is made by the template. If you remove
+that tag, the call is removed. You don't have to update three artifacts to
+remove the call.
+
+Asynchronous calls are transparent. There are no callbacks expressed in the
+template themselves. Anyone familiar with PHP ought to be able to author
+templates.
+
+Plus, you get tag libraries and layout libraries to further encapsulate
+asynchronous calls. You can build a tag library to hand off to a web team
+familiar with PHP or JSP. They'll be writing highly-asynchronous Node.js
+programs and they won't even know it.
+
+Managing resources is simple and done via Browserify so that of the plumbing of
+your Stencil application has a Node.js feel to it. Browserify bundles your
+application JavaScript and Stencil templates and sends it in a single request to
+overcome latency.
+
+Finally, Stencil is an API first web framework. Templates on pull their data
+from your API whether they run on the server or in the browser. You can build
+your API right along side your Stencils using Register, a CGI-like API framework
+that uses the same file system based routing logic as Stencil.
+
+## And We're Done
+
+I'm updating Stencil now. Here's where I'm at...
+
+I build Stencil as a [MicroJS](http://microjs.com) template library, but the
+main goal was templates that run on both the browser and server. The server part
+makes Stencil silly as a MicroJS templating language. The Stencil engine
+supports tags and layouts organized into libraries. That organization needs an
+organizational convention. The Stencil engine can run on the server, which
+implies a default Stencil server. They Stencil engine can run in the browser,
+which implies a `pushState` library to invoke the Stencils.
+
+Thus, I find myself writing a web framework. The core is still a MicroJS
+library, but the Stencil template engine is not a simple string templating
+engine. No one would ever use it without scaffolding.
+
+Now the base engine is so small because it is built on top of XML. The templates
+are XML templates. The based template language is an XML language. Here's
+another problem for adoption. People hate XML. No one more than myself.
+
+Thus, the current state of Stencil is that I'm writing a template language
+called the Stencil language that compiles into XStencil. The Stencil language
+looks like ERB and I hope will feel like some of ye olde Perl templating
+languages that I once loved (I yearn for you tragically, Mason.)
+
+## Your Input Is Welcome
+
+Thoughts on Stencil? Join the [Discussion](https://github.com/bigeasy/stencil/issues/11).
 
 ## Synopsis
 
+Minimal.
+
+```erb<!--
+<html>
+<body>
+  <% if (personnel.length) %> 
+    <p>Employee directory:
+    <ul>
+      <% each (personnel) |employee| %>
+        <li><a href=('mailto:' + employee.email)><%= employee.name %></a>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>Downsizing successful!
+  <% end %>
+</body>
+</html>
+-->```
+
 Layouts.
 
-```xml
+<!--```erb
+<% library %>
+  <% tag document %>
+    <html>
+    <head>
+      <title><%= $attributes.title %></title>
+      <% block head %>
+    </head>
+    <body>
+      <h1><%= $attributes.title %></h1>
+      <% block body %>
+    </body>
+    </html>
+  <% end %>
+<% end %>
+-->```
+
+As XStencil, which you won't have to see ever if you don't want to.
+
+<!--```xml
 <s:include xmlns:s="stencil">
   <s:tag name="document">
     <html>
     <head>
-      <title><s:value select="attr.title"/></title>
+      <title><s:value select="$attributes.title"/></title>
       <s:block name="head"/>
     </head>
     <body>
-      <h1><s:value select="attr.title"/></h1>
+      <h1><s:value select="$attributes.title"/></h1>
       <s:block name="body"/>
     </body>
     </html>
   </s:tag>
 </s:include>
-```
+```-->
 
 Pages laid out.
 
-```xml
-<o:document xmlns:s="stencil" xmlns:o="inc:layout.stencil" title="Hello, World!">
-  <o:head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></o:head>
-  <o:body><p>Hello, World!</p></o:body>
+<!--```erb
+<% o.document %include=(o: "./layout.stencil") title="Hello, World!" %>
+  <% o.head %>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <% end %>
+  <% o.body %>
+    <p>Hello, World!</p>
+  <% end %>
+<% end %>
+```-->
+
+XStencil again, which will be moved to a separate page.
+
+<!--```xml
+<o:document xmlns:s="stencil"
+            xmlns:o="inc:layout.stencil"
+            title="Hello, World!">
+  <o:head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  </o:head>
+  <o:body>
+    <p>Hello, World!</p>
+  </o:body>
 </o:document>
 ```
 
 The same templates run on the browser and in Node.js, so you can use the same
 logic you use to serve a generate page to refresh that page.
+
+## The Rest is XStencil
+
+Sorry, folks. The rest is XStencil. I'm going to create Stencil and XStencil
+examples of everything and let you toggle between languages. You'll want to use
+Stencil, but there are some applications, Facebook I believe, that still use
+XHTML, so until I sort out support for Facebook, I'm going to keep all the
+XStencil examples I created, and consider how to serve XHMTL.
+
+But, I hate XML more than a pocket full of angry bees, so if I can make XML go
+away completely, I shall. (But, it won't. The Stencil engine is tiny because of
+XML.)
 
 ## Stencil on the Server
 
