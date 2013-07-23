@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<title>Stencil</title>
+<!--
+<link href='http://fonts.googleapis.com/css?family=Parisienne|Oxygen+Mono|PT+Mono|Offside|Nova+Mono|Averia+Serif+Libre|Alex+Brush|Autour+One|Share+Tech+Mono|Merriweather|Maven+Pro|Raleway' rel='stylesheet' type='text/css'>
+-->
+<!-- todo: why doesn't fork me float? -->
+<!--
+<link href="http://fonts.googleapis.com/css?family=ABeeZee|Nunito|Inconsolata|Podkova:400,700|Artbus+Slab|Della+Respira|Cutive+Mono|Sorts+Mill+Goudy|Karla:400,700|Cardo:400,700|Oxygen+Mono|Raleway:400,700" rel="stylesheet" type="text/css">
+-->
+<link href="http://fonts.googleapis.com/css?family=ABeeZee|Inconsolata|Karla:400,700|Oxygen+Mono" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Sorts+Mill+Goudy">
+<link rel="stylesheet" type="text/css" href="css/syntax.css">
+<link rel="stylesheet" type="text/css" href="css/stencil.css">
+<body><a href="https://github.com/bigeasy/stencil/"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_gray_6d6d6d.png" alt="Fork me on GitHub"></a><div class="container">
+
+<div class="unit welcome">
+<h1>Stencil</h1>
+</div>
+<!-- todo: code font is too small for body text font -->
+<div class="unit description markdown hydrate-comments" data-inner-text="index.md"><p>Asynchronous HTML5 templating for Node.js and the browser. Photo by <a href="&#x6d;&#x61;&#x69;&#x6c;&#116;&#x6f;&#58;&#x61;&#10;&#104;&#114;&#101;&#x66;&#61;&#x22;&#104;&#x74;&#x74;&#112;&#x3a;&#x2f;&#x2f;&#x77;&#119;&#x77;&#46;&#102;&#x6c;&#105;&#x63;&#107;&#x72;&#x2e;&#99;&#x6f;&#x6d;&#x2f;&#112;&#x65;&#111;&#x70;&#108;&#101;&#x2f;&#55;&#52;&#x31;&#56;&#50;&#54;&#x33;&#49;&#x40;&#x4e;&#48;&#x30;&#x2f;&#x22;">&#x61;&#10;&#104;&#114;&#101;&#x66;&#61;&#x22;&#104;&#x74;&#x74;&#112;&#x3a;&#x2f;&#x2f;&#x77;&#119;&#x77;&#46;&#102;&#x6c;&#105;&#x63;&#107;&#x72;&#x2e;&#99;&#x6f;&#x6d;&#x2f;&#112;&#x65;&#111;&#x70;&#108;&#101;&#x2f;&#55;&#52;&#x31;&#56;&#50;&#54;&#x33;&#49;&#x40;&#x4e;&#48;&#x30;&#x2f;&#x22;</a>mufflevski.</p>
+<p>Thoughts on Stencil? Join the
+<a href="https://github.com/bigeasy/stencil/issues/11">Discussion</a>.</p>
+<h2>Synopsis</h2>
+<p>Layouts.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;s:include</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;s:tag</span> <span class="na">name=</span><span class="s">&quot;document&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;html&gt;</span>
+    <span class="nt">&lt;head&gt;</span>
+      <span class="nt">&lt;title&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;attr.title&quot;</span><span class="nt">/&gt;&lt;/title&gt;</span>
+      <span class="nt">&lt;s:block</span> <span class="na">name=</span><span class="s">&quot;head&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/head&gt;</span>
+    <span class="nt">&lt;body&gt;</span>
+      <span class="nt">&lt;h1&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;attr.title&quot;</span><span class="nt">/&gt;&lt;/h1&gt;</span>
+      <span class="nt">&lt;s:block</span> <span class="na">name=</span><span class="s">&quot;body&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/body&gt;</span>
+    <span class="nt">&lt;/html&gt;</span>
+  <span class="nt">&lt;/s:tag&gt;</span>
+<span class="nt">&lt;/s:include&gt;</span>
+</pre></div>
+</code></pre>
+<p>Pages laid out.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;o:document</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span> <span class="na">xmlns:o=</span><span class="s">&quot;inc:layout.stencil&quot;</span> <span class="na">title=</span><span class="s">&quot;Hello, World!&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;o:head&gt;&lt;meta</span> <span class="na">http-equiv=</span><span class="s">&quot;Content-Type&quot;</span> <span class="na">content=</span><span class="s">&quot;text/html; charset=UTF-8&quot;</span><span class="nt">/&gt;&lt;/o:head&gt;</span>
+  <span class="nt">&lt;o:body&gt;&lt;p&gt;</span>Hello, World!<span class="nt">&lt;/p&gt;&lt;/o:body&gt;</span>
+<span class="nt">&lt;/o:document&gt;</span>
+</pre></div>
+</code></pre>
+<p>The same templates run on the browser and in Node.js, so you can use the same
+logic you use to serve a generate page to refresh that page.</p>
+<h2>Stencil on the Server</h2>
+<p>On the server, we create a template and serialize it to HTML5. You can also
+serialize to older HTML flavors for older browsers.</p>
+<h2>Stencil on the Browser</h2>
+<p>On the browser, when we generate Stencil XML, we simply import it into the
+existing DOM using <code>Document.adoptNode</code>.</p>
+<h3>The <code>value</code> Directive</h3>
+<p>The <code>value</code> directive inserts a value from the context into the DOM. The <code>value</code>
+attribute takes a <code>select</code> property. The <code>select</code> property is evaluated as a
+JavaScript statement. The return value of the statement is converted to string
+and added to the DOM.</p>
+<p>Here we evaluate the JavaScript expression <code>1 + 1</code>.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;1 + 1&quot;</span><span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>This generates a document with the statement calculated.</p>
+<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;</span>2<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>Of course, in practice, you&#39;re going to want to insert the values from the
+object you&#39;ve pushed through the stencil.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;</span>
+  Greetings <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;person.lastName&quot;</span><span class="nt">/&gt;</span>, <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;person.firstName&quot;</span><span class="nt">/&gt;</span>
+  and welcome to the bureaucracy.
+<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>This template assumes a <code>person</code> property has been added to the context object.</p>
+<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;</span>
+  Greetings Kafka, Franz
+  and welcome to the bureaucracy.
+<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>You can also insert HTML into your document using the <code>value</code> directive by
+setting its <code>type</code> attribute to <code>html</code>. Generally, you want to put your HTML in
+your stencil, not in your data, but there are some exceptions. You might be
+generating HTML from user supplied markdown, or you might be rendering data that
+has been edited by a rich-text editor, like in a content management system.</p>
+<p>Here&#39;s a ridiculous example, we&#39;ve placed a JavaScript string with HTML in the
+<code>select</code> attribute and set the <code>type</code> attribute to <code>html</code>.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;&#39;&lt;em&gt;Hello&lt;/em&gt;, World!&#39;&quot;</span> <span class="na">type=</span><span class="s">&quot;html&quot;</span><span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>The <code>select</code> attribute value is evaluated as JavaScript, so we need the inner
+quotes, because it is a JavaScript string. The string is then parsed as HTML and
+the HTML is inserted into the document.</p>
+<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;&lt;em&gt;</span>Hello<span class="nt">&lt;/em&gt;</span>, World!<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>Of course, you&#39;re not going to hard code HTML into a <code>value</code> directive like this
+but instead insert HTML from a property in your context object.</p>
+<h3>The <code>with</code> Directive</h3>
+<p>The <code>with</code> directive is almost exactly like the <code>each</code> directive, except that it
+always operates on an object. When you pass an object or scalar, it will assign
+the value to the variable named in the <code>as</code> property.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;s:with</span> <span class="na">select=</span><span class="s">&quot;companies[&#39;Acme&#39;].departments[&#39;Trucks&#39;].manager&quot;</span> <span class="na">as=</span><span class="s">&quot;manager&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;manager.firstName&quot;</span><span class="nt">/&gt;</span> <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;manager.lastName&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+<span class="nt">&lt;/s:with&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>The <code>each</code> directive also does this, treating an object or scalar as an array of
+one item, but <code>with</code> is going to make a lot more sense when you read your
+templates.</p>
+<p>Note that when you use <code>with</code> to select an Array value, the array is not
+iterated. The array is assigned to the variable specified by the <code>as</code> attribute;
+not the array values.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;s:with</span> <span class="na">select=</span><span class="s">&quot;companies[&#39;Acme&#39;].departments[&#39;Trucks&#39;].personnel&quot;</span> <span class="na">as=</span><span class="s">&quot;personnel&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;ul&gt;</span>
+    <span class="nt">&lt;s:each</span> <span class="na">select=</span><span class="s">&quot;personnel&quot;</span> <span class="na">as=</span><span class="s">&quot;employee&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;employee.firstName&quot;</span><span class="nt">/&gt;</span> <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;employee.lastName&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+    <span class="nt">&lt;/s:each&gt;</span>
+  <span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/s:with&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<h3>The <code>when</code> Directive</h3>
+<p>The <code>when</code> directive is used to only update a section of a template if the data
+is available. When the <code>when</code> directive is encountered during an update, the
+<code>select</code> attribute is evaluated, if it evaluates to <code>true</code>, then the contents of
+the <code>when</code> directive are re-evaluated. It it evaluates to <code>false</code>, then the
+contents are left as they are.</p>
+<p>This is useful if you have generated a page and are checking the server for
+updates, but only to certain dynamic sections of the page.</p>
+<p>If, for example, you have a blog page that has an article and a sidebar, you
+might be updating the sidebar with recent comments. You want to push a new
+collection of recent comments through your Stencil, but if you don&#39;t also
+provide the article, the Stencil will erase your article.</p>
+<p>Here&#39;s how we avoid that.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;s:when</span> <span class="na">select=</span><span class="s">&quot;this.article&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;article&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;h1&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;article.title&quot;</span><span class="nt">/&gt;&lt;/h1&gt;</span>
+    <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&quot;sub-title&quot;</span><span class="nt">&gt;</span>
+      By <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;article.author&quot;</span><span class="nt">/&gt;</span>
+      on <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;article.publishedAt&quot;</span><span class="nt">/&gt;&lt;/p&gt;</span>
+    <span class="nt">&lt;div&gt;</span>
+      <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;article.body&quot;</span> <span class="na">type=</span><span class="s">&quot;html&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/s:when&gt;</span>
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;sidebar&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;h2&gt;</span>Recent Comments<span class="nt">&lt;/h2&gt;</span>
+  <span class="nt">&lt;ul&gt;</span>
+    <span class="nt">&lt;s:each</span> <span class="na">select=</span><span class="s">&quot;recents&quot;</span> <span class="na">as=</span><span class="s">&quot;comment&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;comment.snippet&quot;</span><span class="nt">/&gt;</span> ~
+          <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;comment.author&quot;</span><span class="nt">/&gt;</span> on <span class="nt">&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;comment.articleTitle&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+    <span class="nt">&lt;/s:each&gt;</span>
+  <span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>The <code>when</code> directive is primarily for updates, since it is assumed that you&#39;ll
+have all your data on hand when you first generate the page on the server side.
+However, if during generation a <code>when</code> directive evaluates to <code>false</code>, it
+behaves as an <code>if</code> directive, removing the content. It will then generate the
+content on the next update where the <code>when</code> directive evaluates to <code>true</code>.</p>
+<p>TODO: Should the <code>when</code> directive support <code>else</code>?</p>
+<h3>The Context Object</h3>
+<p>From within your templates you can reference the context object itself either by
+referencing <code>this</code> or the special variable dollar sign <code>$</code> with is an alias for
+for <code>this</code>.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;dl&gt;</span>
+<span class="nt">&lt;s:each</span> <span class="na">select=</span><span class="s">&quot;Object.keys(this)&quot;</span> <span class="na">as=</span><span class="s">&quot;key&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;dt&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;key&quot;</span><span class="nt">/&gt;&lt;/dt&gt;</span>
+  <span class="nt">&lt;dd&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;this[key]&quot;</span><span class="nt">/&gt;&lt;/dd&gt;</span>
+<span class="nt">&lt;/s:each&gt;</span>
+<span class="nt">&lt;/dl&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>You can also use the dollar sign <code>$</code> alias, if you find that more aesthetically
+pleasing.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;dl&gt;</span>
+<span class="nt">&lt;s:each</span> <span class="na">select=</span><span class="s">&quot;Object.keys($)&quot;</span> <span class="na">as=</span><span class="s">&quot;key&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;dt&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;key&quot;</span><span class="nt">/&gt;&lt;/dt&gt;</span>
+  <span class="nt">&lt;dd&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;$[key]&quot;</span><span class="nt">/&gt;&lt;/dd&gt;</span>
+<span class="nt">&lt;/s:each&gt;</span>
+<span class="nt">&lt;/dl&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<p>But, again, why? Only because I&#39;m doing this stupid thing with prototypes that
+I&#39;m going to try to document right here...</p>
+<h3>The <code>stencil</code> Object</h3>
+<p>The <code>stencil</code> variable contains a special object added to the context by the
+Stencil that has properties of the current template. The <code>stencil</code> variable is
+constantly reset and overrides and variable assignments by the user.</p>
+<p>The <code>stencil</code> Object offers the following properties and methods.</p>
+<ul>
+<li><code>url</code> — The URL of the current Stencil.</li>
+<li><code>absolutize(base, path)</code> — Creates an absolute path using the given
+base and sub-path. If the sub-path begins with a <code>/</code>, it is treated as a full
+qualified path.</li>
+<li><code>normalize(path)</code> — Normalizes a file path so that
+<code>/docs/./articles/../posts/post.html</code> is normalized to
+<code>/docs/posts/post.html</code>.</li>
+<li><code>json(url)</code> — Returns a Stencil callback that will fetch the given URL
+and parse it as JSON.</li>
+</ul>
+<p>TK: Find a place to write more about <code>json(url)</code> and send the readers of this
+section to that place.</p>
+<h2>Tag Libraries</h2>
+<p>Using the same language as used in templates, Stencil supports the creation of
+tag libraries. With tag libraries you can doe more to hide the complexity of a
+template. You can create tags that name collections in application domain.</p>
+<h3>Passing Parameters to Blocks</h3>
+<p>When you create tags you&#39;re going to want to have them add values to the
+caller&#39;s template context, TK what? blech! ... many useful tags are going to
+fetch data and then expose it to the caller. This is done with a <code>params</code>
+attribute on the <code>block</code> directive. Use the <code>params</code> directive to define a
+single JavaScript object that will be visible to the caller.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;s:include</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;s:tag</span> <span class="na">name=</span><span class="s">&quot;numbers&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;s:block</span> <span class="na">params=</span><span class="s">&quot;{ one: 1, two: 2, three: 3 }&quot;</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/s:tag&gt;</span>
+<span class="nt">&lt;/s:include&gt;</span>
+</pre></div>
+</code></pre>
+<p>You can all this tag from your template and it will create a property in the
+template context named <code>$numbers</code>, that is, the tag name with dollar sign <code>$</code> in
+front of it.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span> <span class="na">xmlns:t=</span><span class="s">&quot;inc:_params.stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;t:numbers&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;$numbers.one&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;$numbers.two&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;$numbers.three&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/t:numbers&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+</pre></div>
+</code></pre>
+<p>The output of this template is, of course:</p>
+<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+  <span class="nt">&lt;li&gt;</span>1<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>2<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>3<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+</pre></div>
+</code></pre>
+<p>The caller can always rename the reserved attribute <code>as</code>.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span> <span class="na">xmlns:t=</span><span class="s">&quot;inc:_params.stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;t:numbers</span> <span class="na">as=</span><span class="s">&quot;digits&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;digits.one&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;digits.two&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;s:value</span> <span class="na">select=</span><span class="s">&quot;digits.three&quot;</span><span class="nt">/&gt;&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/t:numbers&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+</pre></div>
+</code></pre>
+<p>Note that the object is only visible inside the body of the tag.</p>
+<p>When you define your parameter object inside the tag library, there&#39;s maybe a
+bit of a problem in that you won&#39;t know it&#39;s name, which may or may not matter,
+it is so early in the life of Stencil for me to know. So, when you define your
+object, you can reference the user provided name of the object using <code>$name</code>.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;s:include</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;s:tag</span> <span class="na">name=</span><span class="s">&quot;numbers&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;s:block</span> <span class="na">params=</span><span class="s">&quot;{ one: 1,</span>
+<span class="s">                     two: function (callback) { callback(null, this[$name].one + 1) },</span>
+<span class="s">                     three: 3 }&quot;</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/s:tag&gt;</span>
+<span class="nt">&lt;/s:include&gt;</span>
+</pre></div>
+</code></pre>
+<p>The above calculates the value of <code>two</code> using the value of <code>one</code>, referencing
+the generated object in the context using the special variable <code>name</code>.</p>
+<h3>Creating Evaluated Tag Properties</h3>
+<p>Sometimes you will want to specify an evaluated property in your tags. We have a
+tricky trick for your tag definition that will give you want you want. When you
+want the user to provide you with a statement that you can use in an <code>each</code> or
+<code>value</code> directive, do a double evaluation in your tag library.</p>
+<p>Here is a minimal example, we&#39;re going to create an alias for the <code>value</code>
+directive named <code>say</code> that has an evaluated called <code>stuff</code>. As you can see, we
+use an evaluated attribute for the <code>select</code> attribute of the <code>value</code> directive
+in the tag. The evaluated select attribute will use the <code>stuff</code> attribute passed
+to the tag.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;s:include</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;s:tag</span> <span class="na">name=</span><span class="s">&quot;say&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;s:value</span> <span class="na">s:select=</span><span class="s">&quot;$attribute.stuff&quot;</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/s:tag&gt;</span>
+<span class="nt">&lt;/s:include&gt;</span>
+</pre></div>
+</code></pre>
+<p>When the template author is ready to say stuff, he invokes the <code>say</code> tag with an
+ordinary <code>stuff</code> attribute, he doesn&#39;t have to know that it&#39;s evaluated.</p>
+<p>The attribute <code>stuff</code> has a value of <code>&quot;1 + 1&quot;</code>. That is not evaluated. It is
+passed into the tag as <code>$attributes.stuff</code>. Inside the tag, <code>$attributes.stuff</code>
+has a string value of <code>&quot;1 + 1&quot;</code>. The evaluated <code>select</code> attribute of value
+evaluates <code>$attributes.stuff</code> and creates a <code>select</code> attribute for the <code>value</code>
+directive with a string value of <code>&quot;1 + 1&quot;</code>.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span> <span class="na">xmlns:t=</span><span class="s">&quot;inc:_tags.xml&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;&lt;t:say</span> <span class="na">stuff=</span><span class="s">&quot;1 + 1&quot;</span><span class="nt">/&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+</pre></div>
+</code></pre>
+<p>The <code>value</code> attribute will then evaluate the <code>select</code> attribute, unaware and
+unconcerned that it was once an evaluated attribute. It&#39;s not a static attribute
+as far as the <code>value</code> attribute is concerned. It evaluates the JavaScript
+statement <code>1 + 1</code> and gets <code>2</code>.</p>
+<p>Here is the output.</p>
+<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;p&gt;</span>2<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+</pre></div>
+</code></pre>
+<p>You&#39;d probably want to use <code>select</code> as your attribute, instead of <code>stuff</code>
+because it follows convention and requires less explanation. We use <code>stuff</code> in
+the example above to make it easier to pick out the working parts.</p>
+<p>Here&#39;s a slightly more complicated, every-so-slightly more realistic example.
+Here we put our select attribute into an evaluated select attribute of an <code>each</code>
+directive. We&#39;re creating a <code>loopy</code> tag.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;s:include</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;s:tag</span> <span class="na">name=</span><span class="s">&quot;loopy&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;s:each</span> <span class="na">s:select=</span><span class="s">&quot;$attribute.select&quot;</span> <span class="na">as=</span><span class="s">&quot;item&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;s:tag</span> <span class="na">name=</span><span class="s">&quot;item&quot;</span> <span class="na">select=</span><span class="s">&quot;item&quot;</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/s:each&gt;</span>
+<span class="nt">&lt;/s:tag&gt;</span>
+<span class="nt">&lt;/s:include&gt;</span>
+</pre></div>
+</code></pre>
+<p>Here&#39;s how we use it with the object <code>{ numbers: [ 1, 2, 3 ] }</code>. As you can see,
+we pass in the string <code>&quot;numbers&quot;</code> in a select attribute. It does not get
+evaluated. It is passed into the tag as the property <code>$attributes.select</code>. The
+value of <code>$attributes.select</code> will be the string <code>&quot;numbers&quot;</code>.</p>
+<p>When we use an evaluated <code>select</code> attribute with the <code>each</code> directive, it
+evaluates to the value of <code>$attribute.select</code> with is <code>&quot;numbers&quot;</code>. That creates
+a select value for the <code>each</code> directive that is <code>&quot;numbers&quot;</code>. That is evaluated
+by the <code>each</code> directive to obtain the numbers array.</p>
+<pre><code class="lang-xml"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span> <span class="na">xmlns:t=</span><span class="s">&quot;inc:_tags.xml&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+  <span class="nt">&lt;t:loopy</span> <span class="na">select=</span><span class="s">&quot;numbers&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;li&gt;&lt;t:item/&gt;&lt;/li&gt;</span>
+  <span class="nt">&lt;/t:loopy&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+</pre></div>
+</code></pre>
+<p>Which gives us the html.</p>
+<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+  <span class="nt">&lt;li&gt;</span>1<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>2<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>3<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</pre></div>
+</code></pre>
+<h2>Remember</h2>
+<ul>
+<li>It&#39;s not a query tool. It&#39;s a templating tool.</li>
+</ul>
+<h2>Expand</h2>
+<ul>
+<li>Functions must have no side-effects; i.e. do not use your template functions
+to create a hit counter.</li>
+<li>It&#39;s not hard to write template functions that do not have side effects. The
+sort of functions that might have side effects are not likely to appear in
+the logic that supports emitting markup.</li>
+</ul>
+<h2>Motivations</h2>
+<p>Revisiting the ideas explored in a <a href="https://github.com/defunct/stencil">Java based
+Stencil</a>.</p>
+<p>Stencil is asynchronous HTML5 templating for Node.js and the browser. It based
+on some ideas from yesteryear and some ideas from tomorrow.</p>
+<p>This project evolved from work with Streamline and CoffeeScript. That work has
+been moved to a project named <a href="https://github.com/bigeasy/pastiche">Pastiche</a>.</p>
+<h2>Philosophy</h2>
+<p>Especially when dealing with a library that has a goal of being small, you&#39;re
+limited as to how much scaffolding you can offer developers. My approach for
+Stencil is to define three roles, application developer, web developer, and web
+designer, and say the first two roles labor to create a childlike sense of
+wonder in the latter role.</p>
+<p>An application developer creates APIs that the web developer can query. The web
+developer wraps those APIs in tag libraries, so that the web designer can focus
+on semantic layout.</p>
+<h2>Change log</h2>
+<p>Changes for each release.</p>
+<h3>Version 0.0.7</h3>
+<ul>
+<li>Specify port at command line. #123.</li>
+</ul>
+<h3>Version 0.0.6</h3>
+<ul>
+<li>Implement HTML values. #43.</li>
+<li>Print <code>DOCTYPE</code> when serializing. #84.</li>
+<li>Implement <code>with</code> directive. #103.</li>
+<li>Remove <code>$</code> variable. #109. #107.</li>
+<li>Create and document <code>stencil</code> object. #119.</li>
+<li>Implement <code>when</code> directive. #61.</li>
+<li>Remove <code>context</code> from callback signature. #116.</li>
+<li>Remove used parameter fix ups. #117.</li>
+<li>Test <code>null</code> to remove an attribute. #115.</li>
+<li>Implement block parameters. #114.</li>
+<li>Rename <code>into</code> attribute to <code>as</code>. #105.</li>
+<li>Recursion inside a tag definition. #112.</li>
+<li>Test and document evaluated tag attributes. #113.</li>
+<li>Bodied sub-tag and reentering caller scope. #89. #85. #59. #51. #25.</li>
+<li>Implement <code>recurse</code> directive. #102.</li>
+<li>Fix aspect ratio of image. #111.</li>
+</ul>
+<h3>Version 0.0.5</h3>
+<p>Mon Apr 22 19:07:43 UTC 2013</p>
+<ul>
+<li>Fix non-directive with attribute child directives. #108.</li>
+</ul>
+<h3>Version 0.0.4</h3>
+<p>Tue Apr 16 14:15:19 UTC 2013</p>
+<ul>
+<li>Add <code>request</code> and <code>response</code> to Stencil service. #106.
+this <is a="" test="">
+z</is></li>
+</ul>
+</div>
+
+</div></body>
+<!-- todo: move into an edify plugin -->
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-20388260-3', 'bigeasy.github.io');
+ga('send', 'pageview');
+</script>
+</html>

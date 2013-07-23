@@ -1,0 +1,84 @@
+<html>
+<head>
+</head>
+<body>
+<code><pre id="pre"></pre></code>
+</body>
+<script type="text/javascript">
+! function (global) {
+  var pseudo = 1;
+
+  global.execScript('\
+    Function ExecuteVBScript(code) \n\
+      ExecuteGlobal(code) \n\
+    End Function \n\
+  ', 'VBScript');
+
+  global.GetJavaScriptProperty = function (object, key) {
+    alert(key);
+    return object[key];
+  }
+
+  // Template VBScript class With psuedo-Hungarian notation and everything!
+  var CLASS = '\
+    Class PseudoObject_$INCREMENT$ \n\
+    \n\
+      Private m_delegate \n\
+    \n\
+      Private Sub Class_Initialize() \n\
+        alert("called") \n\
+        Set m_delegate = PseudoObject_JavaScriptObject_$INCREMENT$ \n\
+      End Sub \n\
+    $PROPERTIES$ \n\
+    \n\
+    End Class \n\
+  ';
+
+  var PROPERTY = '\
+\n\
+      Public Property Get $NAME$ \n\
+        alert("called") \n\
+        $NAME$ = GetJavaScriptProperty(m_delegate, $KEY$) \n\
+      End Property \
+  ';
+
+  var FACTORY = '\
+    Function PseudoObjectFactory_$INCREMENT$() \n\
+      Dim o \n\
+      Set o = New PseudoObject_$INCREMENT$ \n\
+      Set PseudoObjectFactory_$INCREMENT$ = o \n\
+    End Function \n\
+  ';
+
+  function template (template, substutions) {
+    return template.replace(/\$([^$]+)\$/g, function ($, name) { return substutions[name] });
+  }
+
+  var key = "End"
+  var name = '[' + key + ']';
+  var escaped = '"' + key.replace(/"/g, '""') + '"';
+
+  
+  var x = { INCREMENT: 1, PROPERTIES: template(PROPERTY, { NAME: name, KEY: escaped }) }
+  var vb = template(CLASS, x) + '\n' + template(FACTORY, x);
+  document.getElementById('pre').innerText = vb;
+
+  try {
+    global.ExecuteVBScript(vb);
+  } catch (e) {
+    var foo = [];
+    for (key in e) foo.push(key);
+    alert(foo.join(','));
+    throw e;
+  }
+
+  global.PseudoObject_JavaScriptObject_1 = {};
+  global.PseudoObject_JavaScriptObject_1[key] = 'Success.';
+  var o = PseudoObjectFactory_1();
+
+  for (key in o) { alert(key + ' = ' + o[key]) }
+
+  alert('DONE!');
+} (this);
+</script>
+</html>
