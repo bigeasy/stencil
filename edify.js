@@ -22,7 +22,7 @@ module.exports = cadence(function (step, $, cache) {
     }, function () {
         edify.pygments($, '.lang-erb', 'erb', cache, step())
     }, function () {
-        edify.pygments($, '.lang-xml', 'xml', cache, step())
+        $('.lang-xml').remove()
     }, function () {
         edify.pygments($, '.lang-javascript', 'javascript', cache, step())
     })

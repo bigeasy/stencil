@@ -130,8 +130,6 @@ Layouts.
 <% end %>
 -->```
 
-As XStencil, which you won't have to see ever if you don't want to.
-
 <!--```xml
 <s:include xmlns:s="stencil">
   <s:tag name="document">
@@ -161,8 +159,6 @@ Pages laid out.
   <% end %>
 <% end %>
 ```-->
-
-XStencil again, which will be moved to a separate page.
 
 <!--```xml
 <o:document xmlns:s="stencil"
@@ -211,6 +207,16 @@ and added to the DOM.
 
 Here we evaluate the JavaScript expression `1 + 1`.
 
+TK: Side by side; like a boss!
+
+```erb
+<html>
+<body>
+<p><%= 1 + 1 %></p>
+</body>
+</html>
+```
+
 ```xml
 <html xmlns:s="stencil">
 <body>
@@ -231,6 +237,17 @@ This generates a document with the statement calculated.
 
 Of course, in practice, you're going to want to insert the values from the
 object you've pushed through the stencil.
+
+```erb
+<html>
+<body>
+<p>
+  Greetings <%= person.lastName %>, <%= person.firstName %>
+  and welcome to the bureaucracy.
+</p>
+</body>
+</html>
+```
 
 ```xml
 <html xmlns:s="stencil">
@@ -265,6 +282,14 @@ has been edited by a rich-text editor, like in a content management system.
 Here's a ridiculous example, we've placed a JavaScript string with HTML in the
 `select` attribute and set the `type` attribute to `html`.
 
+```erb
+<html>
+<body>
+<p><%- '<em>Hello</em>, World!' %></p>
+</body>
+</html>
+```
+
 ```xml
 <html xmlns:s="stencil">
 <body>
@@ -278,7 +303,7 @@ quotes, because it is a JavaScript string. The string is then parsed as HTML and
 the HTML is inserted into the document.
 
 ```html
-<html xmlns:s="stencil">
+<html>
 <body>
 <p><em>Hello</em>, World!</p>
 </body>
@@ -293,6 +318,16 @@ but instead insert HTML from a property in your context object.
 The `with` directive is almost exactly like the `each` directive, except that it
 always operates on an object. When you pass an object or scalar, it will assign
 the value to the variable named in the `as` property.
+
+```erb
+<html>
+<body>
+<% with (companies['Acme'].departments['Trucks'].manager) |manager| %>
+  <li><%= manager.firstName %> <%= manager.lastName %></li>
+<% end %>
+</body>
+</html>
+```
 
 ```xml
 <html xmlns:s="stencil">
@@ -311,6 +346,20 @@ templates.
 Note that when you use `with` to select an Array value, the array is not
 iterated. The array is assigned to the variable specified by the `as` attribute;
 not the array values.
+
+```erb
+<html>
+<body>
+<% with (companies['Acme'].departments['Trucks'].personnel) |personnel| %>
+  <ul>
+    <% each (personnel) |employee| %>
+      <li><%= employee.firstName %> <%= employee.lastName %></li>
+    <% end %>
+  </ul>
+<% end %>
+</body>
+</html>
+```
 
 ```xml
 <html xmlns:s="stencil">
@@ -343,6 +392,33 @@ collection of recent comments through your Stencil, but if you don't also
 provide the article, the Stencil will erase your article.
 
 Here's how we avoid that.
+
+```erb
+<html>
+<body>
+<% when (this.article) %>
+  <div class="article">
+    <h1><%= article.title %></h1>
+    <p class="sub-title">
+      By <%= article.author %>
+      on <%= article.publishedAt %></p>
+    <div>
+      <%- article.body %>
+    </div>
+  </div>
+<% end %>
+<div class="sidebar">
+  <h2>Recent Comments</h2>
+  <ul>
+    <% each (recents) |comment| %>
+      <li><%= comment.snippet %> ~
+          <%= comment.author %> on <%= comment.articleTitle %></li>
+    <% end %>
+  </ul>
+</div>
+</body>
+</html>
+```
 
 ```xml
 <html xmlns:s="stencil">
@@ -385,6 +461,19 @@ From within your templates you can reference the context object itself either by
 referencing `this` or the special variable dollar sign `$` with is an alias for
 for `this`.
 
+```erb
+<html>
+<body>
+<dl>
+<% each (Object.keys(this)) |key| %>
+  <dt><%= key %></dt>
+  <dd><%= this[key] %></dd>
+<% end %>
+</dl>
+</body>
+</html>
+```
+
 ```xml
 <html xmlns:s="stencil">
 <body>
@@ -399,7 +488,20 @@ for `this`.
 ```
 
 You can also use the dollar sign `$` alias, if you find that more aesthetically
-pleasing.
+pleasing. TK: Huh? Am I still doing this?
+
+```erb
+<html>
+<body>
+<dl>
+<% each (Object.keys($)) |key| %>
+  <dt><s:value select="key"/></dt>
+  <dd><s:value select="this[key]"/></dd>
+<% end %>
+</dl>
+</body>
+</html>
+```
 
 ```xml
 <html xmlns:s="stencil">
@@ -452,6 +554,14 @@ fetch data and then expose it to the caller. This is done with a `params`
 attribute on the `block` directive. Use the `params` directive to define a
 single JavaScript object that will be visible to the caller.
 
+```erb
+<% library %>
+<% tag numbers %>
+  <% block ({ one: 1, two: 2, three: 3 }) %>
+<% end %>
+<% end %>
+```
+
 ```xml
 <s:include xmlns:s="stencil">
 <s:tag name="numbers">
@@ -463,6 +573,20 @@ single JavaScript object that will be visible to the caller.
 You can all this tag from your template and it will create a property in the
 template context named `$numbers`, that is, the tag name with dollar sign `$` in
 front of it.
+
+```erb
+<html %include=(t: '_params.stencil')>
+<body>
+<% t.numbers %>
+<ul>
+  <li><%= $numbers.one %></li>
+  <li><%= $numbers.two %></li>
+  <li><%= $numbers.three %></li>
+</ul>
+<% end %>
+</html>
+</body>
+```
 
 ```xml
 <html xmlns:s="stencil" xmlns:t="inc:_params.stencil">
@@ -492,7 +616,21 @@ The output of this template is, of course:
 </body>
 ```
 
-The caller can always rename the reserved attribute `as`.
+The caller can always rename the reserved using the as operator `|`.
+
+```erb
+<html %include=(t: '_params.stencil')>
+<body>
+<% t.numbers |digits| %>
+<ul>
+  <li><%= digits.one %></li>
+  <li><%= digits.two %></li>
+  <li><%= digits.three %></li>
+</ul>
+<% end %>
+</html>
+</body>
+```
 
 ```xml
 <html xmlns:s="stencil" xmlns:t="inc:_params.stencil">
@@ -514,6 +652,18 @@ When you define your parameter object inside the tag library, there's maybe a
 bit of a problem in that you won't know it's name, which may or may not matter,
 it is so early in the life of Stencil for me to know. So, when you define your
 object, you can reference the user provided name of the object using `$name`.
+
+```erb
+<% library %>
+<% tag numbers %>
+  <% block ({ one: 1,
+              two: function (callback) {
+                callback(null, this[$name].one + 1)
+              },
+              three: 3 }) %>
+<% end %>
+<% end %>
+```
 
 ```xml
 <s:include xmlns:s="stencil">
@@ -541,6 +691,13 @@ use an evaluated attribute for the `select` attribute of the `value` directive
 in the tag. The evaluated select attribute will use the `stuff` attribute passed
 to the tag.
 
+```erb
+<% library %>
+<% tag say %>
+  <%= $attribute.stuff %>
+<% end %>
+<% end %>
+```
 ```xml
 <s:include xmlns:s="stencil">
 <s:tag name="say">
@@ -557,6 +714,14 @@ passed into the tag as `$attributes.stuff`. Inside the tag, `$attributes.stuff`
 has a string value of `"1 + 1"`. The evaluated `select` attribute of value
 evaluates `$attributes.stuff` and creates a `select` attribute for the `value`
 directive with a string value of `"1 + 1"`.
+
+```erb
+<html %include=(t: '_tags.stenccil')>
+<body>
+<p><% t.say stuff="1 + 1" %></p>
+</body>
+<html>
+```
 
 ```xml
 <html xmlns:s="stencil" xmlns:t="inc:_tags.xml">
@@ -585,15 +750,27 @@ You'd probably want to use `select` as your attribute, instead of `stuff`
 because it follows convention and requires less explanation. We use `stuff` in
 the example above to make it easier to pick out the working parts.
 
+TK: Talk about the select auto-magic select examples.
+
 Here's a slightly more complicated, every-so-slightly more realistic example.
 Here we put our select attribute into an evaluated select attribute of an `each`
 directive. We're creating a `loopy` tag.
+
+```erb
+<% library %>
+<% tag loopy %>
+  <% each $($attribute.select) |item| %>
+    <% tag item %><%= item %><% end %>
+  <% end %>
+<% end %>
+<% end %>
+```
 
 ```xml
 <s:include xmlns:s="stencil">
 <s:tag name="loopy">
   <s:each s:select="$attribute.select" as="item">
-    <s:tag name="item" select="item"/>
+    <s:tag name="item"><s:value select="item"/></s:tag>
   </s:each>
 </s:tag>
 </s:include>
@@ -609,6 +786,18 @@ evaluates to the value of `$attribute.select` with is `"numbers"`. That creates
 a select value for the `each` directive that is `"numbers"`. That is evaluated
 by the `each` directive to obtain the numbers array.
 
+```erb
+<html %include=(t: '_tags.stencil')>
+<body>
+<ul>
+  <% t.loopy (numbers) %>
+    <li><% t.item %></li>
+  <% end %>
+</ul>
+</body>
+<html>
+```
+
 ```xml
 <html xmlns:s="stencil" xmlns:t="inc:_tags.xml">
 <body>
@@ -620,6 +809,8 @@ by the `each` directive to obtain the numbers array.
 </body>
 <html>
 ```
+
+TK: Maybe just a bogo each example `t.eachy`?
 
 Which gives us the html.
 
