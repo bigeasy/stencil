@@ -73,6 +73,8 @@ var i = 0,
 	IN_DIRECTIVE_AS = i++,
 	IN_DIRECTIVE_KEY = i++,
 	IN_DIRECTIVE = i++,
+	IN_JAVASCRIPT_STRING = i++,
+	IN_JAVASCRIPT_STRING_ESCAPE = i++,
 	BEFORE_DIRECTIVE_END = i++,
 	BEFORE_TEXT_DIRECTIVE = i++,
 	IN_TEXT_DIRECTIVE = i++,
@@ -318,9 +320,13 @@ Tokenizer.prototype.write = function(chunk){
 			}
 		}
 		else if (this._state === IN_DIRECTIVE_SELECT) {
-			if ("(" === c) {
+			if ("'" === c || "\"" === c) {
+				this._quoteCharacter = c;
+				this._outerState = IN_DIRECTIVE_SELECT;
+				this._state = IN_JAVASCRIPT_STRING;
+			} else if("(" === c) {
 				this._depth++;
-			} else if (")" === c) {
+			} else if(")" === c) {
 				this._depth--;
 			}
 			if (this._depth === 0) {
@@ -331,7 +337,11 @@ Tokenizer.prototype.write = function(chunk){
 
 		}
 		else if (this._state === IN_DIRECTIVE_KEY) {
-			if ("[" === c) {
+			if ("'" === c || "\"" === c) {
+				this._quoteCharacter = c;
+				this._outerState = IN_DIRECTIVE_KEY;
+				this._state = IN_JAVASCRIPT_STRING;
+			} else if("[" === c) {
 				this._depth++;
 			} else if ("]" === c) {
 				this._depth--;
@@ -342,6 +352,16 @@ Tokenizer.prototype.write = function(chunk){
 					this._buffer.substring(this._sectionStart, this._index)
 			}
 
+		}
+		else if (this._state === IN_JAVASCRIPT_STRING) {
+			if(c === "\\") {
+				this._state = IN_JAVASCRIPT_STRING_ESCAPE;
+			} else if(c === this._quoteCharacter) {
+				this._state = this._outerState;
+			}
+		}
+		else if (this._state === IN_JAVASCRIPT_STRING_ESCAPE) {
+			this._state = IN_JAVASCRIPT_STRING;
 		}
 		else if (this._state === IN_DIRECTIVE_AS) {
 			// todo: need to assert that it is a valid JavaScript identifier
