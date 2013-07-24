@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(3, function (step, context, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
   var spliced, fs = require('fs'), watchers =
   [
     {
@@ -22,33 +22,58 @@ require('./proof')(3, function (step, context, fixture, ok, compare) {
 
   step(function () {
 
-    context.generate('fixtures/indexed.stencil', { watchers: watchers }, step());
+    xstencil.generate('fixtures/indexed.xstencil', { watchers: watchers }, step());
+    stencil.generate('fixtures/indexed.stencil', { watchers: watchers }, step());
     fixture('fixtures/each.xml', step());
 
-  }, function (actual, expected) {
+  }, function (xindexed, indexed, expected) {
 
-    ok(compare(actual.document, expected), 'generate');
+    var xwatchers = watchers.slice();
+
+    ok(compare(xindexed.document, expected), 'xstencil generate');
 
     step(function () {
 
-      context.reconstitute(actual.document, step());
+      xstencil.reconstitute(xindexed.document, step());
 
-    }, function (actual) {
+    }, function (xindexed) {
 
-      context.regenerate(actual, { watchers: watchers }, step());
+      xstencil.regenerate(xindexed, { watchers: watchers }, step());
 
-    }, function (actual) {
+    }, function (xindexed) {
 
-      ok(compare(actual.document, expected), 'regenerate');
-      watchers.unshift(watchers.pop());
-      context.regenerate(actual, { watchers: watchers }, step());
+      ok(compare(xindexed.document, expected), 'xstencil regenerate');
+      xwatchers.unshift(xwatchers.pop());
+      xstencil.regenerate(xindexed, { watchers: xwatchers }, step());
       fixture('fixtures/each-reorder.xml', step());
 
-    }, function (actual, expected) {
+    }, function (xindexed, expected) {
 
-      ok(compare(actual.document, expected), 'reorder');
+      ok(compare(xindexed.document, expected), 'xstencil reorder');
 
     });
 
+    ok(compare(indexed.document, expected), 'stencil generate');
+
+    step(function () {
+
+      stencil.reconstitute(indexed.document, step());
+
+    }, function (indexed) {
+
+      stencil.regenerate(indexed, { watchers: watchers }, step());
+
+    }, function (indexed) {
+
+      ok(compare(indexed.document, expected), 'stencil regenerate');
+      watchers.unshift(watchers.pop());
+      stencil.regenerate(indexed, { watchers: xwatchers }, step());
+      fixture('fixtures/each-reorder.xml', step());
+
+    }, function (indexed, expected) {
+
+      ok(compare(indexed.document, expected), 'stencil reorder');
+
+    });
   });
 });
