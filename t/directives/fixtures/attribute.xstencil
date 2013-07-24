@@ -1,0 +1,5 @@
+<html xmlns:s="stencil">
+<body>
+<a s:target="target" s:href="src" s:title="'1) don\'t panic'"><img s:src="src" s:alt="alt"/></a>
+</body>
+</html>
