@@ -1,26 +1,40 @@
 #!/usr/bin/env node
 
-require('./proof')(2, function (step, context, fixture, ok, compare) {
+require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
-    context.generate('fixtures/with.stencil', {
+    xstencil.generate('fixtures/with.xstencil', {
+      person: { firstName: "Fred", lastName: "Flintstone" } }, step());
+    stencil.generate('fixtures/with.stencil', {
       person: { firstName: "Fred", lastName: "Flintstone" } }, step());
     fixture('fixtures/with-generate.xml', step());
     fixture('fixtures/with-update.xml', step());
 
-  }, function (actual, generate, regenerate) {
+  }, function (xwith, _with, generate, regenerate) {
+
+    ok(compare(xwith.document, generate), 'xstencil generate');
 
     step(function () {
-
-      ok(compare(actual.document, generate), 'generate');
-      context.regenerate(actual, {
+      xstencil.regenerate(xwith, {
         person: { firstName: "Barney", lastName: "Rubble" } }, step());
 
-    }, function (actual) {
+    }, function (xwith) {
 
-      ok(compare(actual.document, regenerate), 'regenerate');
+      ok(compare(xwith.document, regenerate), 'xstencil regenerate');
+
+    });
+
+    ok(compare(_with.document, generate), 'stencil generate');
+
+    step(function () {
+      stencil.regenerate(_with, {
+        person: { firstName: "Barney", lastName: "Rubble" } }, step());
+
+    }, function (_with) {
+
+      ok(compare(_with.document, regenerate), 'stencil regenerate');
 
     });
   });

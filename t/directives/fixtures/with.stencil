@@ -1,7 +1,7 @@
-<html xmlns:s="stencil">
+<html>
 <body>
-<s:with select="person" as="bedrockian">
-  <p><s:value select="bedrockian.firstName"/> <s:value select="bedrockian.lastName"/></p>
-</s:with>
+<% with (person) |bedrockian| %>
+  <p><%=bedrockian.firstName %> <%= bedrockian.lastName %></p>
+<% end %>
 </body>
 </html>
