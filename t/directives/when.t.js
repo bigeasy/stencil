@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(5, function (step, context, fixture, ok, compare) {
+require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) {
   var fs = require('fs'), article = {
     title: "Now Is the Time",
     publishedAt: "just now",
@@ -16,45 +16,82 @@ require('./proof')(5, function (step, context, fixture, ok, compare) {
     snippet: "I don't know about this..."
   };
 
-  step(function (stencil, resolver) {
+  step(function () {
 
-    context.generate('fixtures/when.stencil', { article: article, recents: recents }, step());
+    xstencil.generate('fixtures/when.xstencil', { article: article, recents: recents }, step());
+    stencil.generate('fixtures/when.stencil', { article: article, recents: recents }, step());
     fixture('fixtures/when-generate.xml', step());
     fixture('fixtures/when-update.xml', step());
     fixture('fixtures/when-missing.xml', step());
 
-  }, function (actual, generated, updated, missing) {
 
-    ok(compare(actual.document, generated), 'generate');
+  }, function (xwhen, when, generated, updated, missing) {
+
+    ok(compare(xwhen.document, generated), 'xstencil generate');
+
+    var xrecents = recents.slice()
 
     step(function () {
 
-      context.reconstitute(actual.document, step());
+      xstencil.reconstitute(xwhen.document, step());
 
-    }, function (actual) {
+    }, function (xwhen) {
 
-      context.regenerate(actual, { recents: recents }, step());
+      xstencil.regenerate(xwhen, { recents: xrecents }, step());
 
-    }, function (actual) {
+    }, function (xwhen) {
 
-      ok(compare(actual.document, generated), 'reconstitute');
+      ok(compare(xwhen.document, generated), 'xstencil reconstitute');
+      xrecents.push(extraComment);
+      xstencil.regenerate(xwhen, { recents: xrecents }, step());
+
+    }, function (xwhen) {
+
+      ok(compare(xwhen.document, updated), 'xstencil updated');
+      xrecents.pop();
+      xstencil.generate('fixtures/when.xstencil', { recents: xrecents }, step());
+
+    }, function (xwhen) {
+
+      ok(compare(xwhen.document, missing), 'xstencil missing');
+      xstencil.regenerate(xwhen, { article: article, recents: xrecents }, step());
+
+    }, function (xwhen) {
+
+      ok(compare(xwhen.document, generated), 'xstencil completed');
+
+    });
+
+    ok(compare(when.document, generated), 'stencil generate');
+
+    step(function () {
+
+      stencil.reconstitute(when.document, step());
+
+    }, function (when) {
+
+      stencil.regenerate(when, { recents: recents }, step());
+
+    }, function (when) {
+
+      ok(compare(when.document, generated), 'stencil reconstitute');
       recents.push(extraComment);
-      context.regenerate(actual, { recents: recents }, step());
+      stencil.regenerate(when, { recents: recents }, step());
 
-    }, function (actual) {
+    }, function (when) {
 
-      ok(compare(actual.document, updated), 'updated');
+      ok(compare(when.document, updated), 'stencil updated');
       recents.pop();
-      context.generate('fixtures/when.stencil', { recents: recents }, step());
+      stencil.generate('fixtures/when.stencil', { recents: recents }, step());
 
-    }, function (actual) {
+    }, function (when) {
 
-      ok(compare(actual.document, missing), 'missing');
-      context.regenerate(actual, { article: article, recents: recents }, step());
+      ok(compare(when.document, missing), 'stencil missing');
+      stencil.regenerate(when, { article: article, recents: recents }, step());
 
-    }, function (actual) {
+    }, function (when) {
 
-      ok(compare(actual.document, generated), 'completed');
+      ok(compare(when.document, generated), 'stencil completed');
 
     });
   });

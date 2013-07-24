@@ -1,20 +1,20 @@
-<html xmlns:s="stencil">
+<html>
 <body>
-<s:when select="this.article">
+<% when (this.article) %>
   <div class="article">
-    <h1><s:value select="article.title"/></h1>
-    <p class="sub-title">By <s:value select="article.author"/> on <s:value select="article.publishedAt"/></p>
+    <h1><%= article.title %></h1>
+    <p class="sub-title">By <%= article.author %> on <%= article.publishedAt %></p>
     <div>
-      <s:value select="article.body" type="html"/>
+      <%- article.body %>
     </div>
   </div>
-</s:when>
+<% end %>
 <div class="sidebar">
   <h2>Recent Comments</h2>
   <ul>
-    <s:each select="recents" as="comment">
-      <li><s:value select="comment.snippet"/> ~ <s:value select="comment.author"/> on <s:value select="comment.articleTitle"/></li>
-    </s:each>
+    <% each (recents) |comment| %>
+      <li><%= comment.snippet %> ~ <%= comment.author %> on <%= comment.articleTitle %></li>
+    <% end %>
   </ul>
 </div>
 </body>
