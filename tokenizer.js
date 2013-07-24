@@ -79,7 +79,9 @@ var i = 0,
 	BEFORE_TEXT_DIRECTIVE = i++,
 	IN_TEXT_DIRECTIVE = i++,
 	IN_TEXT_DIRECTIVE_WHITESPACE = i++,
-	AFTER_TEXT_DIRECTIVE = i++;
+	AFTER_TEXT_DIRECTIVE = i++,
+	
+	IN_ATTRIBUTE_VALUE_EVALUATED = i++;
 
 function whitespace(c){
 	return c === " " || c === "\t" || c === "\r" || c === "\n";
@@ -222,7 +224,11 @@ Tokenizer.prototype.write = function(chunk){
 				this._sectionStart = this._index;
 			}
 		} else if(this._state === BEFORE_ATTRIBUTE_VALUE){
-			if(c === "\""){
+			if(c === "("){
+				this._cbs.onattribeval();
+				this._state = IN_ATTRIBUTE_VALUE_EVALUATED;
+				this._sectionStart = this._index + 1;
+			} else if(c === "\""){
 				this._state = IN_ATTRIBUTE_VALUE_DOUBLE_QUOTES;
 				this._sectionStart = this._index + 1;
 			} else if(c === "'"){
@@ -231,6 +237,15 @@ Tokenizer.prototype.write = function(chunk){
 			} else if(!whitespace(c)){
 				this._state = IN_ATTRIBUTE_VALUE_NO_QUOTES;
 				this._sectionStart = this._index;
+			}
+		} else if(this._state === IN_ATTRIBUTE_VALUE_EVALUATED){
+			if(c === "'" || c === "\""){
+				this._state = IN_JAVASCRIPT_STRING;
+				this._outerState = IN_ATTRIBUTE_VALUE_EVALUATED;
+				this._quoteCharacter = c;
+			} else if(c === ")") {
+				this._emitToken("onattribvalue");
+				this._state = BEFORE_ATTRIBUTE_NAME;
 			}
 		} else if(this._state === IN_ATTRIBUTE_VALUE_DOUBLE_QUOTES){
 			if(c === "\""){
