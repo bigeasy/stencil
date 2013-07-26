@@ -66,6 +66,11 @@ var i = 0,
     AFTER_STYLE_3 = i++, //L
     AFTER_STYLE_4 = i++, //E
 
+	IN_IMPORT_DIRECTIVE_NAME = i++,	
+	IN_IMPORT_DIRECTIVE_VALUE = i++,	
+
+	IN_ATTRIBUTE_VALUE_EVALUATED = i++,
+
 	BEFORE_DIRECTIVE = i++,
 	BEFORE_DIRECTIVE_NAME = i++,
 	IN_DIRECTIVE_NAME = i++,
@@ -79,9 +84,7 @@ var i = 0,
 	BEFORE_TEXT_DIRECTIVE = i++,
 	IN_TEXT_DIRECTIVE = i++,
 	IN_TEXT_DIRECTIVE_WHITESPACE = i++,
-	AFTER_TEXT_DIRECTIVE = i++,
-	
-	IN_ATTRIBUTE_VALUE_EVALUATED = i++;
+	AFTER_TEXT_DIRECTIVE = i++;
 
 function whitespace(c){
 	return c === " " || c === "\t" || c === "\r" || c === "\n";
@@ -197,6 +200,9 @@ Tokenizer.prototype.write = function(chunk){
 			} else if(c === "/"){
 				this._cbs.onselfclosingtag();
 				this._state = AFTER_CLOSING_TAG_NAME;
+			} else if(c === "%") {
+				this._state = IN_IMPORT_DIRECTIVE_NAME;
+				this._sectionStart = this._index + 1;
 			} else if(!whitespace(c)){
 				this._state = IN_ATTRIBUTE_NAME;
 				this._sectionStart = this._index;
@@ -212,6 +218,19 @@ Tokenizer.prototype.write = function(chunk){
 				this._emitIfToken("onattribname");
 				this._state = BEFORE_ATTRIBUTE_NAME;
 				continue;
+			}
+		} else if(this._state === IN_IMPORT_DIRECTIVE_NAME){
+			if(c === "("){
+				this._emitIfToken("onimportname");
+				this._state = IN_IMPORT_DIRECTIVE_VALUE;
+				this._sectionStart = this._index + 1;
+			} else if (!/^[includerequire]$/.test(c)) {
+				throw new Error;
+			}
+		} else if(this._state === IN_IMPORT_DIRECTIVE_VALUE){
+			if(c === ")"){
+				this._emitIfToken("onimportvalue");
+				this._state = BEFORE_ATTRIBUTE_NAME;	
 			}
 		} else if(this._state === AFTER_ATTRIBUTE_NAME){
 			if(c === "="){
