@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 
-require('./proof')(2, function (step, xstencil, fixture, ok, compare) {
+require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
     xstencil.generate('fixtures/require.xstencil', { greeting: "Hello, World!" }, step());
+    stencil.generate('fixtures/require.stencil', { greeting: "Hello, World!" }, step());
     fixture('fixtures/require-generate.xml', step());
     fixture('fixtures/require-regenerate.xml', step());
 
-  }, function (xrequire, generate, regenerate) {
+  }, function (xrequire, require, generate, regenerate) {
 
     ok(compare(xrequire.document, generate), 'xstencil generate');
 
@@ -24,6 +25,22 @@ require('./proof')(2, function (step, xstencil, fixture, ok, compare) {
     }, function (xrequire) {
 
       ok(compare(xrequire.document, regenerate), 'xstencil regenerate');
+
+    });
+
+    ok(compare(require.document, generate), 'xstencil generate');
+
+    step(function () {
+
+      stencil.reconstitute(require.document, step());
+
+    }, function (require) {
+
+      stencil.regenerate(require, { greeting: "Hello, Nurse!" }, step());
+
+    }, function (require) {
+
+      ok(compare(require.document, regenerate), 'xstencil regenerate');
 
     });
   });

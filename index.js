@@ -1,6 +1,6 @@
 ! function (definition) {
   if (typeof module == "object" && module.exports) definition(require, module.exports, module);
-  else if (typeof define == "function" && typeof define.amd == "object") define(definition);
+  else if (typeof define == "function" && typeof define.amd == "object") define(definition)
 } (function (require, exports, module) { exports.create = function (javascript, xml, json, html) {
   var slice = [].slice, templates = {};
 

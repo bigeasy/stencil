@@ -9,8 +9,8 @@ var cadence = require('cadence')
 var __slice = [].slice
 
 function createXMLTemplate (document, object) {
-    function descend (element, object) {
-        object.children.forEach(function (child) {
+    function descend (element, children) {
+        children.forEach(function (child) {
             var $, name, append
             switch (child.type) {
             case 'tag':
@@ -29,13 +29,19 @@ function createXMLTemplate (document, object) {
                     if ($ = /^data-stencil-evaluated-attribute-(.*)$/.exec(name)) {
                         append.setAttributeNS('stencil', 's:' + $[1], child.attribs[name]);
                         delete child.attribs[name]
+                    } else if ($ = /^data-stencil-require-(.*)$/.exec(name)) {
+                        append.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' + $[1], 'req:' + child.attribs[name]);
+                        delete child.attribs[name]
                     }
                 }
                 for (name in child.attribs) {
                     append.setAttribute(name, child.attribs[name])
                 }
+                if (element.nodeType == 11) {
+                    append.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:s', 'stencil');
+                }
                 element.appendChild(append)
-                descend(append, child)
+                descend(append, child.children)
                 break
             case 'text':
                 element.appendChild(element.ownerDocument.createTextNode(child.data))
@@ -44,11 +50,10 @@ function createXMLTemplate (document, object) {
         })
     }
 
-    var element = document.createElement(object.name)
-    element.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:s', 'stencil');
+    var fragment = document.createDocumentFragment()
     //console.log(object) 
-    document.appendChild(element)
-    descend(element, object);
+    descend(fragment, [ object ]);
+    document.appendChild(fragment)
     //console.log(document.documentElement.toString())
 }
 
@@ -91,6 +96,24 @@ TokenizerProxy.prototype.ondirective = function (directive) {
     }
 }
 
+TokenizerProxy.prototype.onimportname = function (name) {
+    if (name != "require" && name != "include") {
+        throw new Error(name)
+    }
+    this._importName = name;
+}
+
+TokenizerProxy.prototype.onimportvalue = function (value) {
+    var $ = /^([\w$_][\w\d$_]*):\s*('(?:[^\\']|\\.)*'|"(?:[^\\"]|\\.)*")\s*$/.exec(value);
+    if (!$) {
+        throw new Error;
+    }
+    var variable = $[1]
+    var path = $[2].replace(/^.(.*).$/, '$1').replace(/\\(.)/g, '$1')
+    this._cbs.onattribname('data-stencil-' + this._importName + '-' + variable)
+    this._cbs.onattribvalue(path)
+}
+
 TokenizerProxy.prototype.onattribname = function (name) {
     this._attributeName = name;
 }
@@ -121,11 +144,11 @@ exports.createParser = function (base) {
             parser.parseComplete(body)
             // great. now it's time for a serializer.
             //console.log('here', domutils.getOuterHTML(handler.dom[0]))
-            //console.log(require('util').inspect(handler.dom, false, null))
+            console.log(require('util').inspect(handler.dom[0], false, null))
             var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
             actual.documentElement.parentNode.removeChild(actual.documentElement)
             createXMLTemplate(actual, handler.dom[0])
-            //console.log('--->', actual.toString())
+            console.log('--->', actual.toString())
             return actual
         })
     })
