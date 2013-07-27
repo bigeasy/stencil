@@ -2,13 +2,13 @@
 <body>
 <p>Hello</p>
 <ul><li>
-<s:each select="directory" as="directory" name="directory">
+<s:each select="directory" as="directory" label="directory">
   <p><s:value select="directory.name"/></p>
   <s:if select="directory.children">
     <ul>
       <s:each select="directory.children" as="child">
         <li>
-          <s:recurse upto="directory" select="child"/>
+          <s:recurse label="directory" select="child"/>
         </li>
       </s:each>
     </ul>

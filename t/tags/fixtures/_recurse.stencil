@@ -1,13 +1,13 @@
 <s:include xmlns:s="stencil">
 <s:tag name="directory">
-<s:each s:select="$attributes.select" as="directory" name="directory">
+<s:each s:select="$attributes.select" as="directory" label="directory">
   <s:tag name="name"><s:value select="directory.name"/></s:tag>
   <s:tag name="has-children">
     <s:if select="directory.children">
       <s:tag name="children">
         <s:each select="directory.children" as="child">
           <s:tag name="subdirectory">
-            <s:recurse upto="directory" select="child"/>
+            <s:recurse label="directory" select="child"/>
           </s:tag>
           <s:block/>
         </s:each>

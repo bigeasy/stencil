@@ -268,11 +268,11 @@
     return fragment;
   }
 
-  function each (source, parent, frames, page, template, includes, named,
+  function each (source, parent, frames, page, template, includes, labeled,
            directive, element, context, path, generating, callback) {
     var idSource = element.getAttribute("key").trim(),
         as = element.getAttribute("as").trim(),
-        name = element.getAttribute("name").trim(),
+        label = element.getAttribute("label").trim(),
         head = follow(page, path), items = head.items,
         previous = head.end, parentNode = previous.parentNode,
         base = path.slice(0, path.length - 1),
@@ -281,9 +281,9 @@
         wrap = element.localName == "with",
         okay = validator(callback);
 
-    if (name) {
-      named = extend({}, named);
-      named[name] = { directive: directive, frame: frames[0] };
+    if (label) {
+      labeled = extend({}, labeled);
+      labeled[label] = { directive: directive, frame: frames[0] };
     }
 
     head.items = {};
@@ -341,7 +341,7 @@
 
         previous = follow(page, path).end;
 
-        rewrite({}, frames, page, template, includes, named, directive.directives,
+        rewrite({}, frames, page, template, includes, labeled, directive.directives,
                 path, context, generating, okay(shift));
       }
     }));
@@ -350,7 +350,7 @@
   var handlers = {
     // The value directive replaces a value element with text from the current
     // context.
-    value: function (parent, frames, page, template, includes, named,
+    value: function (parent, frames, page, template, includes, labeled,
                      directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
@@ -367,7 +367,7 @@
         callback();
       }));
     },
-    if: function (parent, frames, page, template, includes, named,
+    if: function (parent, frames, page, template, includes, labeled,
                   directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
 
@@ -387,18 +387,18 @@
             fill(marker, fragment);
             generating = true;
           }
-          rewrite({}, frames, page, template, includes, named, directive.directives,
+          rewrite({}, frames, page, template, includes, labeled, directive.directives,
                   path, context, generating, callback);
         }
       }));
     },
-    else: function (parent, frames, page, template, includes, named,
+    else: function (parent, frames, page, template, includes, labeled,
                     directive, element, context, path, generating, callback) {
       element.setAttribute("select", "true");
-      handlers.elseif(parent, frames, page, template, includes, named,
+      handlers.elseif(parent, frames, page, template, includes, labeled,
                       directive, element, context, path, generating, callback);
     },
-    elseif: function (parent, frames, page, template, includes, named,
+    elseif: function (parent, frames, page, template, includes, labeled,
                       directive, element, context, path, generating, callback) {
       var marker = follow(page, path);
       if (parent.condition) {
@@ -406,36 +406,36 @@
         follow(page, path).markers = {};
         callback();
       } else {
-        handlers["if"](parent, frames, page, template, includes, named,
+        handlers["if"](parent, frames, page, template, includes, labeled,
                        directive, element, context, path, generating, callback);
       }
     },
-    each: function (parent, frames, page, template, includes, named,
+    each: function (parent, frames, page, template, includes, labeled,
                     directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select");
-      each(source, parent, frames, page, template, includes, named,
+      each(source, parent, frames, page, template, includes, labeled,
            directive, element, context, path, generating, callback);
     },
-    with: function (parent, frames, page, template, includes, named,
+    with: function (parent, frames, page, template, includes, labeled,
                     directive, element, context, path, generating, callback) {
       var source = element.getAttribute("select");
-      each(source, parent, frames, page, template, includes, named,
+      each(source, parent, frames, page, template, includes, labeled,
            directive, element, context, path, generating, callback);
     },
-    recurse: function (parent, frames, page, template, includes, named, directive, element,
+    recurse: function (parent, frames, page, template, includes, labeled, directive, element,
                    context, path, generating, callback) {
-      var visit = named[element.getAttribute("upto")],
+      var visit = labeled[element.getAttribute("label")],
           source = element.getAttribute("select");
       frames = [visit.frame].concat(frames);
-      each(source, parent, frames, page, template, includes, named,
+      each(source, parent, frames, page, template, includes, labeled,
             visit.directive, visit.directive.element, context, path, generating, callback);
     },
-    when: function (parent, frames, page, template, includes, named, directive, element,
+    when: function (parent, frames, page, template, includes, labeled, directive, element,
                      context, path, generating, callback) {
       var source = element.getAttribute("select").trim(), marker = follow(page, path);
       evaluate(source, context, check(callback, function (value) {
         if (value) {
-          handlers["if"](parent, frames, page, template, includes, named, directive, element,
+          handlers["if"](parent, frames, page, template, includes, labeled, directive, element,
                          context, path, generating, callback);
         } else {
           if (generating) {
@@ -446,7 +446,7 @@
         }
       }));
     },
-    block: function (parent, frames, page, template, includes, named, directive, element,
+    block: function (parent, frames, page, template, includes, labeled, directive, element,
                      context, path, generating, callback) {
       var name = element.getAttribute("name"), marker, fragment, definition,
           caller = frames[0], prototype, i, I, params, tmp = {};
@@ -480,11 +480,11 @@
       evaluate(params, tmp, check(callback, function (value) {
         if (tmp.$name) context[tmp.$name] = value;
         frames = [{ template: template, directive: directive }].concat(frames);
-        rewrite({}, frames, page, caller.template, includes, named, definition.directives,
+        rewrite({}, frames, page, caller.template, includes, labeled, definition.directives,
                 path, context, generating, callback);
       }));
     },
-    tag: function (parent, frames, page, template, includes, named, directive, element,
+    tag: function (parent, frames, page, template, includes, labeled, directive, element,
                    context, path, generating, callback) {
       var marker = follow(page, path);
       if (!empty(marker)) {
@@ -498,7 +498,7 @@
     }
   }
 
-  function rewrite (parent, frames, page, template, includes, named,
+  function rewrite (parent, frames, page, template, includes, labeled,
                     directives, path, context, generating, callback) {
     var okay = validator(callback), prefix = '$';
     context = extend({}, context);
@@ -575,7 +575,7 @@
         default:
           var included;
           if (directive.interpreter) {
-            directive.interpreter(parent, frames, page, template, includes, named,
+            directive.interpreter(parent, frames, page, template, includes, labeled,
                                   directive, element, context, sub, generating, shift);
           } else if (directive.element && (included = includes[directive.element.namespaceURI])) {
             var attributes = {};
@@ -600,11 +600,11 @@
             frame.directive = directive;
             frame.attributes.unshift(attributes);
             frames = [frame].concat(frames);
-            rewrite({}, frames, page, included, includes, named, include.directives,
+            rewrite({}, frames, page, included, includes, labeled, include.directives,
                     sub, context, generating, okay(shift));
           }
           else {
-            rewrite({}, frames, page, template, includes, named, directive.directives,
+            rewrite({}, frames, page, template, includes, labeled, directive.directives,
                     path, context, generating, shift);
           }
           break;
