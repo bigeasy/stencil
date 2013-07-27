@@ -37,35 +37,35 @@ var retree = {
     children: [{ name: 'alan' }]
   }]
 }
-require('./proof')(3, function (step, context, fixture, ok, compare) {
+require('./proof')(3, function (step, xstencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function (stencil, resolver) {
 
-    context.generate('fixtures/recurse.stencil', tree, step());
+    xstencil.generate('fixtures/recurse.xstencil', tree, step());
     fixture('fixtures/recurse-generate.xml', step());
     fixture('fixtures/recurse-regenerate.xml', step());
 
-  }, function (actual, generate, regenerate) {
+  }, function (xrecurse, generate, regenerate) {
 
-    ok(compare(actual.document, generate), 'generate');
+    ok(compare(xrecurse.document, generate), 'generate');
 
     step(function () {
 
-      context.reconstitute(actual.document, step());
+      xstencil.reconstitute(xrecurse.document, step());
 
-    }, function (actual) {
+    }, function (xrecurse) {
 
-      context.regenerate(actual, tree, step());
+      xstencil.regenerate(xrecurse, tree, step());
 
-    }, function (actual) {
+    }, function (xrecurse) {
 
-      ok(compare(actual.document, generate), 'reconstitute');
-      context.regenerate(actual, retree, step());
+      ok(compare(xrecurse.document, generate), 'reconstitute');
+      xstencil.regenerate(xrecurse, retree, step());
 
-    }, function (actual) {
+    }, function (xrecurse) {
 
-      ok(compare(actual.document, regenerate), 'regenerate');
+      ok(compare(xrecurse.document, regenerate), 'regenerate');
 
     });
   });
