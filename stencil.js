@@ -14,8 +14,9 @@ function createXMLTemplate (document, object) {
             var $, name, append
             switch (child.type) {
             case 'tag':
-                if (child.attribs['data-stencil'] == 'true') {
+                if (child.attribs['data-stencil-directive']) {
                     append = element.ownerDocument.createElementNS('stencil', 's:' + child.attribs['data-stencil-directive'])
+                    delete child.attribs['data-stencil-directive']
                     for (name in child.attribs) {
                         if ($ = /^data-stencil-attribute-(.*)$/.exec(name)) {
                             append.setAttribute($[1], child.attribs[name]);
@@ -78,11 +79,9 @@ TokenizerProxy.prototype.ondirective = function (directive) {
     if (/^(end|else)$/.test(directive.name)) {
         this._cbs.onclosetag('div')
     }
-    if ('end' !== directive.name) {
+    if ('end' != directive.name) {
         // todo: single quotes.
         this._cbs.onopentagname("div")
-        this._cbs.onattribname("data-stencil")
-        this._cbs.onattribvalue("true")
         this._cbs.onattribname("data-stencil-directive")
         this._cbs.onattribvalue(directive.name)
         for (var name in directive.attributes) {
@@ -90,7 +89,7 @@ TokenizerProxy.prototype.ondirective = function (directive) {
             this._cbs.onattribvalue(directive.attributes[name])
         }
         this._cbs.onopentagend()
-        if (directive.name == 'value') {
+        if (directive.name == 'value' || directive.name == 'recurse') {
             this._cbs.onclosetag('div')
         }
     }
@@ -144,11 +143,11 @@ exports.createParser = function (base) {
             parser.parseComplete(body)
             // great. now it's time for a serializer.
             //console.log('here', domutils.getOuterHTML(handler.dom[0]))
-            console.log(require('util').inspect(handler.dom[0], false, null))
+            //console.log(require('util').inspect(handler.dom[0], false, null))
             var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
             actual.documentElement.parentNode.removeChild(actual.documentElement)
             createXMLTemplate(actual, handler.dom[0])
-            console.log('--->', actual.toString())
+            //console.log('--->', actual.toString())
             return actual
         })
     })

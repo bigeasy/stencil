@@ -37,18 +37,19 @@ var retree = {
     children: [{ name: 'alan' }]
   }]
 }
-require('./proof')(3, function (step, xstencil, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
   var fs = require('fs');
 
-  step(function (stencil, resolver) {
+  step(function () {
 
     xstencil.generate('fixtures/recurse.xstencil', tree, step());
+    stencil.generate('fixtures/recurse.stencil', tree, step());
     fixture('fixtures/recurse-generate.xml', step());
     fixture('fixtures/recurse-regenerate.xml', step());
 
-  }, function (xrecurse, generate, regenerate) {
+  }, function (xrecurse, recurse, generate, regenerate) {
 
-    ok(compare(xrecurse.document, generate), 'generate');
+    ok(compare(xrecurse.document, generate), 'xstencil generate');
 
     step(function () {
 
@@ -60,12 +61,33 @@ require('./proof')(3, function (step, xstencil, fixture, ok, compare) {
 
     }, function (xrecurse) {
 
-      ok(compare(xrecurse.document, generate), 'reconstitute');
+      ok(compare(xrecurse.document, generate), 'xstencil reconstitute');
       xstencil.regenerate(xrecurse, retree, step());
 
     }, function (xrecurse) {
 
-      ok(compare(xrecurse.document, regenerate), 'regenerate');
+      ok(compare(xrecurse.document, regenerate), 'xstencil regenerate');
+
+    });
+
+    ok(compare(recurse.document, generate), 'stencil generate');
+
+    step(function () {
+
+      stencil.reconstitute(recurse.document, step());
+
+    }, function (recurse) {
+
+      stencil.regenerate(recurse, tree, step());
+
+    }, function (recurse) {
+
+      ok(compare(recurse.document, generate), 'stencil reconstitute');
+      stencil.regenerate(recurse, retree, step());
+
+    }, function (recurse) {
+
+      ok(compare(recurse.document, regenerate), 'stencil regenerate');
 
     });
   });

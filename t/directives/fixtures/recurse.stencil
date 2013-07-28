@@ -1,0 +1,19 @@
+<html>
+<body>
+<p>Hello</p>
+<ul><li>
+<% each (directory) |directory| @directory %>
+  <p><%= directory.name %></p>
+  <% if (directory.children) %>
+    <ul>
+      <% each (directory.children) |child| %>
+        <li>
+          <% recurse (child) @directory %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>
+</li></ul>
+</body>
+</html>
