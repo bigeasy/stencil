@@ -77,6 +77,7 @@ var i = 0,
 	IN_DIRECTIVE_SELECT = i++,
 	IN_DIRECTIVE_AS = i++,
 	IN_DIRECTIVE_KEY = i++,
+	IN_DIRECTIVE_LABEL = i++,
 	IN_DIRECTIVE = i++,
 	IN_JAVASCRIPT_STRING = i++,
 	IN_JAVASCRIPT_STRING_ESCAPE = i++,
@@ -349,6 +350,9 @@ Tokenizer.prototype.write = function(chunk){
 				this._state = IN_DIRECTIVE_AS;
 				this._sectionStart = this._index + 1;
 				this._depth = 1;
+			} else if("@" === c) {
+				this._state = IN_DIRECTIVE_LABEL;
+				this._sectionStart = this._index + 1;
 			} else if("%" === c) {
 				this._state = BEFORE_DIRECTIVE_END;
 			}
@@ -383,6 +387,14 @@ Tokenizer.prototype.write = function(chunk){
 			if (this._depth === 0) {
 				this._state = IN_DIRECTIVE;
 				this._directive.attributes["key"] =
+					this._buffer.substring(this._sectionStart, this._index)
+			}
+
+		}
+		else if (this._state === IN_DIRECTIVE_LABEL) {
+			if (whitespace(c)) {
+				this._state = IN_DIRECTIVE;
+				this._directive.attributes["label"] =
 					this._buffer.substring(this._sectionStart, this._index)
 			}
 
