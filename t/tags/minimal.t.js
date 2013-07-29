@@ -1,33 +1,31 @@
 #!/usr/bin/env node
 
-var fs = require('fs');
-require('./proof')(3, function (step, context, fixture, ok, compare) {
-
+require('./proof')(3, function (step, xstencil, fixture, ok, compare) {
   step(function () {
 
-    context.generate('fixtures/minimal.stencil', {}, step());
+    xstencil.generate('fixtures/minimal.xstencil', {}, step());
     fixture('fixtures/minimal.xml', step());
 
   }, function (actual, expected) {
 
-    ok(compare(actual.document, expected), 'generate');
+    ok(compare(actual.document, expected), 'xstencil generate');
 
     step(function() {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(actual, {}, step());
 
     }, function (actual) {
 
-      ok(compare(actual.document, expected), 'regenerate');
-      context.reconstitute(actual.document, step());
+      ok(compare(actual.document, expected), 'xstencil regenerate');
+      xstencil.reconstitute(actual.document, step());
 
     }, function (actual) {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(actual, {}, step());
 
     }, function (actual) {
 
-      ok(compare(actual.document, expected), 'reconstitute');
+      ok(compare(actual.document, expected), 'xstencil reconstitute');
 
     });
   });
