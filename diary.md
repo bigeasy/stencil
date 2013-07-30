@@ -540,6 +540,13 @@ class "__$stencil$__" and attributes on any type of item named "__$stencil$__".
 
 No need to random generate to avoid, or anything like that.
 
+Have a problem...
+
+ * Can tags specify that they auto end?
+ * Do I slowly rename `include` to `library` (or `module` no `library`, tag
+   library).
+ * Is there a special `name` property in the parser?
+
 ## XStencil Versus Stencil
 
 I'm thinking, file extension, and that is all there is too it. No special extra
