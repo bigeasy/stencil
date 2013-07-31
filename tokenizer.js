@@ -79,6 +79,14 @@ var i = 0,
 	IN_DIRECTIVE_KEY = i++,
 	IN_DIRECTIVE_LABEL = i++,
 	IN_DIRECTIVE = i++,
+	BEFORE_DIRECTIVE_ATTRIBUTE_NAME = i++,
+    IN_DIRECTIVE_ATTRIBUTE_NAME = i++,
+    AFTER_DIRECTIVE_ATTRIBUTE_NAME = i++,
+    BEFORE_DIRECTIVE_ATTRIBUTE_VALUE = i++,
+    IN_DIRECTIVE_ATTRIBUTE_VALUE_DOUBLE_QUOTES = i++, // "
+    IN_DIRECTIVE_ATTRIBUTE_VALUE_SINGLE_QUOTES = i++, // '
+    IN_DIRECTIVE_ATTRIBUTE_VALUE_EVALUATED = i++, // (
+    IN_DIRECTIVE_ATTRIBUTE_VALUE_NO_QUOTES = i++,
 	IN_JAVASCRIPT_STRING = i++,
 	IN_JAVASCRIPT_STRING_ESCAPE = i++,
 	BEFORE_DIRECTIVE_END = i++,
@@ -355,6 +363,9 @@ Tokenizer.prototype.write = function(chunk){
 				this._sectionStart = this._index + 1;
 			} else if("%" === c) {
 				this._state = BEFORE_DIRECTIVE_END;
+			} else if(!whitespace(c)){
+				this._state = IN_DIRECTIVE_ATTRIBUTE_NAME;
+				this._sectionStart = this._index;
 			}
 		}
 		else if (this._state === IN_DIRECTIVE_SELECT) {
@@ -462,6 +473,87 @@ Tokenizer.prototype.write = function(chunk){
 			} else {
 				this._state = IN_TEXT_DIRECTIVE;
 				this._sectionEnd = this._index + 1;
+			}
+		}
+		/*
+		*	directive attributes
+		*/
+		else if(this._state === IN_DIRECTIVE_ATTRIBUTE_NAME){
+			if(c === "="){
+				this._directiveAttributeName = this._gatherToken();
+				this._state = BEFORE_DIRECTIVE_ATTRIBUTE_VALUE;
+			} else if(whitespace(c)){
+				this._directiveAttributeName = this._gatherToken();
+				this._state = AFTER_ATTRIBUTE_NAME;
+			} else if(c === "%"){
+				this._state = BEFORE_DIRECTIVE_END;
+			}
+		} else if(this._state === IN_IMPORT_DIRECTIVE_NAME){
+			if(c === "("){
+				this._emitIfToken("onimportname");
+				this._state = IN_IMPORT_DIRECTIVE_VALUE;
+				this._sectionStart = this._index + 1;
+			} else if (!/^[includerequire]$/.test(c)) {
+				throw new Error;
+			}
+		} else if(this._state === IN_IMPORT_DIRECTIVE_VALUE){
+			if(c === ")"){
+				this._emitIfToken("onimportvalue");
+				this._state = IN_DIRECTIVE;	
+			}
+		} else if(this._state === AFTER_ATTRIBUTE_NAME){
+			if(c === "="){
+				this._state = BEFORE_DIRECTIVE_ATTRIBUTE_VALUE;
+			} else if(c === "/" || c === ">"){
+				this._state = IN_DIRECTIVE;
+				continue;
+			} else if(!whitespace(c)){
+				this._state = IN_DIRECTIVE_ATTRIBUTE_NAME;
+				this._sectionStart = this._index;
+			}
+		} else if(this._state === BEFORE_DIRECTIVE_ATTRIBUTE_VALUE){
+			if(c === "("){
+				this._cbs.onattribeval();
+				this._state = IN_DIRECTIVE_ATTRIBUTE_VALUE_EVALUATED;
+				this._sectionStart = this._index + 1;
+			} else if(c === "\""){
+				this._state = IN_DIRECTIVE_ATTRIBUTE_VALUE_DOUBLE_QUOTES;
+				this._sectionStart = this._index + 1;
+			} else if(c === "'"){
+				this._state = IN_DIRECTIVE_ATTRIBUTE_VALUE_SINGLE_QUOTES;
+				this._sectionStart = this._index + 1;
+			} else if(!whitespace(c)){
+				this._state = IN_DIRECTIVE_ATTRIBUTE_VALUE_NO_QUOTES;
+				this._sectionStart = this._index;
+			}
+		} else if(this._state === IN_DIRECTIVE_ATTRIBUTE_VALUE_EVALUATED){
+			if(c === "'" || c === "\""){
+				this._state = IN_JAVASCRIPT_STRING;
+				this._outerState = IN_DIRECTIVE_ATTRIBUTE_VALUE_EVALUATED;
+				this._quoteCharacter = c;
+			} else if(c === ")") {
+				this._emitToken("onattribvalue");
+				this._state = IN_DIRECTIVE;
+			}
+		} else if(this._state === IN_DIRECTIVE_ATTRIBUTE_VALUE_DOUBLE_QUOTES){
+			if(c === "\""){
+				this._directive.attributes[this._directiveAttributeName] = this._gatherToken();
+				this._state = IN_DIRECTIVE;
+			}
+		} else if(this._state === IN_DIRECTIVE_ATTRIBUTE_VALUE_SINGLE_QUOTES){
+			if(c === "'"){
+				this._state = IN_DIRECTIVE;	
+				this._emitToken("onattribvalue");
+			}
+		} else if(this._state === IN_DIRECTIVE_ATTRIBUTE_VALUE_NO_QUOTES){
+			if(c === ">"){
+				this._emitToken("onattribvalue");
+				this._state = TEXT;
+				this._cbs.onopentagend();
+				this._sectionStart = this._index + 1;
+			} else if(whitespace(c)){
+				this._emitToken("onattribvalue");
+				this._state = IN_DIRECTIVE;
 			}
 		}
 		/*
@@ -789,6 +881,12 @@ Tokenizer.prototype._emitToken = function(name){
 	this._cbs[name](this._buffer.substring(this._sectionStart, this._index));
 	this._sectionStart = -1;
 };
+
+Tokenizer.prototype._gatherToken = function(name){
+	var token = this._buffer.substring(this._sectionStart, this._index);
+	this._sectionStart = -1;
+	return token;
+}
 
 Tokenizer.prototype._emitIfToken = function(name){
 	if(this._index > this._sectionStart){
