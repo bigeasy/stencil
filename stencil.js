@@ -11,11 +11,15 @@ var __slice = [].slice
 function createXMLTemplate (document, object) {
     function descend (element, children) {
         children.forEach(function (child) {
-            var $, name, append
+            var $, name, append, index
             switch (child.type) {
             case 'tag':
                 if (child.attribs['data-stencil-directive']) {
-                    append = element.ownerDocument.createElementNS('stencil', 's:' + child.attribs['data-stencil-directive'])
+                    var directive = child.attribs['data-stencil-directive']
+                    if ((name = directive.replace('.', ':')) == directive) {
+                        name = 's:' + directive
+                    }
+                    append = element.ownerDocument.createElementNS('stencil', name)
                     delete child.attribs['data-stencil-directive']
                     for (name in child.attribs) {
                         if ($ = /^data-stencil-attribute-(.*)$/.exec(name)) {
@@ -30,8 +34,8 @@ function createXMLTemplate (document, object) {
                     if ($ = /^data-stencil-evaluated-attribute-(.*)$/.exec(name)) {
                         append.setAttributeNS('stencil', 's:' + $[1], child.attribs[name]);
                         delete child.attribs[name]
-                    } else if ($ = /^data-stencil-require-(.*)$/.exec(name)) {
-                        append.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' + $[1], 'req:' + child.attribs[name]);
+                    } else if ($ = /^data-stencil-(require|include)-(.*)$/.exec(name)) {
+                        append.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' + $[2], $[1].substring(0, 3) + ':' + child.attribs[name]);
                         delete child.attribs[name]
                     }
                 }
@@ -52,7 +56,7 @@ function createXMLTemplate (document, object) {
     }
 
     var fragment = document.createDocumentFragment()
-    //console.log(object) 
+    //console.log(object)
     descend(fragment, [ object ]);
     document.appendChild(fragment)
     //console.log(document.documentElement.toString())
@@ -63,7 +67,7 @@ var path = require('path');
 
 
 function TokenizerProxy (cbs) {
-    this._cbs = cbs 
+    this._cbs = cbs
 }
 
 'oncdataend oncdatastart \
@@ -131,7 +135,7 @@ TokenizerProxy.prototype.onattribvalue = function (value) {
 // get these back down to the browser, or serve the XML.
 exports.createParser = function (base) {
     return cadence(function (step, source) {
-        
+
         step(function () {
             fs.readFile(path.join(base, source), 'utf8', step())
         }, function (body) {
@@ -141,13 +145,36 @@ exports.createParser = function (base) {
             tokenizer._cbs = new TokenizerProxy(parser._tokenizer._cbs)
             parser._tokenizer = tokenizer
             parser.parseComplete(body)
+            //console.log('=======')
             // great. now it's time for a serializer.
-            //console.log('here', domutils.getOuterHTML(handler.dom[0]))
+            //console.log( domutils.getOuterHTML(handler.dom[0]))
+            //console.log('=======')
             //console.log(require('util').inspect(handler.dom[0], false, null))
             var actual = new (xmldom.DOMParser)().parseFromString('<html/>')
             actual.documentElement.parentNode.removeChild(actual.documentElement)
             createXMLTemplate(actual, handler.dom[0])
-            //console.log('--->', actual.toString())
+            // Why? Because. Because namespaces. Hateful namespaces.
+            var actual = new (xmldom.DOMParser)().parseFromString(actual.toString())
+
+            // You see, in order to use namespaces for tags, like
+            // `t:specialized` we need to build that element with the correct
+            // namespace url, but the prefix might be defined in that element
+            // using `xmlns:t="inc:_foo.stencil"`.
+            //
+            // This is not going to be unheard of in Stencil. With layouts, you
+            // need to import the library, then immediately use the tag. Until
+            // you build the tag an insert it into the document, you don't have
+            // a full namespace map for the node, because it includes the
+            // current node, so `lookupNamespaceURI` won't work if you invoke it
+            // on the parent and the node you're inserting renames a namespace.
+            // If the current node defines a new namespace, it will do so when
+            // you call `setAttributeNS` on the new node, oh, but, you've
+            // already build the new node and `namespaceURI` is an immutable
+            // property, so now what? Remove it and start over because now you
+            // know, but how is that any less ugly than the above, serialize the
+            // XML, then parse it, and the parser will sort out the namespaces.
+            //console.log(actual.toString())
+            //console.log('=======')
             return actual
         })
     })

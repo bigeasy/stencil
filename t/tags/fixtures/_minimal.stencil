@@ -1,0 +1,3 @@
+<% library %>
+  <% tag name="minimal" %><p>Hello, World!</p><% end %>
+<% end %>

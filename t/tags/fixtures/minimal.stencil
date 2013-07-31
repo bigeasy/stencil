@@ -1,0 +1,5 @@
+<html %include(m: "_minimal.stencil")>
+<body>
+<% m.minimal %><% end %>
+</body>
+</html>
