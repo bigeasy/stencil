@@ -1,6 +1,6 @@
-<s:include xmlns:s="stencil">
+<s:library xmlns:s="stencil">
 <s:tag name="parameterized">
   <s:block params="{ one: 1,
                      two: function (callback) { callback(null, this[$name].one + 1) } }"/>
 </s:tag>
-</s:include>
+</s:library>

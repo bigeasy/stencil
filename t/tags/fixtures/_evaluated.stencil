@@ -1,4 +1,4 @@
-<s:include xmlns:s="stencil">
+<s:library xmlns:s="stencil">
   <s:tag name="loop">
     <ul>
       <s:each s:select="$attributes.select" s:as="$attributes.as">
@@ -6,4 +6,4 @@
       </s:each>
     </ul>
   </s:tag>
-</s:include>
+</s:library>

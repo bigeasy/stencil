@@ -1,4 +1,4 @@
-<s:include xmlns:s="stencil">
+<s:library xmlns:s="stencil">
 <s:tag name="directory">
 <s:each s:select="$attributes.select" as="directory" label="directory">
   <s:tag name="name"><s:value select="directory.name"/></s:tag>
@@ -18,4 +18,4 @@
   <s:block/>
 </s:each>
 </s:tag>
-</s:include>
+</s:library>
