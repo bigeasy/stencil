@@ -7,14 +7,8 @@
     [
                         "template", "html", "xml", "text", "xhtml", "async", "asynchronous"
     ],
-    "licenses":
-    [{
-                        "type": "MIT",
-                        "url": "http://github.com/bigeasy/stencil/raw/master/LICENSE"
-    }],
-    "homepage":         "https://github.com/bigeasy/stencil",
-    "main":             "index.js",
-    "bin":              "./stencil.bin.js",
+    "homepage":         "http://bigeasy.github.io/stencil",
+    "bugs":             "https://github.com/bigeasy/stencil/bugs",
     "repository":
     {
                         "type": "git",
@@ -35,6 +29,12 @@
                         "cadence": "0.0.23",
                         "htmlparser2": "3.1.4"
     },
+    "licenses":
+    [{
+                        "type": "MIT",
+                        "url": "http://github.com/bigeasy/stencil/raw/master/LICENSE"
+    }],
+    "bin":              "./stencil.bin.js",
     "scripts":
     {
                         "test": "proof platform win32 && proof test t/*/*.t.js || t/test"
