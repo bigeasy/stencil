@@ -1,5 +1,5 @@
-<html xmlns:s="stencil" xmlns:b="inc:_bodied.stencil">
+<html %include(b: "_bodied.stencil")>
 <body>
-<b:bodied><p>Hello, World!</p></b:bodied>
+<% b.bodied %><p>Hello, World!</p><% end %>
 </body>
 </html>

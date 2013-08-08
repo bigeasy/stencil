@@ -174,7 +174,7 @@ exports.createParser = function (base) {
             // know, but how is that any less ugly than the above, serialize the
             // XML, then parse it, and the parser will sort out the namespaces.
             //console.log(actual.toString())
-            //console.log('=======')
+            //onsole.log('=======')
             return actual
         })
     })

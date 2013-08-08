@@ -1,33 +1,53 @@
 #!/usr/bin/env node
 
-var fs = require('fs');
-require('./proof')(3, function (step, context, fixture, ok, compare) {
-
+require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
   step(function () {
 
-    context.generate('fixtures/bodied.stencil', {}, step());
+    xstencil.generate('fixtures/bodied.xstencil', {}, step());
+    stencil.generate('fixtures/bodied.stencil', {}, step());
     fixture('fixtures/bodied.xml', step());
 
-  }, function (actual, expected) {
+  }, function (xbodied, bodied, expected) {
 
-    ok(compare(actual.document, expected), 'generate');
+    ok(compare(xbodied.document, expected), 'xstencil generate');
 
     step(function() {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(xbodied, {}, step());
 
-    }, function (actual) {
+    }, function (xbodied) {
 
-      ok(compare(actual.document, expected), 'regenerate');
-      context.reconstitute(actual.document, step());
+      ok(compare(xbodied.document, expected), 'xstencil regenerate');
+      xstencil.reconstitute(xbodied.document, step());
 
-    }, function (actual) {
+    }, function (xbodied) {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(xbodied, {}, step());
 
-    }, function (actual) {
+    }, function (xbodied) {
 
-      ok(compare(actual.document, expected), 'reconstitute');
+      ok(compare(xbodied.document, expected), 'xstencil reconstitute');
+
+    });
+
+    ok(compare(bodied.document, expected), 'stencil generate');
+
+    step(function() {
+
+      stencil.regenerate(bodied, {}, step());
+
+    }, function (bodied) {
+
+      ok(compare(bodied.document, expected), 'stencil regenerate');
+      stencil.reconstitute(bodied.document, step());
+
+    }, function (bodied) {
+
+      stencil.regenerate(bodied, {}, step());
+
+    }, function (bodied) {
+
+      ok(compare(bodied.document, expected), 'stencil reconstitute');
 
     });
   });
