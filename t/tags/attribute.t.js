@@ -2,34 +2,55 @@
 
 // Also tests the isolation of contexts.
 
-var fs = require('fs');
-require('./proof')(3, function (step, context, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
   step(function () {
 
-    context.generate('fixtures/attribute.stencil', {}, step());
+    xstencil.generate('fixtures/attribute.xstencil', {}, step());
+    stencil.generate('fixtures/attribute.stencil', {}, step());
     fixture('fixtures/attribute.xml', step());
 
-  }, function (actual, expected) {
+  }, function (xattribute, attribute, expected) {
 
-    ok(compare(actual.document, expected), 'generate');
+    ok(compare(xattribute.document, expected), 'xstencil generate');
 
     step(function() {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(xattribute, {}, step());
 
-    }, function (actual) {
+    }, function (xattribute) {
 
-      ok(compare(actual.document, expected), 'regenerate');
-      context.reconstitute(actual.document, step());
+      ok(compare(xattribute.document, expected), 'xstencil regenerate');
+      xstencil.reconstitute(xattribute.document, step());
 
-    }, function (actual) {
+    }, function (xattribute) {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(xattribute, {}, step());
 
-    }, function (actual) {
+    }, function (xattribute) {
 
-      ok(compare(actual.document, expected), 'reconstitute');
+      ok(compare(xattribute.document, expected), 'xstencil reconstitute');
+
+    });
+
+    ok(compare(attribute.document, expected), 'stencil generate');
+
+    step(function() {
+
+      stencil.regenerate(attribute, {}, step());
+
+    }, function (attribute) {
+
+      ok(compare(attribute.document, expected), 'stencil regenerate');
+      stencil.reconstitute(attribute.document, step());
+
+    }, function (attribute) {
+
+      stencil.regenerate(attribute, {}, step());
+
+    }, function (attribute) {
+
+      ok(compare(attribute.document, expected), 'stencil reconstitute');
 
     });
   });

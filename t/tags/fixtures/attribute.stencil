@@ -1,5 +1,5 @@
-<html xmlns:s="stencil" xmlns:a="inc:_attribute.stencil">
+<html %include(a: "_attribute.stencil")>
 <body>
-<a:attribute greeting="Hello, World!"><p><s:value select="! this.$attributes"/></p></a:attribute>
+<% a.attribute greeting="Hello, World!" %><p><%= ! this.$attributes %></p><% end %>
 </body>
 </html>
