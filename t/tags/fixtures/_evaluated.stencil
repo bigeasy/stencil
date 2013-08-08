@@ -1,5 +1,5 @@
 <s:library xmlns:s="stencil">
-  <s:tag name="loop">
+  <s:tag label="loop">
     <ul>
       <s:each s:select="$attributes.select" s:as="$attributes.as">
         <li><s:value s:select="$attributes.display"/></li>

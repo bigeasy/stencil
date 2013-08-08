@@ -1,12 +1,12 @@
 <s:library xmlns:s="stencil">
-<s:tag name="directory">
+<s:tag label="directory">
 <s:each s:select="$attributes.select" as="directory" label="directory">
-  <s:tag name="name"><s:value select="directory.name"/></s:tag>
-  <s:tag name="has-children">
+  <s:tag label="name"><s:value select="directory.name"/></s:tag>
+  <s:tag label="has-children">
     <s:if select="directory.children">
-      <s:tag name="children">
+      <s:tag label="children">
         <s:each select="directory.children" as="child">
-          <s:tag name="subdirectory">
+          <s:tag label="subdirectory">
             <s:recurse label="directory" select="child"/>
           </s:tag>
           <s:block/>

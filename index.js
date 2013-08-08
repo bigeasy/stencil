@@ -448,7 +448,7 @@
     },
     block: function (parent, frames, page, template, includes, labeled, directive, element,
                      context, path, generating, callback) {
-      var name = element.getAttribute("name"), marker, fragment, definition,
+      var name = element.getAttribute("label"), marker, fragment, definition,
           caller = frames[0], prototype, i, I, params, tmp = {};
       if (name) {
         definition = caller.directive.directives.filter(function (directive) {
@@ -493,7 +493,7 @@
       }
       directive = extend({}, directive);
       directive.frame = frames[0];
-      includes[includes[template.url]].tags[element.getAttribute("name")] = directive;
+      includes[includes[template.url]].tags[element.getAttribute("label")] = directive;
       callback();
     }
   }
@@ -764,7 +764,7 @@
         directives = directive.directives;
 
         if (node.namespaceURI == "stencil" && node.localName == "tag") {
-          tags[node.getAttribute("name")] = directive;
+          tags[node.getAttribute("label")] = directive;
           tags = directive.tags;
         }
       }

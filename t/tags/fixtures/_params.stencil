@@ -1,5 +1,5 @@
 <s:library xmlns:s="stencil">
-<s:tag name="parameterized">
+<s:tag label="parameterized">
   <s:block params="{ one: 1,
                      two: function (callback) { callback(null, this[$name].one + 1) } }"/>
 </s:tag>

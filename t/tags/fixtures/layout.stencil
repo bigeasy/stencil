@@ -1,13 +1,13 @@
 <s:include xmlns:s="stencil">
-  <s:tag name="document">
+  <s:tag label="document">
     <html>
     <head>
       <title>Hello, World!</title>
-      <s:block name="head"/>
+      <s:block label="head"/>
     </head>
     <body>
       <title>Hello, World!</title>
-      <s:block name="body"/>
+      <s:block label="body"/>
     </body>
     </html>
   </s:tag>
