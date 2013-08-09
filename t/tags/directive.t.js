@@ -1,33 +1,54 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
-require('./proof')(3, function (step, context, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
   step(function () {
 
-    context.generate('fixtures/directive.stencil', { greeting: "Hello, World!" }, step());
+    xstencil.generate('fixtures/directive.xstencil', { greeting: "Hello, World!" }, step());
+    stencil.generate('fixtures/directive.stencil', { greeting: "Hello, World!" }, step());
     fixture('fixtures/directive.xml', step());
 
-  }, function (actual, expected) {
+  }, function (xdirective, directive, expected) {
 
-    ok(compare(actual.document, expected), 'generate');
+    ok(compare(xdirective.document, expected), 'xstencil generate');
 
     step(function () {
 
-      context.regenerate(actual, { greeting: "Hello, World!" }, step());
+      xstencil.regenerate(xdirective, { greeting: "Hello, World!" }, step());
 
-    }, function (actual) {
+    }, function (xdirective) {
 
-      ok(compare(actual.document, expected), 'regenerate');
-      context.reconstitute(actual.document, step());
+      ok(compare(xdirective.document, expected), 'xstencil regenerate');
+      xstencil.reconstitute(xdirective.document, step());
 
-    }, function (actual) {
+    }, function (xdirective) {
 
-      context.regenerate(actual, { greeting: "Hello, World!" }, step());
+      xstencil.regenerate(xdirective, { greeting: "Hello, World!" }, step());
 
-    }, function (actual) {
+    }, function (xdirective) {
 
-      ok(compare(actual.document, expected), 'reconstitute');
+      ok(compare(xdirective.document, expected), 'xstencil reconstitute');
+    });
+
+    ok(compare(directive.document, expected), 'stencil generate');
+
+    step(function () {
+
+      stencil.regenerate(directive, { greeting: "Hello, World!" }, step());
+
+    }, function (directive) {
+
+      ok(compare(directive.document, expected), 'stencil regenerate');
+      stencil.reconstitute(directive.document, step());
+
+    }, function (directive) {
+
+      stencil.regenerate(directive, { greeting: "Hello, World!" }, step());
+
+    }, function (directive) {
+
+      ok(compare(directive.document, expected), 'stencil reconstitute');
     });
   });
 });
