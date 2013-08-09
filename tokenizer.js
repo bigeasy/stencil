@@ -532,18 +532,18 @@ Tokenizer.prototype.write = function(chunk){
 				this._outerState = IN_DIRECTIVE_ATTRIBUTE_VALUE_EVALUATED;
 				this._quoteCharacter = c;
 			} else if(c === ")") {
-				this._emitToken("onattribvalue");
+				this._directive.attributes["data-stencil-evaluated-attribute-" + this._directiveAttributeName] = this._gatherToken();
 				this._state = IN_DIRECTIVE;
 			}
 		} else if(this._state === IN_DIRECTIVE_ATTRIBUTE_VALUE_DOUBLE_QUOTES){
 			if(c === "\""){
-				this._directive.attributes[this._directiveAttributeName] = this._gatherToken();
+				this._directive.attributes["data-stencil-attribute-" + this._directiveAttributeName] = this._gatherToken();
 				this._state = IN_DIRECTIVE;
 			}
 		} else if(this._state === IN_DIRECTIVE_ATTRIBUTE_VALUE_SINGLE_QUOTES){
 			if(c === "'"){
+				this._directive.attributes["data-stencil-attribute-" + this._directiveAttributeName] = this._gatherToken();
 				this._state = IN_DIRECTIVE;	
-				this._emitToken("onattribvalue");
 			}
 		} else if(this._state === IN_DIRECTIVE_ATTRIBUTE_VALUE_NO_QUOTES){
 			if(c === ">"){

@@ -1,5 +1,5 @@
-<html xmlns:s="stencil" xmlns:e="inc:_evaluated.stencil">
+<html %include(e: "_evaluated.stencil")>
 <body>
-<e:loop select="items" as="item" display="item.value"/>
+<% e.loop (items) |item| display="item.value" %><% end %>
 </body>
 </html>

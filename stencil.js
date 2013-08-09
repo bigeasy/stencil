@@ -89,7 +89,7 @@ TokenizerProxy.prototype.ondirective = function (directive) {
         this._cbs.onattribname("data-stencil-directive")
         this._cbs.onattribvalue(directive.name)
         for (var name in directive.attributes) {
-            this._cbs.onattribname("data-stencil-attribute-" + name)
+            this._cbs.onattribname(name)
             this._cbs.onattribvalue(directive.attributes[name])
         }
         this._cbs.onopentagend()
@@ -174,7 +174,7 @@ exports.createParser = function (base) {
             // know, but how is that any less ugly than the above, serialize the
             // XML, then parse it, and the parser will sort out the namespaces.
             //console.log(actual.toString())
-            //onsole.log('=======')
+            //console.log('=======')
             return actual
         })
     })

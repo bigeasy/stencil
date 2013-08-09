@@ -3,33 +3,55 @@
 var fs = require('fs'), object = {
   items: [{ value: 1 }, { value: 2 }]
 };
-require('./proof')(3, function (step, context, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
   step(function () {
 
-    context.generate('fixtures/evaluated.stencil', object, step());
+    xstencil.generate('fixtures/evaluated.xstencil', object, step());
+    stencil.generate('fixtures/evaluated.stencil', object, step());
     fixture('fixtures/evaluated.xml', step());
 
-  }, function (actual, expected) {
+  }, function (xevaluated, evaluated, expected) {
 
-    ok(compare(actual.document, expected), 'generate');
+    ok(compare(xevaluated.document, expected), 'xstencil generate');
 
     step(function() {
 
-      context.regenerate(actual, object, step());
+      xstencil.regenerate(xevaluated, object, step());
 
-    }, function (actual) {
+    }, function (xevaluated) {
 
-      ok(compare(actual.document, expected), 'regenerate');
-      context.reconstitute(actual.document, step());
+      ok(compare(xevaluated.document, expected), 'xstencil regenerate');
+      xstencil.reconstitute(xevaluated.document, step());
 
-    }, function (actual) {
+    }, function (xevaluated) {
 
-      context.regenerate(actual, object, step());
+      xstencil.regenerate(xevaluated, object, step());
 
-    }, function (actual) {
+    }, function (xevaluated) {
 
-      ok(compare(actual.document, expected), 'reconstitute');
+      ok(compare(xevaluated.document, expected), 'xstencil reconstitute');
+
+    });
+
+    ok(compare(evaluated.document, expected), 'stencil generate');
+
+    step(function() {
+
+      stencil.regenerate(evaluated, object, step());
+
+    }, function (evaluated) {
+
+      ok(compare(evaluated.document, expected), 'stencil regenerate');
+      stencil.reconstitute(evaluated.document, step());
+
+    }, function (evaluated) {
+
+      stencil.regenerate(evaluated, object, step());
+
+    }, function (evaluated) {
+
+      ok(compare(evaluated.document, expected), 'stencil reconstitute');
 
     });
   });
