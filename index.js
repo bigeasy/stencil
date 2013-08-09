@@ -469,7 +469,7 @@
           insertBefore(marker.end.parentNode, fragment, marker.end);
         }
       }
-      if (params = element.getAttribute('params')) {
+      if (params = element.getAttribute('select')) {
         tmp = extend(tmp, context);
         if (!(tmp.$name = definition.element.getAttribute('as'))) {
           tmp.$name  = '$' + (name || frames[0].directive.element.localName);
