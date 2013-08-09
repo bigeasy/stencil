@@ -1,4 +1,4 @@
-<s:include xmlns:s="stencil">
+<s:library xmlns:s="stencil">
   <s:tag label="document">
     <html>
     <head>
@@ -11,5 +11,4 @@
     </body>
     </html>
   </s:tag>
-</s:include>
-
+</s:library>
