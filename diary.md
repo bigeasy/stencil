@@ -297,6 +297,25 @@ same time...
 Okay, I was wandering around and I remembered exactly how this is supposed to be
 done, so I wrote documentation for it, so I won't revisit it and resolve it.
 
+*Update*, *TODO*: New confusion. What context does the tag run in? With my
+current evaluated attribute scheme, the double evaluation assumes that the tag
+will be in the context of the caller template, that the tag directive derives
+from the context of the caller.
+
+Well, what if the tag library has required a module? Where does that go? It's
+lost, isn't it? What good is a tag library that cannot require scaffolding?
+
+What comes to mind is that we frame contexts, so that the library is evaluated,
+it's first element, requiring any modules. The tags operate on their module
+context, but then you add a `with` attirbute to `each` and to `with`. (Or maybe
+it is `on` or `using`, but that changes the context for that one invocation.
+
+We can use `[` for shorthand, if it matters. Or it can be an attribute.
+
+Then, we can do our nested evaluation, but set the context for the one
+evaluation. Tag invocations get a `$caller` object which is the calling context,
+and as it nests, so do the dollar signs.
+
 ## Incoming
 
  * Do underbars disappear?
