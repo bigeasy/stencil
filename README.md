@@ -3,4 +3,4 @@ mufflevski, on Flickr"><img
 src="http://farm1.staticflickr.com/38/77864703_db8027986c_z.jpg?zz=1"
 width="722" height="541" alt="stencil"></a>
 
-# (Documentation and Everything Else)[http://bigeasy.github.io/stencil]
+# [Documentation and Everything Else](http://bigeasy.github.io/stencil)
