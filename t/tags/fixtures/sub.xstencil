@@ -1,0 +1,7 @@
+<html xmlns:s="stencil" xmlns:sub="inc:_sub.stencil">
+<body>
+<sub:sub>
+  <sub:child/>
+</sub:sub>
+</body>
+</html>

@@ -1,31 +1,32 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
-require('./proof')(3, function (step, context, fixture, ok, compare) {
+require('./proof')(3, function (step, xstencil, fixture, ok, compare) {
 
-  step(function (stencil, resolver) {
-    context.generate('fixtures/sub.stencil', {}, step());
+  step(function () {
+    xstencil.generate('fixtures/sub.xstencil', {}, step());
     fixture('fixtures/sub.xml', step());
   },
 
-  function (actual, expected) {
-    ok(compare(actual.document, expected), 'generate');
+  function (xsub, expected) {
+
+    ok(compare(xsub.document, expected), 'generate');
 
     step(function () {
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(xsub, {}, step());
 
-    }, function (actual) {
+    }, function (xsub) {
 
-      ok(compare(actual.document, expected), 'regenerate');
-      context.reconstitute(actual.document, step());
+      ok(compare(xsub.document, expected), 'regenerate');
+      xstencil.reconstitute(xsub.document, step());
 
-    }, function (actual) {
+    }, function (xsub) {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(xsub, {}, step());
 
-    }, function (actual) {
+    }, function (xsub) {
 
-      ok(compare(actual.document, expected), 'reconstitute');
+      ok(compare(xsub.document, expected), 'reconstitute');
 
     });
   });

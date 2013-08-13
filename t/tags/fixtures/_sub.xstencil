@@ -1,0 +1,6 @@
+<s:library xmlns:s="stencil">
+  <s:tag label="sub">
+    <s:tag label="child"><p>Hello, World!</p></s:tag>
+    <s:block/>
+  </s:tag>
+</s:library>
