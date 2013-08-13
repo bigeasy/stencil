@@ -4,33 +4,33 @@
 // sub-tag as well as re-entering the caller's scope.
 
 var fs = require('fs');
-require('./proof')(3, function (step, context, fixture, ok, compare) {
+require('./proof')(3, function (step, xstencil, fixture, ok, compare) {
 
-  step(function (stencil, resolver) {
+  step(function () {
 
-    context.generate('fixtures/sub-attribute.stencil', {}, step());
+    xstencil.generate('fixtures/sub-attribute.xstencil', {}, step());
     fixture('fixtures/sub-attribute.xml', step());
 
-  }, function (actual, expected) {
+  }, function (xsub, expected) {
 
-    ok(compare(actual.document, expected), 'generate');
+    ok(compare(xsub.document, expected), 'xstencil generate');
 
     step(function () {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(xsub, {}, step());
 
-    }, function (actual) {
+    }, function (xsub) {
 
-      ok(compare(actual.document, expected), 'regenerate');
-      context.reconstitute(actual.document, step());
+      ok(compare(xsub.document, expected), 'xstencil regenerate');
+      xstencil.reconstitute(xsub.document, step());
 
-    }, function (actual) {
+    }, function (xsub) {
 
-      context.regenerate(actual, {}, step());
+      xstencil.regenerate(xsub, {}, step());
 
-    }, function (actual) {
+    }, function (xsub) {
 
-      ok(compare(actual.document, expected), 'reconstitute');
+      ok(compare(xsub.document, expected), 'xstencil reconstitute');
 
     });
   });
