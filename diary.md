@@ -594,3 +594,45 @@ What do I need from jQuery. *Only*, DOM ready, so it can be swapped out.
 
 Would be nice if bundled JavaScript could also have, no, not important. You can
 just generate JSON if that's what you need. How hard it it?
+
+## Self-Closing Tags
+
+I'm looking at the langauge and instead of tags that self close, I'm wondering, why
+not make opens explicit?  Something to indicate a block. That's the obvious
+other choice.
+
+It could be that an `as` attibute forces a block. It could be that we used `do`
+like Ruby or `` => `` like CoffeeScript.
+
+```erb
+<% layout.document %include(layout="_layout.stencil") do %>
+<% end %>
+```
+
+Or maybe the rule is that it's `do` and `done` for tags libraries. That makes it
+more special, different.
+
+```erb
+<% layout.document %include(layout="_layout.stencil") do %>
+<% done %>
+```
+
+We could say that as means you're going to do something special.
+
+```erb
+<% layout.document %include(layout="_layout.stencil") |body| %>
+  <% body.foo do %>
+  <% done %>
+<% done %>
+```
+
+Or we might always require `do/done`.
+
+```erb
+<% layout.document %include(layout="_layout.stencil") |body| do %>
+  <% body.foo do %>
+  <% done %>
+<% done %>
+```
+
+Thus, with no do, there is no block, no sub blocks, no tags etc.
