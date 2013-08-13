@@ -1,4 +1,4 @@
-<html xmlns:s="stencil" xmlns:sub="inc:_sub.stencil">
+<html xmlns:s="stencil" xmlns:sub="inc:_sub.xstencil">
 <body>
 <sub:sub>
   <sub:child/>

@@ -1,7 +1,7 @@
-<html xmlns:s="stencil" xmlns:sub="inc:_sub.stencil">
+<html %include(sub: "_sub.stencil")>
 <body>
-<sub:sub>
-  <sub:child/>
-</sub:sub>
+<% sub.sub %>
+  <% sub.child %><% end %>
+<% end %>
 </body>
 </html>
