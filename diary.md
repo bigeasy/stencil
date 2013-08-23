@@ -636,3 +636,49 @@ Or we might always require `do/done`.
 ```
 
 Thus, with no do, there is no block, no sub blocks, no tags etc.
+
+## Self-Closing Tags Redux
+
+Many notes, probably lost. Here's the upshot.
+
+```
+<% if (employee.hourly) :>
+  Pay: <%= employee.wage * employee.hours %>
+<% else if (employee.commissioned) :>
+  Pay: <%= employee.commission * employee.sales %>
+<% else :>
+  Pay: <%= employee.salary / 26 %>
+<% end %>
+```
+
+I'd considered getting rid of angle brackets all together, but no, they belong,
+they say HTML, and they call attention to themselves, while a different bracket
+type will always look like litter in the content.
+
+Here's a new thought though.
+
+```
+<% if (employee.hourly) { %>
+  Pay: <%= employee.wage * employee.hours %>
+<% } else if (employee.commissioned) { %>
+  Pay: <%= employee.commission * employee.sales %>
+<% } else { %>
+  Pay: <%= employee.salary / 26 %>
+<% } %>
+```
+
+You couldn't get any more explicit than that. It says open and it says end.
+
+```
+<html %include:emp="employee">
+<body>
+<h1><% emp.department (department) %></h1>
+<% each (department.employees) |employee| { %>
+  <% emp.pay (employee) %>
+  <% emp.benefits (employee)[type] |benefit| { %>
+    <%= benefit.description %>: <%= benefit.accrued %>
+  <% } %>
+<% } %>
+</body>
+</html>
+```
