@@ -758,7 +758,7 @@ Like so.
 <ul>
 @each (department.employees) |employee| [ssn] {
   @emp.pay (employee)
-  @emp.benefits (employee)[type] |benefit|] {
+  @emp.benefits (employee)[type] |benefit| {
     <li>@(benefit.description): @(benefit.accrued)</li>
   }
 }
