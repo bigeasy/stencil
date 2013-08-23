@@ -682,3 +682,99 @@ You couldn't get any more explicit than that. It says open and it says end.
 </body>
 </html>
 ```
+
+Some, hopefully, final thoughts.
+
+```
+<html include:emp="employee">
+<body>
+<h1>[ emp.department (department) format="nobel"]</h1>
+<ul>
+[ each (department.employees) |employee| ] {
+  [ emp.pay (employee) ]
+  [ emp.benefits (employee)[type] |benefit| ] {
+    <li>[= benefit.description ]: [= benefit.accrued ]</li>
+  }
+}
+</ul>
+</body>
+</html>
+```
+
+That actually seems harder to read.
+
+```
+@if (employee.hourly) {
+  Pay: @(employee.wage * employee.hours)
+} else if (employee.commissioned) {
+  Pay: @employee.commission * employee.sales)
+} else {
+  Pay: @(employee.salary / 26)
+}
+```
+
+Not bad. And with HTML abound.
+
+```
+<html include:emp="employee">
+<body>
+<h1>@[emp.department(department) format=nobel]</h1>
+<ul>
+@[each (department.employees) |employee|] {
+  @emp.pay (employee)
+  @[emp.benefits (employee)[type] |benefit|] {
+    <li>@(benefit.description): @(benefit.accrued)</li>
+  }
+}
+</ul>
+</body>
+</html>
+```
+
+Below we use an ampersand to mean an attribue.
+
+```
+<html include:emp="employee">
+<body>
+<h1>@emp.department(department) &format=nobel</h1>
+<ul>
+@each (department.employees) |employee| [ssn] {
+  @emp.pay (employee)
+  @emp.benefits (employee)[type] |benefit|] {
+    <li>@(benefit.description): @(benefit.accrued)</li>
+  }
+}
+</ul>
+</body>
+</html>
+```
+
+Like so.
+
+```
+<html %include:emp="employee">
+<body>
+<h1>@emp.department(department) %format=nobel</h1>
+<ul>
+@each (department.employees) |employee| [ssn] {
+  @emp.pay (employee)
+  @emp.benefits (employee)[type] |benefit|] {
+    <li>@(benefit.description): @(benefit.accrued)</li>
+  }
+}
+</ul>
+</body>
+</html>
+```
+
+When we need things inlined.
+
+```
+Dear @if (person.gender == 'male') { Sir } else { Madam },
+
+We see that you are a
+@if (person.profession == 'unemployed') { Laggard } else { @(person.profession) }.
+Wonderful! Many of our customers occupy themselves in just way.
+```
+
+Haven't I seen this before?
