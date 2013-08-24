@@ -637,6 +637,191 @@ Or we might always require `do/done`.
 
 Thus, with no do, there is no block, no sub blocks, no tags etc.
 
+*Update: New idea, but first, the three ideas above are 
+
+ * default no block with keywords for blocks, with the keywords probably
+ optional for the built in directives that obviously have blocks (like if), 
+ * default no block with a sigil to indicate a block, such as using `|a|` to
+ indicate an `as` attibute, or as suggested above, CoffeeScript's `` => ``,
+ * or default is a block with a sigil to indicate no block, like the forward
+ slash, or if that is too much like XML then maybe doubling up the percent
+ signs, exclamation marks.
+
+Consdiering it all again, I thought I'd suggest `` =%> `` to mean that a block
+is opening.
+
+```erb
+<% if employee.hourly =%>
+  Pay: <%= employee.hours * employee.wage %>
+<% elsif employee.commissioned =%>
+  Pay: <%= employee.sales * employee.commission %>
+<% else =%>
+  Pay: <%= employee.salary / 26 %>
+<% end %>
+```
+
+Nope. Don't like the look of it, but I do like the notion that a block is more
+stuff, so you add a sigil to mean more stuff. What about the colon?
+
+```erb
+<% if employee.hourly : %>
+  Pay: <%= employee.hours * employee.wage %>
+<% elsif employee.commissioned : %>
+  Pay: <%= employee.sales * employee.commission %>
+<% else : %>
+
+Better.
+
+```erb
+<% if employee.hourly :%>
+  Pay: <%= employee.hours * employee.wage %>
+<% elsif employee.commissioned :%>
+  Pay: <%= employee.sales * employee.commission %>
+<% else :%>
+  Pay: <%= employee.salary / 26 %>
+<% end %>
+```
+
+Subtle.
+
+```erb
+<% if employee.hourly %:>
+  Pay: <%= employee.hours * employee.wage %>
+<% elsif employee.commissioned %:>
+  Pay: <%= employee.sales * employee.commission %>
+<% else %:>
+  Pay: <%= employee.salary / 26 %>
+<% end %>
+```
+
+Odd.
+
+```erb
+% if employee.hourly :
+  Pay: %= employee.hours * employee.wage %
+% elsif employee.commissioned :
+  Pay: %= employee.sales * employee.commission %
+% else :
+  Pay: %= employee.salary / 26 %
+% end %
+```
+
+Now I've gone and made a silly language that prevents the use of modulo in
+JavaScript.
+
+```
+[ if employee.hourly ]:
+  Pay: =[ employee.hours * employee.wage ]
+[ elsif employee.commissioned ]:
+  Pay: =[ employee.sales * employee.commission ]
+[ else ]:
+  Pay: =[ employee.salary / 26 ]
+[ end ]
+```
+
+Not as verbose. Consumes a useful bracket. Doubles? If I go curlies then I look
+too much like another language. Brackes match and the color has a wall to put
+its back to. It looks like a block. The value insertions look like a person who
+is unpleasantly surprised. Now I have to update the parser in a big way, which
+is rough, but the langauge does look better like this. More can be said in fewer
+characters and it can be said more clearly.
+
+```
+[ if employee.firstName ]:=[ employee.lastName ], =[ employee.firstName ][ else ]:=[ employee.lastName ][ end ]
+```
+
+That is hard to reado though. Ant is is making all sorts of emoticons.
+
+```
+[ if employee.hourly ]:
+  Pay: [= employee.hours * employee.wage ]
+[ elsif employee.commissioned ]:
+  Pay: [= employee.sales * employee.commission ]
+[ else ]:
+  Pay: [= employee.salary / 26 ]
+[: if ]
+```
+
+Put those equals on the inside.
+
+```
+< if (employee.hourly) ->
+  Pay: [= employee.hours * employee.wage ]
+< elsif employee.commissioned ->
+  Pay: [= employee.sales * employee.commission ]
+< else ->
+  Pay: [= employee.salary / 26 ]
+< end >
+```
+
+```
+[ if (employee.hourly) -> ]
+  Pay: [= employee.hours * employee.wage ]
+[ elsif employee.commissioned -> ]
+  Pay: [= employee.sales * employee.commission ]
+[ else -> ]
+  Pay: [= employee.salary / 26 ]
+[ end ]
+```
+
+```
+[ if (employee.hourly) : ]
+  Pay: [= employee.hours * employee.wage ]
+[ elsif employee.commissioned : ]
+  Pay: [= employee.sales * employee.commission ]
+[ else : ]
+  Pay: [= employee.salary / 26 ]
+[ end ]
+```
+
+```
+% if (employee.hourly) :
+  Pay: %= employee.hours * employee.wage %
+  % util.greeting (employee.lastName) %
+% elsif employee.commissioned :
+  Pay: %= employee.sales * employee.commission %
+% else :
+  Pay: %= employee.salary / 26 %
+% end %
+```
+
+Almost not horrible.
+
+```
+<% if (employee.hourly) ->
+  Pay: <%= employee.hours * employee.wage %>
+  <% util.greeting (employee.lastName) %>
+<% elsif employee.commissioned ->
+  Pay: <%= employee.sales * employee.commission %>
+<% else ->
+  Pay: %= employee.salary / 26 %
+<% end %>
+```
+
+```
+<: if (employee.hourly) ->
+  Pay: <:= employee.hours * employee.wage :>
+  <: util.greeting (employee.lastName) :>
+<: elsif employee.commissioned ->
+  Pay: <:= employee.sales * employee.commission :>
+<: else ->
+  Pay: <:= employee.salary / 26 :>
+<: end :>
+```
+
+```
+<% if (employee.hourly) :>
+  Pay: <%= employee.hours * employee.wage %>
+  <% util.greeting (employee.lastName) %>
+<% elsif employee.commissioned :>
+  Pay: <%= employee.sales * employee.commission %>
+<% else :>
+  Pay: <%= employee.salary / 26 %>
+<% end %>
+```
+
+That's darn close.
+
 ## Self-Closing Tags Redux
 
 Many notes, probably lost. Here's the upshot.
