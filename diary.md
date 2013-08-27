@@ -963,3 +963,39 @@ Wonderful! Many of our customers occupy themselves in just way.
 ```
 
 Haven't I seen this before?
+
+## Curly Braced Stencil Language
+
+I have decided to go with the curly brace style, based on the following
+rationale;
+
+It is context-free. This is was a feature of all the doodling above, but in much
+of the doodling, without saying as much in the transcript, I keep considering
+how a tag library author might mark their tags as bodied or not. The doodling
+above was doodling away from that, and rationalizing hard about the choices. If
+user defined tags are going to have a block start keyword or sigil, it needs
+look approrpiate for the directives. If not, then it is going to be a tricky
+language, like shell. I've learned that shell is too tricky for the uninitated.
+
+I could have `then` for `if` directives and `do` and `done` for `each` and
+`with` directives, and that's what you'd use for your tags. But I didn't like
+the notion of `else do` or `else then`, and it seemed like if I wanted to
+specify some things as always having a block, or never having a block in
+directives, then I'd eventually want to do the same thing for tags, and I'd
+always be talking myself out of it, or closing issues where someone is
+suggesting it.
+
+With the curly brace style, the containership is explicit, context-free, but
+familiar and terse. I'm no longer thinking about having langauge switches in the
+tag definitions. It is a horrible vision that no longer plauges me. This is the
+way forward.
+
+It is different from HTML and that was clouding my thinking. I didn't want to
+make blockless-ness explicit, because I didn't want to imply that I encouraged
+the self-closing blocks of XML. I didn't want to trigger anyone who is offended
+by XML. The Stencil Language is a move away from XML. I didn't want anyone to
+see the hisotry of XML in Stencil and come to the conslusion that a self-closing
+tags were an artifact of XML. I'm no longer concerned that people will believe
+this variation to have anything to do with XML.
+
+Now the transition to the new language needs to be piecemeal, just like Packet.
