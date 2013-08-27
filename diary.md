@@ -999,3 +999,44 @@ tags were an artifact of XML. I'm no longer concerned that people will believe
 this variation to have anything to do with XML.
 
 Now the transition to the new language needs to be piecemeal, just like Packet.
+
+## Escaping Curly Braces
+
+I'm wondering about escaping curly braces.
+
+```
+@if (someCondition()) {
+<pre>
+\@if (someCondition()) {
+  &lt;!-- your code goes here --&gt;
+}
+</pre>
+}
+```
+
+Why don't we have to escape the curlies? Because, I believe we can track the
+depth of them. We only need to escape the at. While we're here, let's consider
+how we want to escape the at. I believe we attempt to be consistent and use HTML
+entities. Which means we can also use entities to escape curly braces.
+
+```
+@if (someCondition()) {
+<pre>
+&at;if (someCondition()) &lcb;
+  &lt;!-- your code goes here --&gt;
+$rcb;
+</pre>
+}
+```
+
+Even if we are keeping count of curly braces, there may come a time when you
+need to escape them.
+
+```
+@if (someCondition()) { be careful with &rcb;, it can confuse Stencil }
+```
+
+This is inspring me to create my own parser. It only needs to support HTML5. It
+can use regular expressions and it does not have to be incremental. An initial
+pass could simply be a rewrite of the `@` conditions. A subseqeunt path could
+track the depth of the HTML.
