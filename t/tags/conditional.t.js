@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
-require('./proof')(8, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(8, function (step, xstencil, _stencil, fixture, ok, compare) {
 
   step(function () {
 
     xstencil.generate('fixtures/conditional.xstencil', { greeting: "Hello, World!" }, step());
-    stencil.generate('fixtures/conditional.stencil', { greeting: "Hello, World!" }, step());
+    _stencil.generate('fixtures/conditional.stencil', { greeting: "Hello, World!" }, step());
     fixture('fixtures/conditional-true.xml', step());
     fixture('fixtures/conditional-false.xml', step());
 
@@ -42,21 +42,21 @@ require('./proof')(8, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function () {
 
-      stencil.regenerate(conditional, {}, step());
+      _stencil.regenerate(conditional, {}, step());
 
     }, function (conditional) {
 
       ok(compare(conditional.document, falsey), 'stencil false');
-      stencil.regenerate(conditional, { greeting: "Hello, World!" }, step());
+      _stencil.regenerate(conditional, { greeting: "Hello, World!" }, step());
 
     }, function (conditional) {
 
       ok(compare(conditional.document, truthy), 'stencil regenerating');
-      stencil.reconstitute(conditional.document, step());
+      _stencil.reconstitute(conditional.document, step());
 
     }, function (conditional) {
 
-      stencil.regenerate(conditional, { greeting: "Hello, World!" }, step());
+      _stencil.regenerate(conditional, { greeting: "Hello, World!" }, step());
 
     }, function (conditional) {
 

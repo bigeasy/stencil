@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) {
   step(function () {
 
     xstencil.generate('fixtures/minimal.xstencil', {}, step());
-    stencil.generate('fixtures/minimal.stencil', {}, step());
+    _stencil.generate('fixtures/minimal.stencil', {}, step());
     fixture('fixtures/minimal.xml', step());
 
   }, function (xminimal, minimal, expected) {
@@ -34,16 +34,16 @@ require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function() {
 
-      stencil.regenerate(xminimal, {}, step());
+      _stencil.regenerate(xminimal, {}, step());
 
     }, function (xminimal) {
 
       ok(compare(xminimal.document, expected), 'stencil regenerate');
-      stencil.reconstitute(xminimal.document, step());
+      _stencil.reconstitute(xminimal.document, step());
 
     }, function (xminimal) {
 
-      stencil.regenerate(xminimal, {}, step());
+      _stencil.regenerate(xminimal, {}, step());
 
     }, function (xminimal) {
 

@@ -3,12 +3,12 @@
 var fs = require('fs'), object = {
   items: [{ value: 1 }, { value: 2 }]
 };
-require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) {
 
   step(function () {
 
     xstencil.generate('fixtures/evaluated.xstencil', object, step());
-    stencil.generate('fixtures/evaluated.stencil', object, step());
+    _stencil.generate('fixtures/evaluated.stencil', object, step());
     fixture('fixtures/evaluated.xml', step());
 
   }, function (xevaluated, evaluated, expected) {
@@ -38,16 +38,16 @@ require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function() {
 
-      stencil.regenerate(evaluated, object, step());
+      _stencil.regenerate(evaluated, object, step());
 
     }, function (evaluated) {
 
       ok(compare(evaluated.document, expected), 'stencil regenerate');
-      stencil.reconstitute(evaluated.document, step());
+      _stencil.reconstitute(evaluated.document, step());
 
     }, function (evaluated) {
 
-      stencil.regenerate(evaluated, object, step());
+      _stencil.regenerate(evaluated, object, step());
 
     }, function (evaluated) {
 

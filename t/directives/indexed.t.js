@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) {
   var spliced, fs = require('fs'), watchers =
   [
     {
@@ -23,7 +23,7 @@ require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
   step(function () {
 
     xstencil.generate('fixtures/indexed.xstencil', { watchers: watchers }, step());
-    stencil.generate('fixtures/indexed.stencil', { watchers: watchers }, step());
+    _stencil.generate('fixtures/indexed.stencil', { watchers: watchers }, step());
     fixture('fixtures/each.xml', step());
 
   }, function (xindexed, indexed, expected) {
@@ -57,17 +57,17 @@ require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function () {
 
-      stencil.reconstitute(indexed.document, step());
+      _stencil.reconstitute(indexed.document, step());
 
     }, function (indexed) {
 
-      stencil.regenerate(indexed, { watchers: watchers }, step());
+      _stencil.regenerate(indexed, { watchers: watchers }, step());
 
     }, function (indexed) {
 
       ok(compare(indexed.document, expected), 'stencil regenerate');
       watchers.unshift(watchers.pop());
-      stencil.regenerate(indexed, { watchers: xwatchers }, step());
+      _stencil.regenerate(indexed, { watchers: xwatchers }, step());
       fixture('fixtures/each-reorder.xml', step());
 
     }, function (indexed, expected) {

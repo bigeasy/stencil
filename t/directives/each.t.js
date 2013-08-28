@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(10, function (step, xstencil, _stencil, fixture, ok, compare) {
   var spliced, fs = require('fs'), watchers =
   [
     {
@@ -23,7 +23,7 @@ require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) 
   step(function () {
 
     xstencil.generate('fixtures/each.xstencil', { watchers: watchers }, step());
-    stencil.generate('fixtures/each.stencil', { watchers: watchers }, step());
+    _stencil.generate('fixtures/each.stencil', { watchers: watchers }, step());
     fixture('fixtures/each.xml', step());
     fixture('fixtures/each-reorder.xml', step());
     fixture('fixtures/each-removed.xml', step());
@@ -70,29 +70,29 @@ require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) 
 
     step(function () {
 
-      stencil.reconstitute(each.document, step());
+      _stencil.reconstitute(each.document, step());
 
     }, function (each) {
 
-      stencil.regenerate(each, { watchers: watchers }, step());
+      _stencil.regenerate(each, { watchers: watchers }, step());
 
     }, function (each) {
 
       ok(compare(each.document, first), 'stencil regenerate');
       watchers.unshift(watchers.pop());
-      stencil.regenerate(each, { watchers: watchers }, step());
+      _stencil.regenerate(each, { watchers: watchers }, step());
 
     }, function (each) {
 
       ok(compare(each.document, reorder), 'stencil reordered');
       spliced = watchers.splice(1, 1);
-      stencil.regenerate(each, { watchers: watchers }, step());
+      _stencil.regenerate(each, { watchers: watchers }, step());
 
     }, function (each) {
 
       ok(compare(each.document, removed), 'stencil removed');
       watchers.splice(1, 0, spliced[0]);
-      stencil.regenerate(each, { watchers: watchers }, step());
+      _stencil.regenerate(each, { watchers: watchers }, step());
 
     }, function (each) {
 

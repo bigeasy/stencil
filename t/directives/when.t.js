@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(10, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs'), article = {
     title: "Now Is the Time",
     publishedAt: "just now",
@@ -19,7 +19,7 @@ require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) 
   step(function () {
 
     xstencil.generate('fixtures/when.xstencil', { article: article, recents: recents }, step());
-    stencil.generate('fixtures/when.stencil', { article: article, recents: recents }, step());
+    _stencil.generate('fixtures/when.stencil', { article: article, recents: recents }, step());
     fixture('fixtures/when-generate.xml', step());
     fixture('fixtures/when-update.xml', step());
     fixture('fixtures/when-missing.xml', step());
@@ -66,28 +66,28 @@ require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) 
 
     step(function () {
 
-      stencil.reconstitute(when.document, step());
+      _stencil.reconstitute(when.document, step());
 
     }, function (when) {
 
-      stencil.regenerate(when, { recents: recents }, step());
+      _stencil.regenerate(when, { recents: recents }, step());
 
     }, function (when) {
 
       ok(compare(when.document, generated), 'stencil reconstitute');
       recents.push(extraComment);
-      stencil.regenerate(when, { recents: recents }, step());
+      _stencil.regenerate(when, { recents: recents }, step());
 
     }, function (when) {
 
       ok(compare(when.document, updated), 'stencil updated');
       recents.pop();
-      stencil.generate('fixtures/when.stencil', { recents: recents }, step());
+      _stencil.generate('fixtures/when.stencil', { recents: recents }, step());
 
     }, function (when) {
 
       ok(compare(when.document, missing), 'stencil missing');
-      stencil.regenerate(when, { article: article, recents: recents }, step());
+      _stencil.regenerate(when, { article: article, recents: recents }, step());
 
     }, function (when) {
 

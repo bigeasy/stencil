@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
-require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) {
 
   step(function () {
 
     xstencil.generate('fixtures/directive.xstencil', { greeting: "Hello, World!" }, step());
-    stencil.generate('fixtures/directive.stencil', { greeting: "Hello, World!" }, step());
+    _stencil.generate('fixtures/directive.stencil', { greeting: "Hello, World!" }, step());
     fixture('fixtures/directive.xml', step());
 
   }, function (xdirective, directive, expected) {
@@ -35,16 +35,16 @@ require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function () {
 
-      stencil.regenerate(directive, { greeting: "Hello, World!" }, step());
+      _stencil.regenerate(directive, { greeting: "Hello, World!" }, step());
 
     }, function (directive) {
 
       ok(compare(directive.document, expected), 'stencil regenerate');
-      stencil.reconstitute(directive.document, step());
+      _stencil.reconstitute(directive.document, step());
 
     }, function (directive) {
 
-      stencil.regenerate(directive, { greeting: "Hello, World!" }, step());
+      _stencil.regenerate(directive, { greeting: "Hello, World!" }, step());
 
     }, function (directive) {
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(10, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
     xstencil.generate('fixtures/if.xstencil', { value: true }, step());
-    stencil.generate('fixtures/if.stencil', { value: true }, step());
+    _stencil.generate('fixtures/if.stencil', { value: true }, step());
     fixture('fixtures/if-true.xml', step());
     fixture('fixtures/if-false.xml', step());
 
@@ -47,26 +47,26 @@ require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) 
 
     step(function() {
 
-      stencil.reconstitute(_if.document, step());
+      _stencil.reconstitute(_if.document, step());
 
     }, function (_if) {
 
-      stencil.regenerate(_if, { value: true }, step());
+      _stencil.regenerate(_if, { value: true }, step());
 
     }, function (_if) {
 
       ok(compare(_if.document, truthy), 'reconstitute');
-      stencil.regenerate(_if, { value: false }, step());
+      _stencil.regenerate(_if, { value: false }, step());
 
     }, function (_if) {
 
       ok(compare(_if.document, falsey), 'false');
-      stencil.regenerate(_if, { value: true }, step());
+      _stencil.regenerate(_if, { value: true }, step());
 
     }, function (_if) {
 
       ok(compare(_if.document, truthy), 'true-scavenge');
-      stencil.regenerate(_if, { value: false }, step());
+      _stencil.regenerate(_if, { value: false }, step());
 
     }, function (_if) {
 

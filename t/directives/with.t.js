@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
     xstencil.generate('fixtures/with.xstencil', {
       person: { firstName: "Fred", lastName: "Flintstone" } }, step());
-    stencil.generate('fixtures/with.stencil', {
+    _stencil.generate('fixtures/with.stencil', {
       person: { firstName: "Fred", lastName: "Flintstone" } }, step());
     fixture('fixtures/with-generate.xml', step());
     fixture('fixtures/with-update.xml', step());
@@ -29,7 +29,7 @@ require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
     ok(compare(_with.document, generate), 'stencil generate');
 
     step(function () {
-      stencil.regenerate(_with, {
+      _stencil.regenerate(_with, {
         person: { firstName: "Barney", lastName: "Rubble" } }, step());
 
     }, function (_with) {

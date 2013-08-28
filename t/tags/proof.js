@@ -6,7 +6,7 @@ module.exports = require('proof')(function () {
   var context =
   { context: require('../..').create(javascript, xml)
   , xstencil: require('../..').create(javascript, xml)
-  , stencil: require('../..').create(javascript, stencilParser)
+  , _stencil: require('../..').create(javascript, stencilParser)
   , compare: require('../compare')
   , fixture: function (file, callback) { fs.readFile(path.resolve(__dirname, file), 'utf8', callback) }
   };

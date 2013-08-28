@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
@@ -8,7 +8,7 @@ require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
     xstencil.generate('fixtures/attribute.xstencil', {
         target: null, src: "world.png", alt: "Hello, World!"
     }, step());
-    stencil.generate('fixtures/attribute.stencil', {
+    _stencil.generate('fixtures/attribute.stencil', {
         target: null, src: "world.png", alt: "Hello, World!"
     }, step());
     fixture('fixtures/attribute-generate.xml', step());
@@ -34,7 +34,7 @@ require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
     ok(compare(attribute.document, generate), 'stencil generate');
 
     step(function () {
-      stencil.regenerate(attribute, {
+      _stencil.regenerate(attribute, {
         target: "_self", src: "nurse.png", alt: "Hello, Nurse!"
       }, step());
 

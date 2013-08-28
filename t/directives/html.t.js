@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
@@ -8,7 +8,7 @@ require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
     xstencil.generate('fixtures/html.xstencil', {
       greeting: "Hello, <br/><a href='index.html'><em>World</em></a>!"
     }, step());
-    stencil.generate('fixtures/html.stencil', {
+    _stencil.generate('fixtures/html.stencil', {
       greeting: "Hello, <br/><a href='index.html'><em>World</em></a>!"
     }, step());
     fixture('fixtures/html-generate.xml', step());
@@ -36,11 +36,11 @@ require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function () {
 
-      stencil.reconstitute(html.document, step());
+      _stencil.reconstitute(html.document, step());
 
     }, function (html) {
 
-      stencil.regenerate(html, { greeting: "Hello, Nurse!" }, step());
+      _stencil.regenerate(html, { greeting: "Hello, Nurse!" }, step());
 
     }, function (html) {
 

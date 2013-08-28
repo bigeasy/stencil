@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
     xstencil.generate('fixtures/value.xstencil', { greeting: "Hello, World!" }, step());
-    stencil.generate('fixtures/value.stencil', { greeting: "Hello, World!" }, step());
+    _stencil.generate('fixtures/value.stencil', { greeting: "Hello, World!" }, step());
     fixture('fixtures/value-generate.xml', step());
     fixture('fixtures/value-regenerate.xml', step());
 
@@ -32,11 +32,11 @@ require('./proof')(4, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function () {
 
-      stencil.reconstitute(value.document, step());
+      _stencil.reconstitute(value.document, step());
 
     }, function (reconstituted) {
 
-      stencil.regenerate(reconstituted, { greeting: "Hello, Nurse!" }, step());
+      _stencil.regenerate(reconstituted, { greeting: "Hello, Nurse!" }, step());
 
     }, function (regenerated) {
 

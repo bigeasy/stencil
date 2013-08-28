@@ -2,12 +2,12 @@
 
 // Also tests the isolation of contexts.
 
-require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) {
 
   step(function () {
 
     xstencil.generate('fixtures/attribute.xstencil', {}, step());
-    stencil.generate('fixtures/attribute.stencil', {}, step());
+    _stencil.generate('fixtures/attribute.stencil', {}, step());
     fixture('fixtures/attribute.xml', step());
 
   }, function (xattribute, attribute, expected) {
@@ -37,16 +37,16 @@ require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function() {
 
-      stencil.regenerate(attribute, {}, step());
+      _stencil.regenerate(attribute, {}, step());
 
     }, function (attribute) {
 
       ok(compare(attribute.document, expected), 'stencil regenerate');
-      stencil.reconstitute(attribute.document, step());
+      _stencil.reconstitute(attribute.document, step());
 
     }, function (attribute) {
 
-      stencil.regenerate(attribute, {}, step());
+      _stencil.regenerate(attribute, {}, step());
 
     }, function (attribute) {
 

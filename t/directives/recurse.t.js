@@ -37,13 +37,13 @@ var retree = {
     children: [{ name: 'alan' }]
   }]
 }
-require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
     xstencil.generate('fixtures/recurse.xstencil', tree, step());
-    stencil.generate('fixtures/recurse.stencil', tree, step());
+    _stencil.generate('fixtures/recurse.stencil', tree, step());
     fixture('fixtures/recurse-generate.xml', step());
     fixture('fixtures/recurse-regenerate.xml', step());
 
@@ -74,16 +74,16 @@ require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function () {
 
-      stencil.reconstitute(recurse.document, step());
+      _stencil.reconstitute(recurse.document, step());
 
     }, function (recurse) {
 
-      stencil.regenerate(recurse, tree, step());
+      _stencil.regenerate(recurse, tree, step());
 
     }, function (recurse) {
 
       ok(compare(recurse.document, generate), 'stencil reconstitute');
-      stencil.regenerate(recurse, retree, step());
+      _stencil.regenerate(recurse, retree, step());
 
     }, function (recurse) {
 

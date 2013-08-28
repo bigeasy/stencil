@@ -8,7 +8,7 @@ module.exports = require('proof')(function () {
       stencilParser = require('../../stencil').createParser(__dirname);
   var context =
   { xstencil: require('../..').create(javascript, xml, null, html)
-  , stencil: require('../..').create(javascript, stencilParser, null, html)
+  , _stencil: require('../..').create(javascript, stencilParser, null, html)
   , compare: require('../compare')
   , fixture: function (file, callback) { fs.readFile(path.resolve(__dirname, file), 'utf8', callback) }
   };

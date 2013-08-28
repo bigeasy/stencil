@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(10, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
     xstencil.generate('fixtures/elseif.xstencil', { value: 'a' }, step());
-    stencil.generate('fixtures/elseif.stencil', { value: 'a' }, step());
+    _stencil.generate('fixtures/elseif.stencil', { value: 'a' }, step());
     fixture('fixtures/elseif-a.xml', step());
     fixture('fixtures/elseif-b.xml', step());
     fixture('fixtures/elseif-c.xml', step());
@@ -48,26 +48,26 @@ require('./proof')(10, function (step, xstencil, stencil, fixture, ok, compare) 
 
     step(function () {
 
-      stencil.reconstitute(elseif.document, step());
+      _stencil.reconstitute(elseif.document, step());
 
     }, function (elseif) {
 
-      stencil.regenerate(elseif, { value: 'a' }, step());
+      _stencil.regenerate(elseif, { value: 'a' }, step());
 
     }, function (elseif) {
 
       ok(compare(elseif.document, a), 'stencil reconstitute');
-      stencil.regenerate(elseif, { value: 'b' }, step());
+      _stencil.regenerate(elseif, { value: 'b' }, step());
 
     }, function (elseif) {
 
       ok(compare(elseif.document, b), 'stencil b');
-      stencil.regenerate(elseif, { value: 'c' }, step());
+      _stencil.regenerate(elseif, { value: 'c' }, step());
 
     }, function (elseif) {
 
       ok(compare(elseif.document, c), 'stencil c');
-      stencil.regenerate(elseif, { value: 'a' }, step());
+      _stencil.regenerate(elseif, { value: 'a' }, step());
 
     }, function (elseif) {
 

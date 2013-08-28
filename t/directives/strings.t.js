@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-require('./proof')(2, function (step, stencil, fixture, ok, compare) {
+require('./proof')(2, function (step, _stencil, fixture, ok, compare) {
   var fs = require('fs');
 
   step(function () {
 
-    stencil.generate('fixtures/strings.stencil', {}, step());
+    _stencil.generate('fixtures/strings.stencil', {}, step());
     fixture('fixtures/strings.xml', step());
 
   }, function (strings, expected) {
@@ -14,11 +14,11 @@ require('./proof')(2, function (step, stencil, fixture, ok, compare) {
 
     step(function() {
 
-      stencil.reconstitute(strings.document, step());
+      _stencil.reconstitute(strings.document, step());
 
     }, function (strings) {
 
-      stencil.regenerate(strings, {}, step());
+      _stencil.regenerate(strings, {}, step());
 
     }, function (strings) {
 

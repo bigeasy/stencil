@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
+require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) {
   step(function () {
 
     xstencil.generate('fixtures/bodied.xstencil', {}, step());
-    stencil.generate('fixtures/bodied.stencil', {}, step());
+    _stencil.generate('fixtures/bodied.stencil', {}, step());
     fixture('fixtures/bodied.xml', step());
 
   }, function (xbodied, bodied, expected) {
@@ -34,16 +34,16 @@ require('./proof')(6, function (step, xstencil, stencil, fixture, ok, compare) {
 
     step(function() {
 
-      stencil.regenerate(bodied, {}, step());
+      _stencil.regenerate(bodied, {}, step());
 
     }, function (bodied) {
 
       ok(compare(bodied.document, expected), 'stencil regenerate');
-      stencil.reconstitute(bodied.document, step());
+      _stencil.reconstitute(bodied.document, step());
 
     }, function (bodied) {
 
-      stencil.regenerate(bodied, {}, step());
+      _stencil.regenerate(bodied, {}, step());
 
     }, function (bodied) {
 
