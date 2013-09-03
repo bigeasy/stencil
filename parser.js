@@ -3,6 +3,7 @@ function parse (source) {
     var out = []
     var stack = []
     var line = 1
+    var REGEX = new RegExp('(\\' + '/ . * + ? | ( ) [ ] { } \\'.split(' ').join('|\\') + ')', 'g')
 
     function token () {
         return out.splice(0, out.length).join('')
@@ -20,6 +21,9 @@ function parse (source) {
     }
 
     function gather (regex, count, keep) {
+        if (typeof regex == "string") {
+            regex = new RegExp(part.replace(REGEX, '\\$1'))
+        }
         var start = index
         while (index - start < count && lookAhead(regex, 1)) {
             if (keep) {
@@ -50,14 +54,23 @@ function parse (source) {
     }
 
     function value () {
-        throw new Error
+        switch (source[index]) {
+        case '"':
+            expect(/^"$/)
+            gather(/^[^"]$/, Infinity, true)
+            expect(/^"$/)
+        case "'":
+        default:
+        }
+        return token()
     }
 
     function attribute () {
-        var attribute = {
-            name: identifier(),
-            value: value()
-        }
+        var attribute = {}
+        attribute.name = identifier()
+        expect(/^=$/)
+        attribute.value = value()
+        return attribute
     }
 
     function attributes () {
