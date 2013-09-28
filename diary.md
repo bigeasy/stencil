@@ -98,10 +98,10 @@ I've chosen `$` to be special, to mean the current context. With it, you can
 inspect the local context to see if a variable is set.
 
 **TODO**: Hey, bonehead. What about `this`? Isn't that a special variable to
-maen the current context. (What a bonehead.)
+mean the current context. (What a bonehead.)
 
 The other special variable is `$attributes`, which I don't believe anyone would
-begrudge me. There currently is no concept of a parent context. but we do have
+begrudge me. There currently is no concept of a parent context. But we do have
 parent attributes, if a tag is declared within a tag, the parent attributes are
 the attributes for the tag are `$attributes` and the attributes for the parent
 tag are `$$attributes`.
@@ -117,7 +117,7 @@ Maybe `_$` as the special variable disambiguates, can be used in the libraries.
 
 ## Recursive Templates
 
-Going to implement the style of reentrancy that is currently in my head, but
+Going to implement the style of reentrantcy that is currently in my head, but
 here are some more.
 
 ```xml
@@ -147,7 +147,7 @@ Often times you need to write out information that has a tree-like structure, it
 could be your site navigation, an organization chart, or folders and the files
 and folders inside them. When you do you're going to want to create a template
 that can call itself. In computerese something that calls itself is called
-recursive &mdash; think recurring which has the same latin root; recurrere. We
+recursive &mdash; think recurring which has the same Latin root; recurrere. We
 call these templates recursive template.
 
 You create a recursive block by defining a block with the `each/with` directive,
@@ -307,7 +307,7 @@ lost, isn't it? What good is a tag library that cannot require scaffolding?
 
 What comes to mind is that we frame contexts, so that the library is evaluated,
 it's first element, requiring any modules. The tags operate on their module
-context, but then you add a `with` attirbute to `each` and to `with`. (Or maybe
+context, but then you add a `with` attribute to `each` and to `with`. (Or maybe
 it is `on` or `using`, but that changes the context for that one invocation.
 
 We can use `[` for shorthand, if it matters. Or it can be an attribute.
@@ -597,11 +597,11 @@ just generate JSON if that's what you need. How hard it it?
 
 ## Self-Closing Tags
 
-I'm looking at the langauge and instead of tags that self close, I'm wondering, why
-not make opens explicit?  Something to indicate a block. That's the obvious
+I'm looking at the language and instead of tags that self close, I'm wondering,
+why not make opens explicit?  Something to indicate a block. That's the obvious
 other choice.
 
-It could be that an `as` attibute forces a block. It could be that we used `do`
+It could be that an `as` attribute forces a block. It could be that we used `do`
 like Ruby or `` => `` like CoffeeScript.
 
 ```erb
@@ -637,17 +637,17 @@ Or we might always require `do/done`.
 
 Thus, with no do, there is no block, no sub blocks, no tags etc.
 
-*Update: New idea, but first, the three ideas above are 
+*Update*: New idea, but first, the three ideas above are
 
  * default no block with keywords for blocks, with the keywords probably
- optional for the built in directives that obviously have blocks (like if), 
+ optional for the built in directives that obviously have blocks (like if),
  * default no block with a sigil to indicate a block, such as using `|a|` to
- indicate an `as` attibute, or as suggested above, CoffeeScript's `` => ``,
+ indicate an `as` attribute, or as suggested above, CoffeeScript's `` => ``,
  * or default is a block with a sigil to indicate no block, like the forward
  slash, or if that is too much like XML then maybe doubling up the percent
  signs, exclamation marks.
 
-Consdiering it all again, I thought I'd suggest `` =%> `` to mean that a block
+Considering it all again, I thought I'd suggest `` =%> `` to mean that a block
 is opening.
 
 ```erb
@@ -720,17 +720,17 @@ JavaScript.
 ```
 
 Not as verbose. Consumes a useful bracket. Doubles? If I go curlies then I look
-too much like another language. Brackes match and the color has a wall to put
+too much like another language. Brackets match and the color has a wall to put
 its back to. It looks like a block. The value insertions look like a person who
 is unpleasantly surprised. Now I have to update the parser in a big way, which
-is rough, but the langauge does look better like this. More can be said in fewer
+is rough, but the language does look better like this. More can be said in fewer
 characters and it can be said more clearly.
 
 ```
 [ if employee.firstName ]:=[ employee.lastName ], =[ employee.firstName ][ else ]:=[ employee.lastName ][ end ]
 ```
 
-That is hard to reado though. Ant is is making all sorts of emoticons.
+That is hard to read though. And is is making all sorts of emoticons.
 
 ```
 [ if employee.hourly ]:
@@ -916,7 +916,7 @@ Not bad. And with HTML abound.
 </html>
 ```
 
-Below we use an ampersand to mean an attribue.
+Below we use an ampersand to mean an attribute.
 
 ```
 <html include:emp="employee">
@@ -974,8 +974,8 @@ of the doodling, without saying as much in the transcript, I keep considering
 how a tag library author might mark their tags as bodied or not. The doodling
 above was doodling away from that, and rationalizing hard about the choices. If
 user defined tags are going to have a block start keyword or sigil, it needs
-look approrpiate for the directives. If not, then it is going to be a tricky
-language, like shell. I've learned that shell is too tricky for the uninitated.
+look appropriate for the directives. If not, then it is going to be a tricky
+language, like shell. I've learned that shell is too tricky for the uninitiated.
 
 I could have `then` for `if` directives and `do` and `done` for `each` and
 `with` directives, and that's what you'd use for your tags. But I didn't like
@@ -986,15 +986,15 @@ always be talking myself out of it, or closing issues where someone is
 suggesting it.
 
 With the curly brace style, the containership is explicit, context-free, but
-familiar and terse. I'm no longer thinking about having langauge switches in the
-tag definitions. It is a horrible vision that no longer plauges me. This is the
+familiar and terse. I'm no longer thinking about having language switches in the
+tag definitions. It is a horrible vision that no longer plagues me. This is the
 way forward.
 
 It is different from HTML and that was clouding my thinking. I didn't want to
 make blockless-ness explicit, because I didn't want to imply that I encouraged
 the self-closing blocks of XML. I didn't want to trigger anyone who is offended
 by XML. The Stencil Language is a move away from XML. I didn't want anyone to
-see the hisotry of XML in Stencil and come to the conslusion that a self-closing
+see the history of XML in Stencil and come to the conclusion that a self-closing
 tags were an artifact of XML. I'm no longer concerned that people will believe
 this variation to have anything to do with XML.
 
@@ -1036,7 +1036,7 @@ need to escape them.
 @if (someCondition()) { be careful with &rcb;, it can confuse Stencil }
 ```
 
-This is inspring me to create my own parser. It only needs to support HTML5. It
+This is inspiring me to create my own parser. It only needs to support HTML5. It
 can use regular expressions and it does not have to be incremental. An initial
-pass could simply be a rewrite of the `@` conditions. A subseqeunt path could
+pass could simply be a rewrite of the `@` conditions. A subsequent path could
 track the depth of the HTML.
