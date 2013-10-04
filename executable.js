@@ -60,7 +60,7 @@ exports.routes = function routes (base) {
     var find = require('reactor/find')
     var path = require('path')
     var serializer = require('./serializer')
-  
+
     var javascript = require('./javascript/common').create(base)
     var xml = require('./xml/file').create(base)
     var html = require('./html/parser')
@@ -76,7 +76,7 @@ exports.routes = function routes (base) {
         var matches = reactor(uri.pathname)
 
         if (!matches.length) return false
-        
+
         step(function (match) {
             var pathInfo = match.params.pathInfo ? '/' + match.params.pathInfo : ''
 
@@ -105,7 +105,7 @@ exports.runner = cadence(function (step, options, stdin, stdout, stderr) {
             port: ('port' in options.params) ? options.params.port : 8386,
             host: options.params.host,
             directory: argv.directory,
-            probe: false 
+            probe: false
         }, step())
     })
 })

@@ -13,7 +13,7 @@ require('./proof')(2, function (step, fixture, compare, equal, ok) {
     var stdout = new stream.PassThrough
     step(function () {
         fixture('fixtures/index.xml', step())
-        run([ directory ], null, stdout, null, step())    
+        run([ directory ], null, stdout, null, step())
     }, function (expected, server) {
         console.log(stdout.read())
         step(function () {
