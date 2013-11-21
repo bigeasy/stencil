@@ -59,12 +59,12 @@ function parse (source) {
             expect(/^"$/)
             gather(/^[^"]$/, Infinity, true)
             expect(/^"$/)
-            break;
+            break
         case "'":
             expect(/^'$/)
             gather(/^[^']$/, Infinity, true)
             expect(/^'$/)
-            break;
+            break
         default:
         }
         return token()
