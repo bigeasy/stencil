@@ -66,6 +66,8 @@ function parse (source) {
             expect(/^'$/)
             break
         default:
+            gather(/^[^\s>]$/, Infinity, true)
+            break
         }
         return token()
     }
