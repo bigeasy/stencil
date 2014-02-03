@@ -57,6 +57,7 @@
   width: 80%;
 }
 /* vim: set ts=4 sw=4: */
+/* @code-font: "Oxygen Mono"; */
 html {
   background: #f7f7f7;
   font-size: 100%;
@@ -135,7 +136,7 @@ img {
   color: #9370db;
 }
 .unit.description p code {
-  font-family: "Oxygen Mono";
+  font-family: "Courier New";
   font-size: 0.85em;
   background: white;
   padding: 0 0.25em;
@@ -166,8 +167,8 @@ img {
 .unit.description .highlight > pre {
   margin: 2em 0;
   padding: 1em;
-  font-size: 1.15em;
-  font-family: "Oxygen Mono", 'Monaco', 'Cutive Mono', 'Oxygen Mono', monospace;
+  font-size: 0.85em;
+  font-family: "Courier New", 'Monaco', 'Cutive Mono', 'Oxygen Mono', monospace;
 }
 .unit.sidebar {
   width: 25%;

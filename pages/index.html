@@ -96,16 +96,16 @@ Minimal.
 ```erb<!--
 <html>
 <body>
-  <% if (personnel.length) %> 
+  [ if (personnel.length) ] {
     <p>Employee directory:
     <ul>
-      <% each (personnel) |employee| %>
-        <li><a href=('mailto:' + employee.email)><%= employee.name %></a>
-      <% end %>
+      [ each (personnel) |employee| ]
+        <li><a href=('mailto:' + employee.email)>[<< employee.name ]</a>
+      [ end ]
     </ul>
-  <% else %>
+  } [ else ] {
     <p>Downsizing successful!
-  <% end %>
+  }
 </body>
 </html>
 -->```
@@ -113,20 +113,20 @@ Minimal.
 Layouts.
 
 <!--```erb
-<% library %>
-  <% tag document %>
+[ library ] {
+  [ tag document ] {
     <html>
     <head>
-      <title><%= $attributes.title %></title>
-      <% block head %>
+      <title>[<< $attributes.title ]</title>
+      [ block head ]
     </head>
     <body>
-      <h1><%= $attributes.title %></h1>
-      <% block body %>
+      <h1>[<< $attributes.title ]</h1>
+      [ block body ]
     </body>
     </html>
-  <% end %>
-<% end %>
+  }
+}
 -->```
 
 <!--```xml
@@ -149,17 +149,17 @@ Layouts.
 Pages laid out.
 
 <!--```erb
-<% o.document %include=(o: "./layout.stencil") title="Hello, World!" %>
-  <% o.head %>
+[ o.document include=(o: "./layout.stencil") title="Hello, World!" ] {
+  [ o.head ] {
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <% end %>
-  <% o.body %>
+  }
+  [ o.body ] {
     <p>Hello, World!</p>
-  <% end %>
-<% end %>
+  }
+}
 ```-->
 
-<!--```xml
+<!--```
 <o:document xmlns:s="stencil"
             xmlns:o="inc:layout.stencil"
             title="Hello, World!">
@@ -170,7 +170,7 @@ Pages laid out.
     <p>Hello, World!</p>
   </o:body>
 </o:document>
-```
+```-->
 
 The same templates run on the browser and in Node.js, so you can use the same
 logic you use to serve a generate page to refresh that page.
@@ -208,21 +208,21 @@ Here we evaluate the JavaScript expression `1 + 1`.
 
 TK: Side by side; like a boss!
 
-```erb
+<!--```erb
 <html>
 <body>
 <p><%= 1 + 1 %></p>
 </body>
 </html>
-```
+```-->
 
-```xml
+<!--```xml
 <html xmlns:s="stencil">
 <body>
 <p><s:value select="1 + 1"/></p>
 </body>
 </html>
-```
+```-->
 
 This generates a document with the statement calculated.
 

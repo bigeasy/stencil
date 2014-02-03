@@ -73,50 +73,59 @@ languages that I once loved (I yearn for you tragically, Mason.)</p>
 <p>Minimal.</p>
 <pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
 <span class="x">&lt;body&gt;</span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">if</span> <span class="p">(</span><span class="n">personnel</span><span class="o">.</span><span class="n">length</span><span class="p">)</span> <span class="cp">%&gt;</span><span class="x"> </span>
+<span class="x">  [ if (personnel.length) ] {</span>
 <span class="x">    &lt;p&gt;Employee directory:</span>
 <span class="x">    &lt;ul&gt;</span>
-<span class="x">      </span><span class="cp">&lt;%</span> <span class="n">each</span> <span class="p">(</span><span class="n">personnel</span><span class="p">)</span> <span class="o">|</span><span class="n">employee</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">        &lt;li&gt;&lt;a href=(&#39;mailto:&#39; + employee.email)&gt;</span><span class="cp">&lt;%=</span> <span class="n">employee</span><span class="o">.</span><span class="n">name</span> <span class="cp">%&gt;</span><span class="x">&lt;/a&gt;</span>
-<span class="x">      </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">      [ each (personnel) |employee| ]</span>
+<span class="x">        &lt;li&gt;&lt;a href=(&#39;mailto:&#39; + employee.email)&gt;[&lt;&lt; employee.name ]&lt;/a&gt;</span>
+<span class="x">      [ end ]</span>
 <span class="x">    &lt;/ul&gt;</span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">else</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">  } [ else ] {</span>
 <span class="x">    &lt;p&gt;Downsizing successful!</span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">  }</span>
 <span class="x">&lt;/body&gt;</span>
 <span class="x">&lt;/html&gt;</span>
 </pre></div>
 </code></pre>
 <p>Layouts.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="cp">&lt;%</span> <span class="n">library</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">tag</span> <span class="n">document</span> <span class="cp">%&gt;</span><span class="x"></span>
+<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">[ library ] {</span>
+<span class="x">  [ tag document ] {</span>
 <span class="x">    &lt;html&gt;</span>
 <span class="x">    &lt;head&gt;</span>
-<span class="x">      &lt;title&gt;</span><span class="cp">&lt;%=</span> <span class="vg">$attributes</span><span class="o">.</span><span class="n">title</span> <span class="cp">%&gt;</span><span class="x">&lt;/title&gt;</span>
-<span class="x">      </span><span class="cp">&lt;%</span> <span class="n">block</span> <span class="n">head</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">      &lt;title&gt;[&lt;&lt; $attributes.title ]&lt;/title&gt;</span>
+<span class="x">      [ block head ]</span>
 <span class="x">    &lt;/head&gt;</span>
 <span class="x">    &lt;body&gt;</span>
-<span class="x">      &lt;h1&gt;</span><span class="cp">&lt;%=</span> <span class="vg">$attributes</span><span class="o">.</span><span class="n">title</span> <span class="cp">%&gt;</span><span class="x">&lt;/h1&gt;</span>
-<span class="x">      </span><span class="cp">&lt;%</span> <span class="n">block</span> <span class="n">body</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">      &lt;h1&gt;[&lt;&lt; $attributes.title ]&lt;/h1&gt;</span>
+<span class="x">      [ block body ]</span>
 <span class="x">    &lt;/body&gt;</span>
 <span class="x">    &lt;/html&gt;</span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">  }</span>
+<span class="x">}</span>
 </pre></div>
 </code></pre>
 <pre></pre>
 <p>Pages laid out.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="cp">&lt;%</span> <span class="n">o</span><span class="o">.</span><span class="n">document</span> <span class="o">%</span><span class="kp">include</span><span class="o">=</span><span class="p">(</span><span class="n">o</span><span class="p">:</span> <span class="s2">&quot;./layout.stencil&quot;</span><span class="p">)</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Hello, World!&quot;</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">o</span><span class="o">.</span><span class="n">head</span> <span class="cp">%&gt;</span><span class="x"></span>
+<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">[ o.document include=(o: &quot;./layout.stencil&quot;) title=&quot;Hello, World!&quot; ] {</span>
+<span class="x">  [ o.head ] {</span>
 <span class="x">    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot;&gt;</span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">o</span><span class="o">.</span><span class="n">body</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">  }</span>
+<span class="x">  [ o.body ] {</span>
 <span class="x">    &lt;p&gt;Hello, World!&lt;/p&gt;</span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">  }</span>
+<span class="x">}</span>
 </pre></div>
 </code></pre>
-<pre></pre>
+<pre><code>&lt;o:document xmlns:s=&quot;stencil&quot;
+            xmlns:o=&quot;inc:layout.stencil&quot;
+            title=&quot;Hello, World!&quot;&gt;
+  &lt;o:head&gt;
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot;/&gt;
+  &lt;/o:head&gt;
+  &lt;o:body&gt;
+    &lt;p&gt;Hello, World!&lt;/p&gt;
+  &lt;/o:body&gt;
+&lt;/o:document&gt;</code></pre>
 <p>The same templates run on the browser and in Node.js, so you can use the same
 logic you use to serve a generate page to refresh that page.</p>
 <h2>The Rest is XStencil</h2>
@@ -150,35 +159,19 @@ and added to the DOM.</p>
 </code></pre>
 <pre></pre>
 <p>This generates a document with the statement calculated.</p>
-<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;body&gt;</span>
-<span class="nt">&lt;p&gt;</span>2<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
+<pre><code class="lang-html"><div class="highlight"><pre>2
 </pre></div>
 </code></pre>
 <p>Of course, in practice, you&#39;re going to want to insert the values from the
 object you&#39;ve pushed through the stencil.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="x">&lt;p&gt;</span>
-<span class="x">  Greetings </span><span class="cp">&lt;%=</span> <span class="n">person</span><span class="o">.</span><span class="n">lastName</span> <span class="cp">%&gt;</span><span class="x">, </span><span class="cp">&lt;%=</span> <span class="n">person</span><span class="o">.</span><span class="n">firstName</span> <span class="cp">%&gt;</span><span class="x"></span>
+<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">  Greetings , </span>
 <span class="x">  and welcome to the bureaucracy.</span>
-<span class="x">&lt;/p&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;/html&gt;</span>
 </pre></div>
 </code></pre>
 <pre></pre>
 <p>This template assumes a <code>person</code> property has been added to the context object.</p>
-<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html</span> <span class="na">xmlns:s=</span><span class="s">&quot;stencil&quot;</span><span class="nt">&gt;</span>
-<span class="nt">&lt;body&gt;</span>
-<span class="nt">&lt;p&gt;</span>
-  Greetings Kafka, Franz
+<pre><code class="lang-html"><div class="highlight"><pre>  Greetings Kafka, Franz
   and welcome to the bureaucracy.
-<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
 </pre></div>
 </code></pre>
 <p>You can also insert HTML into your document using the <code>value</code> directive by
@@ -188,22 +181,14 @@ generating HTML from user supplied markdown, or you might be rendering data that
 has been edited by a rich-text editor, like in a content management system.</p>
 <p>Here&#39;s a ridiculous example, we&#39;ve placed a JavaScript string with HTML in the
 <code>select</code> attribute and set the <code>type</code> attribute to <code>html</code>.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="x">&lt;p&gt;</span><span class="cp">&lt;%-</span> <span class="s1">&#39;&lt;em&gt;Hello&lt;/em&gt;, World!&#39;</span> <span class="cp">%&gt;</span><span class="x">&lt;/p&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;/html&gt;</span>
+<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">Hello, World!&#39; </span><span class="err">%&gt;</span><span class="x"></span>
 </pre></div>
 </code></pre>
 <pre></pre>
 <p>The <code>select</code> attribute value is evaluated as JavaScript, so we need the inner
 quotes, because it is a JavaScript string. The string is then parsed as HTML and
 the HTML is inserted into the document.</p>
-<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;body&gt;</span>
-<span class="nt">&lt;p&gt;&lt;em&gt;</span>Hello<span class="nt">&lt;/em&gt;</span>, World!<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
+<pre><code class="lang-html"><div class="highlight"><pre>Hello, World!
 </pre></div>
 </code></pre>
 <p>Of course, you&#39;re not going to hard code HTML into a <code>value</code> directive like this
@@ -212,13 +197,7 @@ but instead insert HTML from a property in your context object.</p>
 <p>The <code>with</code> directive is almost exactly like the <code>each</code> directive, except that it
 always operates on an object. When you pass an object or scalar, it will assign
 the value to the variable named in the <code>as</code> property.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="cp">&lt;%</span> <span class="n">with</span> <span class="p">(</span><span class="n">companies</span><span class="o">[</span><span class="s1">&#39;Acme&#39;</span><span class="o">].</span><span class="n">departments</span><span class="o">[</span><span class="s1">&#39;Trucks&#39;</span><span class="o">].</span><span class="n">manager</span><span class="p">)</span> <span class="o">|</span><span class="n">manager</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="n">manager</span><span class="o">.</span><span class="n">firstName</span> <span class="cp">%&gt;</span><span class="x"> </span><span class="cp">&lt;%=</span> <span class="n">manager</span><span class="o">.</span><span class="n">lastName</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;/html&gt;</span>
+<pre><code class="lang-erb"><div class="highlight"><pre>
 </pre></div>
 </code></pre>
 <pre></pre>
@@ -228,17 +207,7 @@ templates.</p>
 <p>Note that when you use <code>with</code> to select an Array value, the array is not
 iterated. The array is assigned to the variable specified by the <code>as</code> attribute;
 not the array values.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="cp">&lt;%</span> <span class="n">with</span> <span class="p">(</span><span class="n">companies</span><span class="o">[</span><span class="s1">&#39;Acme&#39;</span><span class="o">].</span><span class="n">departments</span><span class="o">[</span><span class="s1">&#39;Trucks&#39;</span><span class="o">].</span><span class="n">personnel</span><span class="p">)</span> <span class="o">|</span><span class="n">personnel</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  &lt;ul&gt;</span>
-<span class="x">    </span><span class="cp">&lt;%</span> <span class="n">each</span> <span class="p">(</span><span class="n">personnel</span><span class="p">)</span> <span class="o">|</span><span class="n">employee</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">      &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="n">employee</span><span class="o">.</span><span class="n">firstName</span> <span class="cp">%&gt;</span><span class="x"> </span><span class="cp">&lt;%=</span> <span class="n">employee</span><span class="o">.</span><span class="n">lastName</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">    </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  &lt;/ul&gt;</span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;/html&gt;</span>
+<pre><code class="lang-erb"><div class="highlight"><pre>
 </pre></div>
 </code></pre>
 <pre></pre>
@@ -255,30 +224,19 @@ might be updating the sidebar with recent comments. You want to push a new
 collection of recent comments through your Stencil, but if you don&#39;t also
 provide the article, the Stencil will erase your article.</p>
 <p>Here&#39;s how we avoid that.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="cp">&lt;%</span> <span class="k">when</span> <span class="p">(</span><span class="n">this</span><span class="o">.</span><span class="n">article</span><span class="p">)</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  &lt;div class=&quot;article&quot;&gt;</span>
-<span class="x">    &lt;h1&gt;</span><span class="cp">&lt;%=</span> <span class="n">article</span><span class="o">.</span><span class="n">title</span> <span class="cp">%&gt;</span><span class="x">&lt;/h1&gt;</span>
-<span class="x">    &lt;p class=&quot;sub-title&quot;&gt;</span>
-<span class="x">      By </span><span class="cp">&lt;%=</span> <span class="n">article</span><span class="o">.</span><span class="n">author</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">      on </span><span class="cp">&lt;%=</span> <span class="n">article</span><span class="o">.</span><span class="n">publishedAt</span> <span class="cp">%&gt;</span><span class="x">&lt;/p&gt;</span>
-<span class="x">    &lt;div&gt;</span>
-<span class="x">      </span><span class="cp">&lt;%-</span> <span class="n">article</span><span class="o">.</span><span class="n">body</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">    &lt;/div&gt;</span>
-<span class="x">  &lt;/div&gt;</span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;div class=&quot;sidebar&quot;&gt;</span>
-<span class="x">  &lt;h2&gt;Recent Comments&lt;/h2&gt;</span>
-<span class="x">  &lt;ul&gt;</span>
-<span class="x">    </span><span class="cp">&lt;%</span> <span class="n">each</span> <span class="p">(</span><span class="n">recents</span><span class="p">)</span> <span class="o">|</span><span class="n">comment</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">      &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="n">comment</span><span class="o">.</span><span class="n">snippet</span> <span class="cp">%&gt;</span><span class="x"> ~</span>
-<span class="x">          </span><span class="cp">&lt;%=</span> <span class="n">comment</span><span class="o">.</span><span class="n">author</span> <span class="cp">%&gt;</span><span class="x"> on </span><span class="cp">&lt;%=</span> <span class="n">comment</span><span class="o">.</span><span class="n">articleTitle</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">    </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  &lt;/ul&gt;</span>
-<span class="x">&lt;/div&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;/html&gt;</span>
+<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">      By </span>
+<span class="x">      on </span>
+
+
+
+
+
+
+<span class="x">  Recent Comments</span>
+
+
+<span class="x">       ~</span>
+<span class="x">           on</span>
 </pre></div>
 </code></pre>
 <pre></pre>
@@ -292,31 +250,13 @@ content on the next update where the <code>when</code> directive evaluates to <c
 <p>From within your templates you can reference the context object itself either by
 referencing <code>this</code> or the special variable dollar sign <code>$</code> with is an alias for
 for <code>this</code>.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="x">&lt;dl&gt;</span>
-<span class="cp">&lt;%</span> <span class="n">each</span> <span class="p">(</span><span class="no">Object</span><span class="o">.</span><span class="n">keys</span><span class="p">(</span><span class="n">this</span><span class="p">))</span> <span class="o">|</span><span class="n">key</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  &lt;dt&gt;</span><span class="cp">&lt;%=</span> <span class="n">key</span> <span class="cp">%&gt;</span><span class="x">&lt;/dt&gt;</span>
-<span class="x">  &lt;dd&gt;</span><span class="cp">&lt;%=</span> <span class="n">this</span><span class="o">[</span><span class="n">key</span><span class="o">]</span> <span class="cp">%&gt;</span><span class="x">&lt;/dd&gt;</span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;/dl&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;/html&gt;</span>
+<pre><code class="lang-erb"><div class="highlight"><pre>
 </pre></div>
 </code></pre>
 <pre></pre>
 <p>You can also use the dollar sign <code>$</code> alias, if you find that more aesthetically
 pleasing. TK: Huh? Am I still doing this?</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="x">&lt;dl&gt;</span>
-<span class="cp">&lt;%</span> <span class="n">each</span> <span class="p">(</span><span class="no">Object</span><span class="o">.</span><span class="n">keys</span><span class="p">(</span><span class="err">$</span><span class="p">))</span> <span class="o">|</span><span class="n">key</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  &lt;dt&gt;&lt;s:value select=&quot;key&quot;/&gt;&lt;/dt&gt;</span>
-<span class="x">  &lt;dd&gt;&lt;s:value select=&quot;this[key]&quot;/&gt;&lt;/dd&gt;</span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;/dl&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;/html&gt;</span>
+<pre><code class="lang-erb"><div class="highlight"><pre>
 </pre></div>
 </code></pre>
 <pre></pre>
@@ -350,240 +290,328 @@ caller&#39;s template context, TK what? blech! ... many useful tags are going to
 fetch data and then expose it to the caller. This is done with a <code>params</code>
 attribute on the <code>block</code> directive. Use the <code>params</code> directive to define a
 single JavaScript object that will be visible to the caller.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="cp">&lt;%</span> <span class="n">library</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="n">tag</span> <span class="n">numbers</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">block</span> <span class="p">({</span> <span class="n">one</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="n">two</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="n">three</span><span class="p">:</span> <span class="mi">3</span> <span class="p">})</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
+<pre><code class="lang-erb"><div class="highlight"><pre>
 </pre></div>
 </code></pre>
 <pre></pre>
 <p>You can all this tag from your template and it will create a property in the
 template context named <code>$numbers</code>, that is, the tag name with dollar sign <code>$</code> in
 front of it.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html %include=(t: &#39;_params.stencil&#39;)&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="cp">&lt;%</span> <span class="n">t</span><span class="o">.</span><span class="n">numbers</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;ul&gt;</span>
-<span class="x">  &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="vg">$numbers</span><span class="o">.</span><span class="n">one</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">  &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="vg">$numbers</span><span class="o">.</span><span class="n">two</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">  &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="vg">$numbers</span><span class="o">.</span><span class="n">three</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">&lt;/ul&gt;</span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;/html&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-</pre></div>
-</code></pre>
-<pre></pre>
-<p>The output of this template is, of course:</p>
-<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;body&gt;</span>
-<span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>1<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>2<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>3<span class="nt">&lt;/li&gt;</span>
-<span class="nt">&lt;/ul&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-</pre></div>
-</code></pre>
-<p>The caller can always rename the reserved using the as operator <code>|</code>.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html %include=(t: &#39;_params.stencil&#39;)&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="cp">&lt;%</span> <span class="n">t</span><span class="o">.</span><span class="n">numbers</span> <span class="o">|</span><span class="n">digits</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;ul&gt;</span>
-<span class="x">  &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="n">digits</span><span class="o">.</span><span class="n">one</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">  &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="n">digits</span><span class="o">.</span><span class="n">two</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">  &lt;li&gt;</span><span class="cp">&lt;%=</span> <span class="n">digits</span><span class="o">.</span><span class="n">three</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">&lt;/ul&gt;</span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;/html&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-</pre></div>
-</code></pre>
-<pre></pre>
-<p>Note that the object is only visible inside the body of the tag.</p>
-<p>When you define your parameter object inside the tag library, there&#39;s maybe a
-bit of a problem in that you won&#39;t know it&#39;s name, which may or may not matter,
+<p>```erb</p>
+</div></div></body>
+```
+
+```xml
+<html xmlns:s="stencil" xmlns:t="inc:_params.stencil">
+<body>
+<t:numbers>
+<ul>
+  <li><s:value select="$numbers.one"></s:value></li>
+  <li><s:value select="$numbers.two"></s:value></li>
+  <li><s:value select="$numbers.three"></s:value></li>
+</ul>
+</t:numbers>
+</body></html>
+
+```
+
+The output of this template is, of course:
+
+```html
+<html>
+<body>
+<ul>
+  <li>1</li>
+  <li>2</li>
+  <li>3</li>
+</ul>
+</body></html>
+
+```
+
+The caller can always rename the reserved using the as operator `|`.
+
+```erb
+<html %include="(t:" '_params.stencil')="">
+<body>
+<% t.numbers="" |digits|="" %="">
+<ul>
+  <li><%= digits.one="" %=""></%=></li>
+  <li><%= digits.two="" %=""></%=></li>
+  <li><%= digits.three="" %=""></%=></li>
+</ul>
+<% end="" %="">
+</%></%></body></html>
+
+```
+
+```xml
+<html xmlns:s="stencil" xmlns:t="inc:_params.stencil">
+<body>
+<t:numbers as="digits">
+<ul>
+  <li><s:value select="digits.one"></s:value></li>
+  <li><s:value select="digits.two"></s:value></li>
+  <li><s:value select="digits.three"></s:value></li>
+</ul>
+</t:numbers>
+</body></html>
+
+```
+
+Note that the object is only visible inside the body of the tag.
+
+When you define your parameter object inside the tag library, there's maybe a
+bit of a problem in that you won't know it's name, which may or may not matter,
 it is so early in the life of Stencil for me to know. So, when you define your
-object, you can reference the user provided name of the object using <code>$name</code>.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="cp">&lt;%</span> <span class="n">library</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="n">tag</span> <span class="n">numbers</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">block</span> <span class="p">({</span> <span class="n">one</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-              <span class="n">two</span><span class="p">:</span> <span class="n">function</span> <span class="p">(</span><span class="n">callback</span><span class="p">)</span> <span class="p">{</span>
-                <span class="n">callback</span><span class="p">(</span><span class="n">null</span><span class="p">,</span> <span class="n">this</span><span class="o">[</span><span class="vg">$name</span><span class="o">].</span><span class="n">one</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-              <span class="p">},</span>
-              <span class="n">three</span><span class="p">:</span> <span class="mi">3</span> <span class="p">})</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-</pre></div>
-</code></pre>
-<pre></pre>
-<p>The above calculates the value of <code>two</code> using the value of <code>one</code>, referencing
-the generated object in the context using the special variable <code>name</code>.</p>
-<h3>Creating Evaluated Tag Properties</h3>
-<p>Sometimes you will want to specify an evaluated property in your tags. We have a
+object, you can reference the user provided name of the object using `$name`.
+
+```erb
+<% library="" %="">
+<% tag="" numbers="" %="">
+  <% 3="" block="" ({="" one:="" 1,="" two:="" function="" (callback)="" {="" callback(null,="" this[$name].one="" +="" 1)="" },="" three:="" })="" %="">
+<% end="" %="">
+<% end="" %="">
+```
+
+```xml
+<s:include xmlns:s="stencil">
+<s:tag name="numbers">
+  <s:block params="{ one: 1,
+                     two: function (callback) { callback(null, this[$name].one + 1) },
+                     three: 3 }"></s:block>
+</s:tag>
+</s:include>
+```
+
+The above calculates the value of `two` using the value of `one`, referencing
+the generated object in the context using the special variable `name`.
+
+### Creating Evaluated Tag Properties
+
+Sometimes you will want to specify an evaluated property in your tags. We have a
 tricky trick for your tag definition that will give you want you want. When you
-want the user to provide you with a statement that you can use in an <code>each</code> or
-<code>value</code> directive, do a double evaluation in your tag library.</p>
-<p>Here is a minimal example, we&#39;re going to create an alias for the <code>value</code>
-directive named <code>say</code> that has an evaluated called <code>stuff</code>. As you can see, we
-use an evaluated attribute for the <code>select</code> attribute of the <code>value</code> directive
-in the tag. The evaluated select attribute will use the <code>stuff</code> attribute passed
-to the tag.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="cp">&lt;%</span> <span class="n">library</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="n">tag</span> <span class="n">say</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  </span><span class="cp">&lt;%=</span> <span class="vg">$attribute</span><span class="o">.</span><span class="n">stuff</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-</pre></div>
-</code></pre>
-<pre></pre>
-<p>When the template author is ready to say stuff, he invokes the <code>say</code> tag with an
-ordinary <code>stuff</code> attribute, he doesn&#39;t have to know that it&#39;s evaluated.</p>
-<p>The attribute <code>stuff</code> has a value of <code>&quot;1 + 1&quot;</code>. That is not evaluated. It is
-passed into the tag as <code>$attributes.stuff</code>. Inside the tag, <code>$attributes.stuff</code>
-has a string value of <code>&quot;1 + 1&quot;</code>. The evaluated <code>select</code> attribute of value
-evaluates <code>$attributes.stuff</code> and creates a <code>select</code> attribute for the <code>value</code>
-directive with a string value of <code>&quot;1 + 1&quot;</code>.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html %include=(t: &#39;_tags.stenccil&#39;)&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="x">&lt;p&gt;</span><span class="cp">&lt;%</span> <span class="n">t</span><span class="o">.</span><span class="n">say</span> <span class="n">stuff</span><span class="o">=</span><span class="s2">&quot;1 + 1&quot;</span> <span class="cp">%&gt;</span><span class="x">&lt;/p&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;html&gt;</span>
-</pre></div>
-</code></pre>
-<pre></pre>
-<p>The <code>value</code> attribute will then evaluate the <code>select</code> attribute, unaware and
-unconcerned that it was once an evaluated attribute. It&#39;s not a static attribute
-as far as the <code>value</code> attribute is concerned. It evaluates the JavaScript
-statement <code>1 + 1</code> and gets <code>2</code>.</p>
-<p>Here is the output.</p>
-<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;body&gt;</span>
-<span class="nt">&lt;p&gt;</span>2<span class="nt">&lt;/p&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;html&gt;</span>
-</pre></div>
-</code></pre>
-<p>You&#39;d probably want to use <code>select</code> as your attribute, instead of <code>stuff</code>
-because it follows convention and requires less explanation. We use <code>stuff</code> in
-the example above to make it easier to pick out the working parts.</p>
-<p>TK: Talk about the select auto-magic select examples.</p>
-<p>Here&#39;s a slightly more complicated, every-so-slightly more realistic example.
-Here we put our select attribute into an evaluated select attribute of an <code>each</code>
-directive. We&#39;re creating a <code>loopy</code> tag.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="cp">&lt;%</span> <span class="n">library</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="n">tag</span> <span class="n">loopy</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">each</span> <span class="err">$</span><span class="p">(</span><span class="vg">$attribute</span><span class="o">.</span><span class="n">select</span><span class="p">)</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">    </span><span class="cp">&lt;%</span> <span class="n">tag</span> <span class="n">item</span> <span class="cp">%&gt;&lt;%=</span> <span class="n">item</span> <span class="cp">%&gt;&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-</pre></div>
-</code></pre>
-<pre></pre>
-<p>Here&#39;s how we use it with the object <code>{ numbers: [ 1, 2, 3 ] }</code>. As you can see,
-we pass in the string <code>&quot;numbers&quot;</code> in a select attribute. It does not get
-evaluated. It is passed into the tag as the property <code>$attributes.select</code>. The
-value of <code>$attributes.select</code> will be the string <code>&quot;numbers&quot;</code>.</p>
-<p>When we use an evaluated <code>select</code> attribute with the <code>each</code> directive, it
-evaluates to the value of <code>$attribute.select</code> with is <code>&quot;numbers&quot;</code>. That creates
-a select value for the <code>each</code> directive that is <code>&quot;numbers&quot;</code>. That is evaluated
-by the <code>each</code> directive to obtain the numbers array.</p>
-<pre><code class="lang-erb"><div class="highlight"><pre><span class="x">&lt;html %include=(t: &#39;_tags.stencil&#39;)&gt;</span>
-<span class="x">&lt;body&gt;</span>
-<span class="x">&lt;ul&gt;</span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="n">t</span><span class="o">.</span><span class="n">loopy</span> <span class="p">(</span><span class="n">numbers</span><span class="p">)</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">    &lt;li&gt;</span><span class="cp">&lt;%</span> <span class="n">t</span><span class="o">.</span><span class="n">item</span> <span class="cp">%&gt;</span><span class="x">&lt;/li&gt;</span>
-<span class="x">  </span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">&lt;/ul&gt;</span>
-<span class="x">&lt;/body&gt;</span>
-<span class="x">&lt;html&gt;</span>
-</pre></div>
-</code></pre>
-<pre></pre>
-<p>TK: Maybe just a bogo each example <code>t.eachy</code>?</p>
-<p>Which gives us the html.</p>
-<pre><code class="lang-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;body&gt;</span>
-<span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>1<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>2<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>3<span class="nt">&lt;/li&gt;</span>
-<span class="nt">&lt;/ul&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</pre></div>
-</code></pre>
-<h2>Remember</h2>
+want the user to provide you with a statement that you can use in an `each` or
+`value` directive, do a double evaluation in your tag library.
+
+Here is a minimal example, we're going to create an alias for the `value`
+directive named `say` that has an evaluated called `stuff`. As you can see, we
+use an evaluated attribute for the `select` attribute of the `value` directive
+in the tag. The evaluated select attribute will use the `stuff` attribute passed
+to the tag.
+
+```erb
+<% library="" %="">
+<% tag="" say="" %="">
+  <%= $attribute.stuff="" %="">
+<% end="" %="">
+<% end="" %="">
+```
+```xml
+<s:include xmlns:s="stencil">
+<s:tag name="say">
+  <s:value s:select="$attribute.stuff"></s:value>
+</s:tag>
+</s:include>
+```
+
+When the template author is ready to say stuff, he invokes the `say` tag with an
+ordinary `stuff` attribute, he doesn't have to know that it's evaluated.
+
+The attribute `stuff` has a value of `"1 + 1"`. That is not evaluated. It is
+passed into the tag as `$attributes.stuff`. Inside the tag, `$attributes.stuff`
+has a string value of `"1 + 1"`. The evaluated `select` attribute of value
+evaluates `$attributes.stuff` and creates a `select` attribute for the `value`
+directive with a string value of `"1 + 1"`.
+
+```erb
+<html %include="(t:" '_tags.stenccil')="">
+<body>
+<p><% t.say="" stuff="1 + 1" %=""></%></p>
+</body>
+<html>
+```
+
+```xml
+<html xmlns:s="stencil" xmlns:t="inc:_tags.xml">
+<body>
+<p><t:say stuff="1 + 1"></t:say></p>
+</body>
+<html>
+```
+
+The `value` attribute will then evaluate the `select` attribute, unaware and
+unconcerned that it was once an evaluated attribute. It's not a static attribute
+as far as the `value` attribute is concerned. It evaluates the JavaScript
+statement `1 + 1` and gets `2`.
+
+Here is the output.
+
+```html
+<html>
+<body>
+<p>2</p>
+</body>
+<html>
+```
+
+You'd probably want to use `select` as your attribute, instead of `stuff`
+because it follows convention and requires less explanation. We use `stuff` in
+the example above to make it easier to pick out the working parts.
+
+TK: Talk about the select auto-magic select examples.
+
+Here's a slightly more complicated, every-so-slightly more realistic example.
+Here we put our select attribute into an evaluated select attribute of an `each`
+directive. We're creating a `loopy` tag.
+
+```erb
+<% library="" %="">
+<% tag="" loopy="" %="">
+  <% each="" $($attribute.select)="" |item|="" %="">
+    <% tag="" item="" %=""><%= item="" %=""><% end="" %="">
+  <% end="" %="">
+<% end="" %="">
+<% end="" %="">
+```
+
+```xml
+<s:include xmlns:s="stencil">
+<s:tag name="loopy">
+  <s:each s:select="$attribute.select" as="item">
+    <s:tag name="item"><s:value select="item"></s:value></s:tag>
+  </s:each>
+</s:tag>
+</s:include>
+```
+
+Here's how we use it with the object `{ numbers: [ 1, 2, 3 ] }`. As you can see,
+we pass in the string `"numbers"` in a select attribute. It does not get
+evaluated. It is passed into the tag as the property `$attributes.select`. The
+value of `$attributes.select` will be the string `"numbers"`.
+
+When we use an evaluated `select` attribute with the `each` directive, it
+evaluates to the value of `$attribute.select` with is `"numbers"`. That creates
+a select value for the `each` directive that is `"numbers"`. That is evaluated
+by the `each` directive to obtain the numbers array.
+
+```erb
+<html %include="(t:" '_tags.stencil')="">
+<body>
 <ul>
-<li>It&#39;s not a query tool. It&#39;s a templating tool.</li>
-</ul>
-<h2>Expand</h2>
+  <% t.loopy="" (numbers)="" %="">
+    <li><% t.item="" %=""></%></li>
+  <% end="" %="">
+</%></%></ul>
+</body>
+<html>
+```
+
+```xml
+<html xmlns:s="stencil" xmlns:t="inc:_tags.xml">
+<body>
 <ul>
-<li>Functions must have no side-effects; i.e. do not use your template functions
-to create a hit counter.</li>
-<li>It&#39;s not hard to write template functions that do not have side effects. The
-sort of functions that might have side effects are not likely to appear in
-the logic that supports emitting markup.</li>
+  <t:loopy select="numbers">
+    <li><t:item></t:item></li>
+  </t:loopy>
 </ul>
-<h2>Motivations</h2>
-<p>Revisiting the ideas explored in a <a href="https://github.com/defunct/stencil">Java based
-Stencil</a>.</p>
-<p>Stencil is asynchronous HTML5 templating for Node.js and the browser. It based
-on some ideas from yesteryear and some ideas from tomorrow.</p>
-<p>This project evolved from work with Streamline and CoffeeScript. That work has
-been moved to a project named <a href="https://github.com/bigeasy/pastiche">Pastiche</a>.</p>
-<h2>Philosophy</h2>
-<p>Especially when dealing with a library that has a goal of being small, you&#39;re
+</body>
+<html>
+```
+
+TK: Maybe just a bogo each example `t.eachy`?
+
+Which gives us the html.
+
+```html
+<html>
+<body>
+<ul>
+  <li>1</li>
+  <li>2</li>
+  <li>3</li>
+</ul>
+</body>
+</html>
+```
+
+## Remember
+
+ * It's not a query tool. It's a templating tool.
+
+## Expand
+
+ * Functions must have no side-effects; i.e. do not use your template functions
+   to create a hit counter.
+ * It's not hard to write template functions that do not have side effects. The
+   sort of functions that might have side effects are not likely to appear in
+   the logic that supports emitting markup.
+
+## Motivations
+
+Revisiting the ideas explored in a [Java based
+Stencil](https://github.com/defunct/stencil).
+
+Stencil is asynchronous HTML5 templating for Node.js and the browser. It based
+on some ideas from yesteryear and some ideas from tomorrow.
+
+This project evolved from work with Streamline and CoffeeScript. That work has
+been moved to a project named [Pastiche](https://github.com/bigeasy/pastiche).
+
+## Philosophy
+
+Especially when dealing with a library that has a goal of being small, you're
 limited as to how much scaffolding you can offer developers. My approach for
 Stencil is to define three roles, application developer, web developer, and web
 designer, and say the first two roles labor to create a childlike sense of
-wonder in the latter role.</p>
-<p>An application developer creates APIs that the web developer can query. The web
-developer wraps those APIs in tag libraries, so that the web designer can focus
-on semantic layout.</p>
-<h2>Change log</h2>
-<p>Changes for each release.</p>
-<h3>Version 0.0.7</h3>
-<ul>
-<li>Specify port at command line. #123.</li>
-</ul>
-<h3>Version 0.0.6</h3>
-<ul>
-<li>Implement HTML values. #43.</li>
-<li>Print <code>DOCTYPE</code> when serializing. #84.</li>
-<li>Implement <code>with</code> directive. #103.</li>
-<li>Remove <code>$</code> variable. #109. #107.</li>
-<li>Create and document <code>stencil</code> object. #119.</li>
-<li>Implement <code>when</code> directive. #61.</li>
-<li>Remove <code>context</code> from callback signature. #116.</li>
-<li>Remove used parameter fix ups. #117.</li>
-<li>Test <code>null</code> to remove an attribute. #115.</li>
-<li>Implement block parameters. #114.</li>
-<li>Rename <code>into</code> attribute to <code>as</code>. #105.</li>
-<li>Recursion inside a tag definition. #112.</li>
-<li>Test and document evaluated tag attributes. #113.</li>
-<li>Bodied sub-tag and reentering caller scope. #89. #85. #59. #51. #25.</li>
-<li>Implement <code>recurse</code> directive. #102.</li>
-<li>Fix aspect ratio of image. #111.</li>
-</ul>
-<h3>Version 0.0.5</h3>
-<p>Mon Apr 22 19:07:43 UTC 2013</p>
-<ul>
-<li>Fix non-directive with attribute child directives. #108.</li>
-</ul>
-<h3>Version 0.0.4</h3>
-<p>Tue Apr 16 14:15:19 UTC 2013</p>
-<ul>
-<li>Add <code>request</code> and <code>response</code> to Stencil service. #106.
-this <is a="" test="">
-z</is></li>
-</ul>
-</div>
+wonder in the latter role.
 
-</div></body>
+An application developer creates APIs that the web developer can query. The web
+developer wraps those APIs in tag libraries, so that the web designer can focus
+on semantic layout.
+
+## Change log
+
+Changes for each release.
+
+### Version 0.0.7
+
+ * Specify port at command line. #123.
+
+### Version 0.0.6
+
+ * Implement HTML values. #43.
+ * Print `DOCTYPE` when serializing. #84.
+ * Implement `with` directive. #103.
+ * Remove `$` variable. #109. #107.
+ * Create and document `stencil` object. #119.
+ * Implement `when` directive. #61.
+ * Remove `context` from callback signature. #116.
+ * Remove used parameter fix ups. #117.
+ * Test `null` to remove an attribute. #115.
+ * Implement block parameters. #114.
+ * Rename `into` attribute to `as`. #105.
+ * Recursion inside a tag definition. #112.
+ * Test and document evaluated tag attributes. #113.
+ * Bodied sub-tag and reentering caller scope. #89. #85. #59. #51. #25.
+ * Implement `recurse` directive. #102.
+ * Fix aspect ratio of image. #111.
+
+### Version 0.0.5
+
+Mon Apr 22 19:07:43 UTC 2013
+
+ * Fix non-directive with attribute child directives. #108.
+
+### Version 0.0.4
+
+Tue Apr 16 14:15:19 UTC 2013
+
+ * Add `request` and `response` to Stencil service. #106.
+this <is a="" test="">
+-->z
+
+
 <!-- todo: move into an edify plugin -->
 <script>
 (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -594,4 +622,5 @@ m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 ga('create', 'UA-20388260-3', 'bigeasy.github.io');
 ga('send', 'pageview');
 </script>
-</html>
+</is></html>
+</html></html></html></%></%></%></%></%=></%></%></%></%></html></html></html></html></html></html></%></%></%=></%></%></%></%></%></%></%></html>
