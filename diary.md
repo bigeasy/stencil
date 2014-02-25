@@ -1040,3 +1040,37 @@ This is inspiring me to create my own parser. It only needs to support HTML5. It
 can use regular expressions and it does not have to be incremental. An initial
 pass could simply be a rewrite of the `@` conditions. A subsequent path could
 track the depth of the HTML.
+
+## Revisiting Escaping
+
+Up there you're going to see curly braces, which make a lot of sense, but using
+`@` as a sigil is going to make for a more difficult parser. An initial pass at
+a parser, it would be easier to have something bounding.
+
+```
+[if (employee.hourly)] {
+  Pay: [<< employee.wage * employee.hours]
+} [else if (employee.commissioned)] {
+  Pay: [<< employee.commission * employee.sales]
+} [else] {
+  Pay: [<< employee.salary / 26]
+}
+```
+
+Not bad. And with HTML abound.
+
+```
+<html include:emp="employee">
+<body>
+<h1>[emp.department(department) format=nobel]</h1>
+<ul>
+[each (department.employees) |employee|] {
+  [emp.pay (employee)]
+  [emp.benefits (employee)[type] |benefit|] {
+    <li>[<< benefit.description]: [<< benefit.accrued]</li>
+  }
+}
+</ul>
+</body>
+</html>
+```
