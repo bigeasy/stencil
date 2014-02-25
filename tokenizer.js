@@ -1,9 +1,9 @@
 module.exports = Tokenizer;
 
-var entityMap = require("./entities/entities.json"),
-    legacyMap = require("./entities/legacy.json"),
-    xmlMap    = require("./entities/xml.json"),
-    decodeMap = require("./entities/decode.json"),
+var entityMap = require("htmlparser2/lib/entities/entities.json"),
+    legacyMap = require("htmlparser2/lib/entities/legacy.json"),
+    xmlMap    = require("htmlparser2/lib/entities/xml.json"),
+    decodeMap = require("htmlparser2/lib/entities/decode.json"),
 
     i = 0,
 
@@ -626,6 +626,7 @@ Tokenizer.prototype.write = function(chunk){
 
 	while(this._index < this._buffer.length && this._running){
 		var c = this._buffer.charAt(this._index);
+		if(this._intercept(c)) continue;
 		if(this._state === TEXT) {
 			this._stateText(c);
 		} else if(this._state === BEFORE_TAG_NAME){
@@ -876,3 +877,5 @@ Tokenizer.prototype._emitPartial = function(value){
 		this._cbs.ontext(value);
 	}
 };
+
+console.log(i)
