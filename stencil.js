@@ -118,7 +118,17 @@ TokenizerProxy.prototype.onimportvalue = function (value) {
 }
 
 TokenizerProxy.prototype.onattribname = function (name) {
-    this._attributeName = name;
+    this._attribute = { name: name, data: [] }
+}
+
+TokenizerProxy.prototype.onattribdata = function (data) {
+    this._attribute.data.push(data)
+}
+
+TokenizerProxy.prototype.onattribend = function (data) {
+    this._cbs.onattribname(this._attribute.name)
+    this._cbs.onattribdata(this._attribute.data.join(''))
+    this._cbs.onattribend()
 }
 
 TokenizerProxy.prototype.onattribeval = function () {
@@ -140,7 +150,7 @@ exports.createParser = function (base) {
             fs.readFile(path.join(base, source), 'utf8', step())
         }, function (body) {
             var handler = new htmlparser.DefaultHandler()
-            var tokenizer = new (require('./tokenizer'))
+            var tokenizer = new (require('./stencilizer'))
             var parser = new htmlparser.Parser(handler);
             tokenizer._cbs = new TokenizerProxy(parser._tokenizer._cbs)
             parser._tokenizer = tokenizer
@@ -173,7 +183,8 @@ exports.createParser = function (base) {
             // property, so now what? Remove it and start over because now you
             // know, but how is that any less ugly than the above, serialize the
             // XML, then parse it, and the parser will sort out the namespaces.
-            //console.log(actual.toString())
+            console.log('=======')
+            console.log(actual.toString())
             //console.log('=======')
             return actual
         })

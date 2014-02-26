@@ -877,5 +877,3 @@ Tokenizer.prototype._emitPartial = function(value){
 		this._cbs.ontext(value);
 	}
 };
-
-console.log(i)
