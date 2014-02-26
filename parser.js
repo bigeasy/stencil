@@ -1,162 +1,96 @@
-function parse (source) {
-    var index = 0
-    var out = []
-    var stack = []
-    var line = 1
-    var REGEX = new RegExp('(\\' + '/ . * + ? | ( ) [ ] { } \\'.split(' ').join('|\\') + ')', 'g')
+var Tokenizer = require('./tokenizer')
+var util = require('util')
 
-    function token () {
-        return out.splice(0, out.length).join('')
+var i = 55,
+    TEXT = 0,
+    BEFORE_DIRECTIVE = i++,
+    BEFORE_TEXT_DIRECTIVE = i++,
+    BEFORE_HTML_DIRECTIVE = i++,
+    AFTER_TEXT_DIRECTIVE_START = i++,
+    IN_TEXT_DIRECTIVE = i++
+
+function whitespace (c) {
+    return c === " " || c === "\n" || c === "\t" || c === "\f" || c === "\r";
+}
+
+function attribute (cbs, name, value) {
+    cbs.onattribname(name)
+    cbs.onattribdata(value)
+    cbs.onattribend()
+}
+
+function send (cbs, directive) {
+    cbs.onopentagname('div')
+    attribute(cbs, 'data-stencil-directive', directive.name)
+    for (var name in directive.attributes) {
+        attribute(cbs, 'data-stencil-attribute-' + name, directive.attributes[name])
     }
+    cbs.onopentagend()
+    cbs.onclosetag('div');
+}
 
-    function text () {
-        var text = token()
-        if (text.length) {
-            stack[0].children.push({ type: 'text', data: text })
-        }
+function Stencilizer () {
+    this._stencilizer = {
+        text: [],
+        attributes: {}
     }
+    Tokenizer.call(this)
+}
+util.inherits(Stencilizer, Tokenizer)
 
-    function expect (regex, keep) {
-        return gather(regex, 1, keep)
-    }
-
-    function gather (regex, count, keep) {
-        if (typeof regex == "string") {
-            regex = new RegExp(part.replace(REGEX, '\\$1'))
-        }
-        var start = index
-        while (index - start < count && lookAhead(regex, 1)) {
-            if (keep) {
-                out.push(source[index])
+Stencilizer.prototype._consume = function (c) {
+    var directive = this._stencilizer
+    switch (this._state) {
+    case TEXT:
+        switch (c) {
+        case '[':
+            if(this._index > this._sectionStart){
+                this._cbs.ontext(this._getSection());
             }
-            index++
-            if (source[index] == '\n') {
-                line++
-            }
-        }
-        return index - start
-    }
-
-    function whitespace (keep) {
-        return gather(/^\s$/, Infinity, keep)
-    }
-
-    function at () {
-        console.log(source.substring(index))
-    }
-
-    function identifier (object) {
-        whitespace(false)
-        if (!gather(/[a-z]/, Infinity, true)) {
-            throw new Error
-        }
-        return token()
-    }
-
-    function value () {
-        switch (source[index]) {
-        case '"':
-            expect(/^"$/)
-            gather(/^[^"]$/, Infinity, true)
-            expect(/^"$/)
-            break
-        case "'":
-            expect(/^'$/)
-            gather(/^[^']$/, Infinity, true)
-            expect(/^'$/)
-            break
-        default:
-            gather(/^[^\s>]$/, Infinity, true)
-            break
-        }
-        return token()
-    }
-
-    function attribute () {
-        var attribute = {}
-        attribute.name = identifier()
-        expect(/^=$/)
-        attribute.value = value()
-        return attribute
-    }
-
-    function attributes () {
-        var attributes = []
-        whitespace(false)
-        while (!expect(/^>$/)) {
-            attributes.push(attribute())
-            whitespace(false)
-        }
-        return attributes
-    }
-
-    function startElement () {
-        if (!expect(/^<$/, false)) {
-            return false
-        }
-        whitespace(false)
-        push({
-            type: 'element',
-            name: identifier(),
-            attributes: attributes(),
-            children: []
-        })
-        return true
-    }
-
-    function lookAhead (regex, distance) {
-        return regex.test(source.substr(index, distance))
-    }
-
-    function children () {
-        for (;;) {
-            if (gather(/^[^<]$/)) {
-                throw new Error
-            }
-            if (lookAhead(/<\//, 2)) {
-                break
-            }
-            if (element()) {
-                throw new Error
-            }
-        }
-    }
-
-    function endElement () {
-        if (!(expect(/</) && expect(/\//))) {
-            throw new Error
-        }
-        var name = identifier()
-        if (stack[0].name != name) {
-            throw new Error
-        }
-        pop()
-    }
-
-    function element () {
-        if (startElement()) {
-            children()
-            endElement()
+            this._state = BEFORE_DIRECTIVE
             return true
         }
         return false
+    case BEFORE_DIRECTIVE:
+        if (c == '<') {
+            this._state  = BEFORE_TEXT_DIRECTIVE
+            directive.name = 'value'
+            directive.attributes.type = 'text'
+        } else {
+            this._state = IN_TEXT_DIRECTIVE
+        }
+        return true
+    case BEFORE_TEXT_DIRECTIVE:
+        if (c == '<') {
+            this._state  = BEFORE_HTML_DIRECTIVE
+            directive.attributes.type = 'html'
+        } else {
+            this._state = IN_TEXT_DIRECTIVE
+        }
+        return true
+    case BEFORE_HTML_DIRECTIVE:
+        this._state = IN_TEXT_DIRECTIVE
+        return true
+    case IN_TEXT_DIRECTIVE:
+        if (c == ']') {
+            directive.attributes.select = directive.text.join('').trim()
+            send(this._cbs, directive)
+            this._state = TEXT
+            this._sectionStart = this._index + 1;
+        } else {
+            directive.text.push(c)
+        }
+        return true
     }
-
-    function push (object) {
-        stack[0].children.push(object)
-        stack.unshift(object)
-    }
-
-    function pop () {
-        return stack.shift()
-    }
-
-    stack = [{ type: 'document', children: [] }]
-    whitespace()
-    text()
-    element()
-    whitespace()
-    return pop()
+    return false
 }
 
-module.exports = parse
+Stencilizer.prototype._intercept = function (c) {
+    if (this._consume(c)) {
+        this._index++
+        return true
+    }
+    return false
+}
+
+module.exports = Stencilizer
