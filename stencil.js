@@ -132,7 +132,7 @@ TokenizerProxy.prototype.onattribend = function (data) {
 }
 
 TokenizerProxy.prototype.onattribeval = function () {
-    this._attributeName = 'data-stencil-evaluated-attribute-' + this._attributeName
+    this._attribute.name = 'data-stencil-evaluated-attribute-' + this._attribute.name
 }
 
 TokenizerProxy.prototype.onattribvalue = function (value) {
