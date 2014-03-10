@@ -94,7 +94,7 @@ Stencilizer.prototype._consume = function (c) {
         return true
     case BEFORE_DIRECTIVE:
         if (c == '<') {
-            this._state  = BEFORE_TEXT_DIRECTIVE
+            this._state = BEFORE_TEXT_DIRECTIVE
             directive.name = 'value'
             directive.attributes.type = 'html'
         } else {
@@ -103,7 +103,7 @@ Stencilizer.prototype._consume = function (c) {
         return true
     case BEFORE_TEXT_DIRECTIVE:
         if (c == '<') {
-            this._state  = BEFORE_HTML_DIRECTIVE
+            this._state = BEFORE_HTML_DIRECTIVE
             directive.attributes.type = 'text'
         } else {
             this._state = IN_TEXT_DIRECTIVE
