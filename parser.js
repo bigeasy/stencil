@@ -28,11 +28,11 @@ function attribute (cbs, name, value) {
     cbs.onattribend()
 }
 
-function send (cbs, directive) {
+function send (cbs, stencilizer) {
     cbs.onopentagname('div')
-    attribute(cbs, 'data-stencil-directive', directive.name)
-    for (var name in directive.attributes) {
-        attribute(cbs, 'data-stencil-attribute-' + name, directive.attributes[name])
+    attribute(cbs, 'data-stencil-directive', stencilizer.name)
+    for (var name in stencilizer.attributes) {
+        attribute(cbs, 'data-stencil-attribute-' + name, stencilizer.attributes[name])
     }
     cbs.onopentagend()
     cbs.onclosetag('div')
@@ -49,7 +49,7 @@ function Stencilizer () {
 util.inherits(Stencilizer, Tokenizer)
 
 Stencilizer.prototype._consume = function (c) {
-    var directive = this._stencilizer
+    var stencilizer = this._stencilizer
     switch (this._state) {
     case TEXT:
         switch (c) {
@@ -74,8 +74,8 @@ Stencilizer.prototype._consume = function (c) {
         switch (c) {
         case '\'':
         case '"':
-            directive.character = c
-            directive.state.push(this._state)
+            stencilizer.character = c
+            stencilizer.state.push(this._state)
             this._state = IN_JAVASCRIPT_STRING
             break
         case ')':
@@ -88,8 +88,8 @@ Stencilizer.prototype._consume = function (c) {
     case IN_JAVASCRIPT_STRING:
         if (c == '\\') {
             this._state = IN_JAVASCRIPT_STRING_ESCAPE
-        } else if (c == directive.character) {
-            this._state = directive.state.pop()
+        } else if (c == stencilizer.character) {
+            this._state = stencilizer.state.pop()
         }
         return true
     case IN_JAVASCRIPT_STRING_ESCAPE:
@@ -98,8 +98,8 @@ Stencilizer.prototype._consume = function (c) {
     case BEFORE_DIRECTIVE:
         if (c == '<') {
             this._state = BEFORE_TEXT_DIRECTIVE
-            directive.name = 'value'
-            directive.attributes.type = 'html'
+            stencilizer.name = 'value'
+            stencilizer.attributes.type = 'html'
         } else {
             this._state = IN_TEXT_DIRECTIVE
         }
@@ -107,7 +107,7 @@ Stencilizer.prototype._consume = function (c) {
     case BEFORE_TEXT_DIRECTIVE:
         if (c == '<') {
             this._state = BEFORE_HTML_DIRECTIVE
-            directive.attributes.type = 'text'
+            stencilizer.attributes.type = 'text'
         } else {
             this._sectionStart = this._index
             this._state = IN_TEXT_DIRECTIVE
@@ -119,8 +119,8 @@ Stencilizer.prototype._consume = function (c) {
         return true
     case IN_TEXT_DIRECTIVE:
         if (c == ']') {
-            directive.attributes.select = this._getSection()
-            send(this._cbs, directive)
+            stencilizer.attributes.select = this._getSection()
+            send(this._cbs, stencilizer)
             this._state = TEXT
             this._sectionStart = this._index + 1
         }
