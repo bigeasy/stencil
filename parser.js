@@ -109,20 +109,20 @@ Stencilizer.prototype._consume = function (c) {
             this._state = BEFORE_HTML_DIRECTIVE
             directive.attributes.type = 'text'
         } else {
+            this._sectionStart = this._index
             this._state = IN_TEXT_DIRECTIVE
         }
         return true
     case BEFORE_HTML_DIRECTIVE:
         this._state = IN_TEXT_DIRECTIVE
+            this._sectionStart = this._index
         return true
     case IN_TEXT_DIRECTIVE:
         if (c == ']') {
-            directive.attributes.select = directive.text.join('').trim()
+            directive.attributes.select = this._getSection()
             send(this._cbs, directive)
             this._state = TEXT
             this._sectionStart = this._index + 1
-        } else {
-            directive.text.push(c)
         }
         return true
     }
