@@ -28,13 +28,17 @@ function attribute (cbs, name, value) {
     cbs.onattribend()
 }
 
-function send (cbs, stencilizer) {
+function begin (cbs, stencilizer) {
     cbs.onopentagname('div')
     attribute(cbs, 'data-stencil-directive', stencilizer.name)
     for (var name in stencilizer.attributes) {
         attribute(cbs, 'data-stencil-attribute-' + name, stencilizer.attributes[name])
     }
     cbs.onopentagend()
+    cbs.onclosetag('div')
+}
+
+function end (cbs) {
     cbs.onclosetag('div')
 }
 
@@ -120,7 +124,8 @@ Stencilizer.prototype._consume = function (c) {
     case IN_TEXT_DIRECTIVE:
         if (c == ']') {
             stencilizer.attributes.select = this._getSection()
-            send(this._cbs, stencilizer)
+            begin(this._cbs, stencilizer)
+            end(this._cbs)
             this._state = TEXT
             this._sectionStart = this._index + 1
         }
