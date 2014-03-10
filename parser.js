@@ -1,10 +1,12 @@
 var Tokenizer = require('./tokenizer')
 var util = require('util')
 
-var i = 55,
-    TEXT = 0,
+var TEXT = 0,
     BEFORE_ATTRIBUTE_NAME = 7,
     BEFORE_ATTRIBUTE_VALUE = 10,
+
+    i = 55,
+
     BEFORE_DIRECTIVE = i++,
     BEFORE_TEXT_DIRECTIVE = i++,
     BEFORE_HTML_DIRECTIVE = i++,
