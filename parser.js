@@ -17,7 +17,7 @@ var i = 55,
     IN_JAVASCRIPT_STRING_ESCAPE = i++
 
 function whitespace (c) {
-    return c === " " || c === "\n" || c === "\t" || c === "\f" || c === "\r";
+    return c === " " || c === "\n" || c === "\t" || c === "\f" || c === "\r"
 }
 
 function attribute (cbs, name, value) {
@@ -33,7 +33,7 @@ function send (cbs, directive) {
         attribute(cbs, 'data-stencil-attribute-' + name, directive.attributes[name])
     }
     cbs.onopentagend()
-    cbs.onclosetag('div');
+    cbs.onclosetag('div')
 }
 
 function Stencilizer () {
@@ -52,7 +52,7 @@ Stencilizer.prototype._consume = function (c) {
         switch (c) {
         case '[':
             if(this._index > this._sectionStart){
-                this._cbs.ontext(this._getSection());
+                this._cbs.ontext(this._getSection())
             }
             this._state = BEFORE_DIRECTIVE
             return true
@@ -78,7 +78,7 @@ Stencilizer.prototype._consume = function (c) {
         case ')':
             this._cbs.onattribdata(this._getSection())
             this._cbs.onattribend()
-            this._state = BEFORE_ATTRIBUTE_NAME;
+            this._state = BEFORE_ATTRIBUTE_NAME
             break
         }
         return true
@@ -117,7 +117,7 @@ Stencilizer.prototype._consume = function (c) {
             directive.attributes.select = directive.text.join('').trim()
             send(this._cbs, directive)
             this._state = TEXT
-            this._sectionStart = this._index + 1;
+            this._sectionStart = this._index + 1
         } else {
             directive.text.push(c)
         }
