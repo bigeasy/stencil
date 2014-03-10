@@ -41,7 +41,8 @@ function send (cbs, directive) {
 function Stencilizer () {
     this._stencilizer = {
         text: [],
-        attributes: {}
+        attributes: {},
+        state: []
     }
     Tokenizer.call(this)
 }
@@ -74,7 +75,7 @@ Stencilizer.prototype._consume = function (c) {
         case '\'':
         case '"':
             directive.character = c
-            directive.state = this._state
+            directive.state.push(this._state)
             this._state = IN_JAVASCRIPT_STRING
             break
         case ')':
@@ -88,7 +89,7 @@ Stencilizer.prototype._consume = function (c) {
         if (c == '\\') {
             this._state = IN_JAVASCRIPT_STRING_ESCAPE
         } else if (c == directive.character) {
-            this._state = directive.state
+            this._state = directive.state.pop()
         }
         return true
     case IN_JAVASCRIPT_STRING_ESCAPE:
