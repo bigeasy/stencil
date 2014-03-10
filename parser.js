@@ -19,7 +19,7 @@ var TEXT = 0,
     IN_JAVASCRIPT_STRING_ESCAPE = i++
 
 function whitespace (c) {
-    return c === " " || c === "\n" || c === "\t" || c === "\f" || c === "\r"
+    return c === ' ' || c === '\n' || c === '\t' || c === '\f' || c === '\r'
 }
 
 function attribute (cbs, name, value) {
