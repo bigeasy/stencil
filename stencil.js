@@ -150,7 +150,7 @@ exports.createParser = function (base) {
             fs.readFile(path.join(base, source), 'utf8', step())
         }, function (body) {
             var handler = new htmlparser.DefaultHandler()
-            var tokenizer = new (require('./stencilizer'))
+            var tokenizer = new (require('./parser'))
             var parser = new htmlparser.Parser(handler);
             tokenizer._cbs = new TokenizerProxy(parser._tokenizer._cbs)
             parser._tokenizer = tokenizer
