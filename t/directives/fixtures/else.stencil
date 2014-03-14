@@ -1,9 +1,9 @@
 <html>
 <body>
-<% if (value) %>
-  <p>If: <%= value %></p>
-<% else %>
-  <p>Else: <%= value %></p>
-<% end %>
+[ if (value) ] {
+  <p>If: [<< value ]</p>
+} [ else ] {
+  <p>Else: [<< value ]</p>
+}
 </body>
 </html>

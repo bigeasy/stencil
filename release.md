@@ -1,5 +1,6 @@
 ### Issue by Issue
 
+ * Implement `else` in catenation parser. #195.
  * Fix require of `parser.js`. #193.
  * Upgrade Proof to 0.0.44. #192.
  * Split `send` into `begin` and `end`. #191.
