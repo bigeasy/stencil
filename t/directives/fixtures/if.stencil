@@ -1,5 +1,5 @@
 <html>
 <body>
-<p><% if (value) %><%= value %><% end %></p>
+<p>[ if (value) ] { [<< value ] }</p>
 </body>
 </html>

@@ -16,7 +16,15 @@ var TEXT = 0,
     IN_ATTRIBUTE_VALUE_EVAL = i++,
 
     IN_JAVASCRIPT_STRING = i++,
-    IN_JAVASCRIPT_STRING_ESCAPE = i++
+    IN_JAVASCRIPT_STRING_ESCAPE = i++,
+
+    BEFORE_DIRECTIVE_NAME = i++,
+    IN_DIRECTIVE_NAME = i++,
+    IN_DIRECTIVE = i++,
+
+    IN_EXPRESSION = i++,
+
+    BEFORE_BLOCK = i++
 
 function whitespace (c) {
     return c === ' ' || c === '\n' || c === '\t' || c === '\f' || c === '\r'
@@ -35,7 +43,6 @@ function begin (cbs, stencilizer) {
         attribute(cbs, 'data-stencil-attribute-' + name, stencilizer.attributes[name])
     }
     cbs.onopentagend()
-    cbs.onclosetag('div')
 }
 
 function end (cbs) {
@@ -46,7 +53,8 @@ function Stencilizer () {
     this._stencilizer = {
         text: [],
         attributes: {},
-        state: []
+        state: [],
+        blocks: 0
     }
     Tokenizer.call(this)
 }
@@ -57,6 +65,16 @@ Stencilizer.prototype._consume = function (c) {
     switch (this._state) {
     case TEXT:
         switch (c) {
+        case '}':
+            if (stencilizer.blocks) {
+                if(this._index > this._sectionStart){
+                    this._cbs.ontext(this._getSection())
+                }
+                this._sectionStart = this._index + 1
+                stencilizer.blocks--
+                end(this._cbs)
+            }
+            return true
         case '[':
             if(this._index > this._sectionStart){
                 this._cbs.ontext(this._getSection())
@@ -105,7 +123,7 @@ Stencilizer.prototype._consume = function (c) {
             stencilizer.name = 'value'
             stencilizer.attributes.type = 'html'
         } else {
-            this._state = IN_TEXT_DIRECTIVE
+            this._state = BEFORE_DIRECTIVE_NAME
         }
         return true
     case BEFORE_TEXT_DIRECTIVE:
@@ -128,6 +146,58 @@ Stencilizer.prototype._consume = function (c) {
             end(this._cbs)
             this._state = TEXT
             this._sectionStart = this._index + 1
+        }
+        return true
+    case BEFORE_DIRECTIVE_NAME:
+        if (!whitespace(c)) {
+            this._sectionStart = this._index
+            this._state = IN_DIRECTIVE_NAME
+        }
+        return true
+    case IN_DIRECTIVE_NAME:
+        if (whitespace(c)) {
+            stencilizer.name = this._getSection()
+            this._state = IN_DIRECTIVE
+        }
+        return true
+    case IN_DIRECTIVE:
+        switch (c) {
+        case '(':
+            stencilizer.terminator = ')'
+            stencilizer.attribute = 'select'
+            stencilizer.state.push(this._state)
+            this._state = IN_EXPRESSION
+            this._sectionStart = this._index + 1
+            break
+        case ']':
+            begin(this._cbs, stencilizer)
+            this._state = BEFORE_BLOCK
+            this._sectionStart = this._index + 1
+            break
+        }
+        return true
+    case IN_EXPRESSION:
+        if (c == stencilizer.terminator) {
+            this._state = stencilizer.state.pop()
+            stencilizer.attributes[stencilizer.attribute] = this._getSection()
+            return true
+        }
+        switch (c) {
+        case '\'':
+        case '"':
+            stencilizer.character = c
+            stencilizer.state.push(this._state)
+            this._state = IN_JAVASCRIPT_STRING
+            break
+        }
+        return true
+    case BEFORE_BLOCK:
+        if (c == '{') {
+            stencilizer.blocks++
+            this._state = TEXT
+            this._sectionStart = this._index + 1
+        } else if (!whitespace(c)) {
+            throw new Error('not in block')
         }
         return true
     }
