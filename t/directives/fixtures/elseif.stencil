@@ -1,7 +1,7 @@
 <html>
 <body>
-<% if (value == 'a') %><p>A: <%= value %></p><% end %>
-<% elseif (value == 'b') %><p>B: <%= value %></p><% end %>
-<% else %><p>Else: <%= value %></p><% end %>
+[ if (value == 'a') ] { <p>A: [<< value ]</p> }
+[ elseif (value == 'b') ] { <p>B: [<< value ]</p> }
+[ else ] { <p>Else: [<< value ]</p> }
 </body>
 </html>
