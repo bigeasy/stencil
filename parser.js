@@ -23,6 +23,8 @@ var TEXT = 0,
     IN_DIRECTIVE = i++,
 
     IN_EXPRESSION = i++,
+    IN_AS = i++,
+    IN_KEY = i++,
 
     BEFORE_BLOCK = i++
 
@@ -163,8 +165,10 @@ Stencilizer.prototype._consume = function (c) {
     case IN_DIRECTIVE:
         switch (c) {
         case '(':
-            stencilizer.terminator = ')'
-            stencilizer.attribute = 'select'
+        case '|':
+        case '[':
+            stencilizer.terminator = ({ '(': ')', '|': '|', '[': ']' })[c]
+            stencilizer.attribute = ({ '(': 'select', '|': 'as', '[': 'key' })[c]
             stencilizer.state.push(this._state)
             this._state = IN_EXPRESSION
             this._sectionStart = this._index + 1

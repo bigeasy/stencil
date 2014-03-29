@@ -1,5 +1,6 @@
 ### Issue by Issue
 
+ * Implement `each` in catenation parser. #197.
  * Implement `elseif` in catenation parser. #196.
  * Implement `else` in catenation parser. #195.
  * Fix require of `parser.js`. #193.
