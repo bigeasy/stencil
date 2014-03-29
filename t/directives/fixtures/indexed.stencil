@@ -1,9 +1,9 @@
 <html>
 <body>
 <ul>
-<% each (watchers) |watcher| %>
-  <li><%= watcher.login %></li>
-<% end %>
+[ each (watchers) |watcher| ] {
+  <li>[<< watcher.login ]</li>
+}
 </ul>
 </body>
 </html>
