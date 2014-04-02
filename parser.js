@@ -23,6 +23,8 @@ var TEXT = 0,
     IN_DIRECTIVE = i++,
 
     IN_EXPRESSION = i++,
+    IN_IDENTIFIER_START = i++,
+    IN_IDENTIFIER = i++,
     IN_AS = i++,
     IN_KEY = i++,
 
@@ -45,6 +47,7 @@ function begin (cbs, stencilizer) {
         attribute(cbs, 'data-stencil-attribute-' + name, stencilizer.attributes[name])
     }
     cbs.onopentagend()
+    stencilizer.attributes = {}
 }
 
 function end (cbs) {
@@ -173,6 +176,12 @@ Stencilizer.prototype._consume = function (c) {
             this._state = IN_EXPRESSION
             this._sectionStart = this._index + 1
             break
+        case '@':
+            stencilizer.attribute = 'label'
+            stencilizer.state.push(this._state)
+            this._state = IN_IDENTIFIER_START
+            this._sectionStart = this._index + 1
+            break
         case ']':
             begin(this._cbs, stencilizer)
             this._state = BEFORE_BLOCK
@@ -195,13 +204,27 @@ Stencilizer.prototype._consume = function (c) {
             break
         }
         return true
+    case IN_IDENTIFIER_START:
+        if (!/^[a-zA-Z_$]$/.test(c)) {
+            throw new Error
+        }
+        this._state = IN_IDENTIFIER
+        return true
+    case IN_IDENTIFIER:
+        if (!/^[0-9a-zA-Z_$]$/.test(c)) {
+            this._state = stencilizer.state.pop()
+            stencilizer.attributes[stencilizer.attribute] = this._getSection()
+        }
+        return true
     case BEFORE_BLOCK:
         if (c == '{') {
             stencilizer.blocks++
             this._state = TEXT
             this._sectionStart = this._index + 1
         } else if (!whitespace(c)) {
-            throw new Error('not in block')
+            end(this._cbs)
+            this._state = TEXT
+            return false
         }
         return true
     }

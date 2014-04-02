@@ -1,5 +1,6 @@
 ### Issue by Issue
 
+ * Implement `recurse` in catenation parser. #199.
  * Implement `each` in catenation parser. #198.
  * Implement `each` in catenation parser. #197.
  * Implement `elseif` in catenation parser. #196.
