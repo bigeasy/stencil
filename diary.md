@@ -56,8 +56,8 @@ load JSON resources. That should be set in the context by the application or the
 application framework, then pushed through Stencil to the scaffolds that use it.
 
 **Umdate**: Um, but, how are you going to market Stencil? As a command line
-application or as a the cure for a noder's Rails envy? Oh, hai, yes, you just
-bolt on the only way your program will ever work if you need it, but it wasn't
+application or as the cure for a noder's Rails envy? Oh, hai, yes, you just bolt
+on the only way your program will ever work if you need it, but it wasn't
 necessary because in theory, Stencil could be used in burgeoning command line
 generated HTML5 field of applications.
 
