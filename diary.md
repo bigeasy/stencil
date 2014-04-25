@@ -573,7 +573,7 @@ require, so we can push that logic out into the loader.
 
 ## Require
 
-Note that, `require` is for static loading. Can you build using ESprima?
+Note that, `require` is for static loading. Can you build using Esprima?
 
 I'm not going to require AMD, nor am I going to require a particular module
 loader. I'm going to start with Browserify. I'll start there because it is
