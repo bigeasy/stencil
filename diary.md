@@ -585,7 +585,7 @@ It's also nice that it is bound to NPM, but that might also be a drawback.
 Let's start by seeing if we can create a bundle.
 
 Need to add an explicit bundle directive. If you don't provide the directive,
-you are on your own, the source passes thorugh.
+you are on your own, the source passes through.
 
 For now, Stencil is going to depend on jQuery, because it's what I know and it
 gets me to where I need to go as quickly as possible.
