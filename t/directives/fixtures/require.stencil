@@ -1,4 +1,4 @@
-<html %require(salutation: 'greetings.js')>
+<html require:salutation="greetings.js">
 <body>
 <p>[<< salutation ]</p>
 </body>

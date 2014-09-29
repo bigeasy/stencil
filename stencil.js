@@ -118,6 +118,10 @@ TokenizerProxy.prototype.onimportvalue = function (value) {
 }
 
 TokenizerProxy.prototype.onattribname = function (name) {
+    var $
+    if ($ = /^(require|include):(.*)$/.exec(name)) {
+        name = 'data-stencil-' + $[1] + '-' + $[2]
+    }
     this._attribute = { name: name, data: [] }
 }
 
