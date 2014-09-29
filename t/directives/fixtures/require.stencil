@@ -1,5 +1,5 @@
 <html %require(salutation: 'greetings.js')>
 <body>
-<p><%= salutation %></p>
+<p>[<< salutation ]</p>
 </body>
 </html>

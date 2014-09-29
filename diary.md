@@ -1074,3 +1074,49 @@ Not bad. And with HTML abound.
 </body>
 </html>
 ```
+
+## Revisting Includes
+
+Somewhat exsiting.
+
+```
+<html %require(salutation: 'greetings.js')>
+<body>
+<p>[<< salutation ]</p>
+</body>
+</html>
+```
+
+Simpliest.
+
+```
+<html require:salutation="greetings">
+<body>
+<p>[<< salutation ]</p>
+</body>
+</html>
+```
+
+Might be easier with the current parser to use a sigil, or in keeping with the
+square brackets.
+
+```
+<html [ require salutation = "greetings" ]>
+<body>
+<p>[<< salutation ]</p>
+</body>
+</html>
+```
+
+Totally cheating to make it the exact JavaScript more or less.
+
+```
+<html [ salutation = require('greetings') ]>
+<body>
+<p>[<< salutation ]</p>
+</body>
+</html>
+```
+
+While might translate to a paraemter defined by an evaluation and visible for
+the scope, so that both `require` and `include` are scoped and visible.
