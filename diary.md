@@ -1118,5 +1118,5 @@ Totally cheating to make it the exact JavaScript more or less.
 </html>
 ```
 
-While might translate to a paraemter defined by an evaluation and visible for
+While might translate to a parameter defined by an evaluation and visible for
 the scope, so that both `require` and `include` are scoped and visible.
