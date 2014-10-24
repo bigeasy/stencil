@@ -1077,7 +1077,7 @@ Not bad. And with HTML abound.
 
 ## Revisting Includes
 
-Somewhat exsiting.
+Somewhat existing.
 
 ```
 <html %require(salutation: 'greetings.js')>
@@ -1087,7 +1087,7 @@ Somewhat exsiting.
 </html>
 ```
 
-Simpliest.
+Simplest.
 
 ```
 <html require:salutation="greetings">
