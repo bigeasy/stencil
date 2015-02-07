@@ -1,4 +1,5 @@
 ### Issue by Issue
 
+ * Implement bodied tag in catenation language. #207.
  * Implement minimal tag in catenation language. #206.
  * Implement tag attributes in catenation language. #205.
