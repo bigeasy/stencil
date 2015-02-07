@@ -1,5 +1,5 @@
-<html xmlns:s="stencil" %include(d: "_directive.stencil")>
+<html include:d="_directive.stencil">
 <body>
-<% d.directive %><p><%= (greeting) %></p><% end %>
+[ d.directive ]{ <p>[<< greeting ]</p> }
 </body>
 </html>
