@@ -3,6 +3,7 @@ var util = require('util')
 
 var TEXT = 0,
     BEFORE_ATTRIBUTE_NAME = 7,
+    IN_ATTRIBUTE_NAME = 8,
     BEFORE_ATTRIBUTE_VALUE = 10,
 
     i = 55,
@@ -54,6 +55,24 @@ function end (cbs) {
     cbs.onclosetag('div')
 }
 
+function AttributeCBS (cbs, stencilizer) {
+    this.cbs = cbs
+    this._stencilizer = stencilizer
+    this._data = []
+}
+
+AttributeCBS.prototype.onattribname = function (name) {
+    this._name = name
+}
+
+AttributeCBS.prototype.onattribdata = function (data) {
+    this._data.push(data)
+}
+
+AttributeCBS.prototype.onattribend = function () {
+    this._stencilizer.attributes[this._name] = this._data.join('')
+}
+
 function Stencilizer () {
     this._stencilizer = {
         text: [],
@@ -88,9 +107,16 @@ Stencilizer.prototype._consume = function (c) {
             return true
         }
         return false
+    case BEFORE_ATTRIBUTE_NAME:
+        if (this._inAttributeDirective) {
+            this._cbs = this._cbs.cbs
+            this._inAttributeDirective = false
+            this._state = IN_DIRECTIVE
+            return this._consume(c)
+        }
+        return false
     case BEFORE_ATTRIBUTE_VALUE:
-        switch (c) {
-        case '(':
+        if (c === '(') {
             this._cbs.onattribeval()
             this._sectionStart = this._index + 1
             this._state = IN_ATTRIBUTE_VALUE_EVAL
@@ -166,27 +192,27 @@ Stencilizer.prototype._consume = function (c) {
         }
         return true
     case IN_DIRECTIVE:
-        switch (c) {
-        case '(':
-        case '|':
-        case '[':
+        if (c === '(' || c === '|' || c === '[') {
             stencilizer.terminator = ({ '(': ')', '|': '|', '[': ']' })[c]
             stencilizer.attribute = ({ '(': 'select', '|': 'as', '[': 'key' })[c]
             stencilizer.state.push(this._state)
             this._state = IN_EXPRESSION
             this._sectionStart = this._index + 1
-            break
-        case '@':
+        } else if (c === '@') {
             stencilizer.attribute = 'label'
             stencilizer.state.push(this._state)
             this._state = IN_IDENTIFIER_START
             this._sectionStart = this._index + 1
             break
-        case ']':
+        } else if (c === ']') {
             begin(this._cbs, stencilizer)
             this._state = BEFORE_BLOCK
             this._sectionStart = this._index + 1
-            break
+        } else if (!whitespace(c)) {
+            this._inAttributeDirective = true
+            this._cbs = new AttributeCBS(this._cbs, stencilizer)
+            this._state = IN_ATTRIBUTE_NAME
+            this._sectionStart = this._index
         }
         return true
     case IN_EXPRESSION:
