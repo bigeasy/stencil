@@ -1,7 +1,7 @@
-<html %include(c: "_conditional.stencil")>
+<html include:c="_conditional.stencil">
 <body>
-<% if (greeting) %>
-<% c.conditional %><p>Hello, World!</p><% end %>
-<% end %>
+[ if (greeting) ] {
+[ c.conditional ] { <p>Hello, World!</p> }
+}
 </body>
 </html>
