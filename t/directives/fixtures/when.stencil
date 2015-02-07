@@ -1,20 +1,20 @@
 <html>
 <body>
-<% when (this.article) %>
+[ when (this.article) ] {
   <div class="article">
-    <h1><%= article.title %></h1>
-    <p class="sub-title">By <%= article.author %> on <%= article.publishedAt %></p>
+    <h1>[<< article.title ]</h1>
+    <p class="sub-title">By [<< article.author ] on [<< article.publishedAt ]</p>
     <div>
-      <%- article.body %>
+      [< article.body ]
     </div>
   </div>
-<% end %>
+}
 <div class="sidebar">
   <h2>Recent Comments</h2>
   <ul>
-    <% each (recents) |comment| %>
-      <li><%= comment.snippet %> ~ <%= comment.author %> on <%= comment.articleTitle %></li>
-    <% end %>
+    [ each (recents) |comment| ] {
+      <li>[<< comment.snippet ] ~ [<< comment.author ] on [<< comment.articleTitle ]</li>
+    }
   </ul>
 </div>
 </body>

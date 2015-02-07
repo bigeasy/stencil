@@ -1,3 +1,3 @@
 ### Issue by Issue
 
- * Implement `require` in catenation parser. #200.
+ * Implement `when` in catenation parser. #201.
