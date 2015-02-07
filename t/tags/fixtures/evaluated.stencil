@@ -1,5 +1,5 @@
-<html %include(e: "_evaluated.stencil")>
+<html include:e="_evaluated.stencil">
 <body>
-<% e.loop (items) |item| display="item.value" %><% end %>
+[ e.loop (items) |item| display="item.value" ]{}
 </body>
 </html>

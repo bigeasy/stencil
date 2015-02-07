@@ -69,8 +69,14 @@ AttributeCBS.prototype.onattribdata = function (data) {
     this._data.push(data)
 }
 
+AttributeCBS.prototype.onattribval = function (data) {
+}
 AttributeCBS.prototype.onattribend = function () {
     this._stencilizer.attributes[this._name] = this._data.join('')
+}
+
+AttributeCBS.prototype.onattribeval = function () {
+    this._name = 's:' + this._name
 }
 
 function Stencilizer () {
