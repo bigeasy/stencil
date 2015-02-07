@@ -1,5 +1,6 @@
 ### Issue by Issue
 
+ * Implement sub tags in catenation language. #209.
  * Implement evaulated tag attributes in catenation language. #208.
  * Implement bodied tag in catenation language. #207.
  * Implement minimal tag in catenation language. #206.

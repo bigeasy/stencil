@@ -1,6 +1,6 @@
-<% library %>
-  <% tag @sub %>
-    <% tag @child %><p>Hello, World!</p><% end %>
-    <% block %><% end %>
-  <% end %>
-<% end %>
+[ library ] {
+  [ tag @sub ] {
+    [ tag @child ] { <p>Hello, World!</p> }
+    [ block ] {}
+  }
+}
