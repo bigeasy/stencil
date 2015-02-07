@@ -203,7 +203,6 @@ Stencilizer.prototype._consume = function (c) {
             stencilizer.state.push(this._state)
             this._state = IN_IDENTIFIER_START
             this._sectionStart = this._index + 1
-            break
         } else if (c === ']') {
             begin(this._cbs, stencilizer)
             this._state = BEFORE_BLOCK

@@ -1,3 +1,3 @@
 ### Issue by Issue
 
- * Implement tags in catenation parser. #203.
+ * Implement tag attributes in catenation language. #205.

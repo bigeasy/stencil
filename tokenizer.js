@@ -789,6 +789,7 @@ Tokenizer.prototype.write = function(chunk){
 		}
 
 		else {
+            console.log(this._state)
 			this._cbs.onerror(Error("unknown _state"), this._state);
 		}
 
