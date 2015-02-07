@@ -1,3 +1,3 @@
-<% library %>
-  <% tag label="minimal" %><p>Hello, World!</p><% end %>
-<% end %>
+[ library ] {
+ [ tag @minimal ]{ <p>Hello, World!</p> }
+}
