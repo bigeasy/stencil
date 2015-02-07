@@ -5,8 +5,8 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
 
   step(function () {
 
-    xstencil.generate('fixtures/require.xstencil', { greeting: "Hello, World!" }, step());
-    _stencil.generate('fixtures/require.stencil', { greeting: "Hello, World!" }, step());
+    xstencil.generate('fixtures/require.xstencil', { greeting: 'Hello, World!' }, step());
+    _stencil.generate('fixtures/require.stencil', { greeting: 'Hello, World!' }, step());
     fixture('fixtures/require-generate.xml', step());
     fixture('fixtures/require-regenerate.xml', step());
 
@@ -20,7 +20,7 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     }, function (xrequire) {
 
-      xstencil.regenerate(xrequire, { greeting: "Hello, Nurse!" }, step());
+      xstencil.regenerate(xrequire, { greeting: 'Hello, Nurse!' }, step());
 
     }, function (xrequire) {
 
@@ -36,7 +36,7 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     }, function (require) {
 
-      _stencil.regenerate(require, { greeting: "Hello, Nurse!" }, step());
+      _stencil.regenerate(require, { greeting: 'Hello, Nurse!' }, step());
 
     }, function (require) {
 

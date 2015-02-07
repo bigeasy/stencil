@@ -1,4 +1,4 @@
-var xmldom = require("xmldom"), fs = require("fs");
+var xmldom = require('xmldom'), fs = require('fs');
 
 function visit (array, element) {
   array.push({ start: true, element: element, nodeType: 1 });
@@ -22,7 +22,7 @@ function attributes (element) {
   for (i = 0, I = element.attributes.length; i < I; i++) {
     attr = element.attributes.item(i);
     name = attr.localName;
-    if (attr.namespaceURI) name += ":(" + attr.namespaceURI + ")";
+    if (attr.namespaceURI) name += ':(' + attr.namespaceURI + ')';
     attrs[name] = attr;
   }
   return attrs;
@@ -47,10 +47,10 @@ function compare (actual, expected) {
     } while ((e = e.parentNode) && e.nodeType == 1);
     throw new Error(stack.join('/'));
   }
-  if (typeof actual == "string") {
+  if (typeof actual == 'string') {
     actual = new (xmldom.DOMParser)().parseFromString(actual).documentElement;
   }
-  if (typeof expected == "string") {
+  if (typeof expected == 'string') {
     expected = new (xmldom.DOMParser)().parseFromString(expected).documentElement;
   }
   var e, a, aa, ea, an, en, name, at = [], et = [], remainder;
@@ -69,7 +69,7 @@ function compare (actual, expected) {
       }
       if (a.nodeType != e.nodeType) return abend(e);
       if (a.start != e.start) return abend(e);
-      if (at.join("").trim() != et.join("").trim()) return abend(e);
+      if (at.join('').trim() != et.join('').trim()) return abend(e);
       if (a.nodeType == 1) {
         an = a.element;
         en = e.element;
@@ -91,16 +91,16 @@ function compare (actual, expected) {
     case 8:
       break;
     default:
-      throw new Error("Unexpected nodeType: " + e.nodeType);
+      throw new Error('Unexpected nodeType: ' + e.nodeType);
     }
   }
   while (actual.length) {
     a = actual.shift();
-    if (a.nodeType != 3 || a.nodeValue.trim() != "") return abend(e);
+    if (a.nodeType != 3 || a.nodeValue.trim() != '') return abend(e);
   }
   while (expected.length) {
     e = expected.shift();
-    if (e.nodeType != 3 || e.nodeValue.trim() != "") return abend(e);
+    if (e.nodeType != 3 || e.nodeValue.trim() != '') return abend(e);
   }
   return true;
 }

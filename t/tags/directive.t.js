@@ -5,8 +5,8 @@ require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) 
 
   step(function () {
 
-    xstencil.generate('fixtures/directive.xstencil', { greeting: "Hello, World!" }, step());
-    _stencil.generate('fixtures/directive.stencil', { greeting: "Hello, World!" }, step());
+    xstencil.generate('fixtures/directive.xstencil', { greeting: 'Hello, World!' }, step());
+    _stencil.generate('fixtures/directive.stencil', { greeting: 'Hello, World!' }, step());
     fixture('fixtures/directive.xml', step());
 
   }, function (xdirective, directive, expected) {
@@ -15,7 +15,7 @@ require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     step(function () {
 
-      xstencil.regenerate(xdirective, { greeting: "Hello, World!" }, step());
+      xstencil.regenerate(xdirective, { greeting: 'Hello, World!' }, step());
 
     }, function (xdirective) {
 
@@ -24,7 +24,7 @@ require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     }, function (xdirective) {
 
-      xstencil.regenerate(xdirective, { greeting: "Hello, World!" }, step());
+      xstencil.regenerate(xdirective, { greeting: 'Hello, World!' }, step());
 
     }, function (xdirective) {
 
@@ -35,7 +35,7 @@ require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     step(function () {
 
-      _stencil.regenerate(directive, { greeting: "Hello, World!" }, step());
+      _stencil.regenerate(directive, { greeting: 'Hello, World!' }, step());
 
     }, function (directive) {
 
@@ -44,7 +44,7 @@ require('./proof')(6, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     }, function (directive) {
 
-      _stencil.regenerate(directive, { greeting: "Hello, World!" }, step());
+      _stencil.regenerate(directive, { greeting: 'Hello, World!' }, step());
 
     }, function (directive) {
 

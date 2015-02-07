@@ -2,18 +2,18 @@
 
 require('./proof')(10, function (step, xstencil, _stencil, fixture, ok, compare) {
   var fs = require('fs'), article = {
-    title: "Now Is the Time",
-    publishedAt: "just now",
-    author: "John Smith",
-    body: "Now is the time for all good men to com to the aid of their country."
+    title: 'Now Is the Time',
+    publishedAt: 'just now',
+    author: 'John Smith',
+    body: 'Now is the time for all good men to com to the aid of their country.'
   }, recents = [{
-    articleTitle: "Nothing to Fear",
-    author: "John Smith",
-    snippet: "I like the part where..."
+    articleTitle: 'Nothing to Fear',
+    author: 'John Smith',
+    snippet: 'I like the part where...'
   }], extraComment = {
-    articleTitle: "Nothing to Fear",
-    author: "Sally Smith",
-    snippet: "I don't know about this..."
+    articleTitle: 'Nothing to Fear',
+    author: 'Sally Smith',
+    snippet: 'I don\'t know about this...'
   };
 
   step(function () {

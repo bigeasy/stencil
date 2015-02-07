@@ -4,19 +4,19 @@ require('./proof')(10, function (step, xstencil, _stencil, fixture, ok, compare)
   var spliced, fs = require('fs'), watchers =
   [
     {
-      "login": "bigeasy",
-      "url": "https://api.github.com/users/bigeasy",
-      "id": 34673
+      'login': 'bigeasy',
+      'url': 'https://api.github.com/users/bigeasy',
+      'id': 34673
     },
     {
-      "login": "chadsmith",
-      "url": "https://api.github.com/users/chadsmith",
-      "id": 187174
+      'login': 'chadsmith',
+      'url': 'https://api.github.com/users/chadsmith',
+      'id': 187174
     },
     {
-      "login": "azampagl",
-      "url": "https://api.github.com/users/azampagl",
-      "id": 43206
+      'login': 'azampagl',
+      'url': 'https://api.github.com/users/azampagl',
+      'id': 43206
     }
   ];
 

@@ -5,7 +5,7 @@ require('./proof')(3, function (step, context, fixture, ok, compare) {
 
   step(function () {
 
-    context.generate('fixtures/layedout.stencil', { greeting: "Hello, World!" }, step());
+    context.generate('fixtures/layedout.stencil', { greeting: 'Hello, World!' }, step());
     fixture('fixtures/layedout.xml', step());
 
   }, function (actual, expected) {

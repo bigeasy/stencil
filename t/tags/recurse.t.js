@@ -5,7 +5,7 @@ require('./proof')(3, function (step, context, fixture, ok, compare) {
   var fs = require('fs');
   var tree = {
     directory: {
-      name: "/",
+      name: '/',
       children: [{
         name: 'etc',
         children: [{
@@ -31,7 +31,7 @@ require('./proof')(3, function (step, context, fixture, ok, compare) {
 
   }, function (actual, expected) {
 
-    console.log(actual.document + "");
+    console.log(actual.document + '');
     ok(compare(actual.document, expected), 'generate');
 
     step(function() {

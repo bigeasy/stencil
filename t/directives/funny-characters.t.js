@@ -5,7 +5,7 @@ require('./proof')(2, function (step, xstencil, fixture, ok, compare) {
 
   step(function () {
 
-    xstencil.generate('fixtures/funny-characters.stencil', { greeting: "Hello, World!" }, step());
+    xstencil.generate('fixtures/funny-characters.stencil', { greeting: 'Hello, World!' }, step());
     fixture('fixtures/funny-characters.xml', step());
 
   }, function (actual, expected) {
@@ -18,7 +18,7 @@ require('./proof')(2, function (step, xstencil, fixture, ok, compare) {
 
     }, function (actual) {
 
-      xstencil.regenerate(actual, { greeting: "Hello, World!" }, step());
+      xstencil.regenerate(actual, { greeting: 'Hello, World!' }, step());
 
     }, function (actual) {
 

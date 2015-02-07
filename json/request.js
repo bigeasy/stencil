@@ -1,4 +1,4 @@
-var http = require("http"), url = require("url");
+var http = require('http'), url = require('url');
 exports.create = function create (base) {
   base = base.replace(/\/$/, '');
   return function json (file, callback) {

@@ -6,9 +6,9 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
   step(function () {
 
     xstencil.generate('fixtures/with.xstencil', {
-      person: { firstName: "Fred", lastName: "Flintstone" } }, step());
+      person: { firstName: 'Fred', lastName: 'Flintstone' } }, step());
     _stencil.generate('fixtures/with.stencil', {
-      person: { firstName: "Fred", lastName: "Flintstone" } }, step());
+      person: { firstName: 'Fred', lastName: 'Flintstone' } }, step());
     fixture('fixtures/with-generate.xml', step());
     fixture('fixtures/with-update.xml', step());
 
@@ -18,7 +18,7 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     step(function () {
       xstencil.regenerate(xwith, {
-        person: { firstName: "Barney", lastName: "Rubble" } }, step());
+        person: { firstName: 'Barney', lastName: 'Rubble' } }, step());
 
     }, function (xwith) {
 
@@ -30,7 +30,7 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     step(function () {
       _stencil.regenerate(_with, {
-        person: { firstName: "Barney", lastName: "Rubble" } }, step());
+        person: { firstName: 'Barney', lastName: 'Rubble' } }, step());
 
     }, function (_with) {
 

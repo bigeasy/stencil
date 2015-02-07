@@ -85,8 +85,8 @@ TokenizerProxy.prototype.ondirective = function (directive) {
     }
     if ('end' != directive.name) {
         // todo: single quotes.
-        this._cbs.onopentagname("div")
-        this._cbs.onattribname("data-stencil-directive")
+        this._cbs.onopentagname('div')
+        this._cbs.onattribname('data-stencil-directive')
         this._cbs.onattribvalue(directive.name)
         for (var name in directive.attributes) {
             this._cbs.onattribname(name)
@@ -100,7 +100,7 @@ TokenizerProxy.prototype.ondirective = function (directive) {
 }
 
 TokenizerProxy.prototype.onimportname = function (name) {
-    if (name != "require" && name != "include") {
+    if (name != 'require' && name != 'include') {
         throw new Error(name)
     }
     this._importName = name;

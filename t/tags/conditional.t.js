@@ -5,8 +5,8 @@ require('./proof')(8, function (step, xstencil, _stencil, fixture, ok, compare) 
 
   step(function () {
 
-    xstencil.generate('fixtures/conditional.xstencil', { greeting: "Hello, World!" }, step());
-    _stencil.generate('fixtures/conditional.stencil', { greeting: "Hello, World!" }, step());
+    xstencil.generate('fixtures/conditional.xstencil', { greeting: 'Hello, World!' }, step());
+    _stencil.generate('fixtures/conditional.stencil', { greeting: 'Hello, World!' }, step());
     fixture('fixtures/conditional-true.xml', step());
     fixture('fixtures/conditional-false.xml', step());
 
@@ -21,7 +21,7 @@ require('./proof')(8, function (step, xstencil, _stencil, fixture, ok, compare) 
     }, function (xconditional) {
 
       ok(compare(xconditional.document, falsey), 'xstencil false');
-      xstencil.regenerate(xconditional, { greeting: "Hello, World!" }, step());
+      xstencil.regenerate(xconditional, { greeting: 'Hello, World!' }, step());
 
     }, function (xconditional) {
 
@@ -30,7 +30,7 @@ require('./proof')(8, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     }, function (xconditional) {
 
-      xstencil.regenerate(xconditional, { greeting: "Hello, World!" }, step());
+      xstencil.regenerate(xconditional, { greeting: 'Hello, World!' }, step());
 
     }, function (xconditional) {
 
@@ -47,7 +47,7 @@ require('./proof')(8, function (step, xstencil, _stencil, fixture, ok, compare) 
     }, function (conditional) {
 
       ok(compare(conditional.document, falsey), 'stencil false');
-      _stencil.regenerate(conditional, { greeting: "Hello, World!" }, step());
+      _stencil.regenerate(conditional, { greeting: 'Hello, World!' }, step());
 
     }, function (conditional) {
 
@@ -56,7 +56,7 @@ require('./proof')(8, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     }, function (conditional) {
 
-      _stencil.regenerate(conditional, { greeting: "Hello, World!" }, step());
+      _stencil.regenerate(conditional, { greeting: 'Hello, World!' }, step());
 
     }, function (conditional) {
 

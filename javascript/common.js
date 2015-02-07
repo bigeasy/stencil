@@ -1,4 +1,4 @@
-var path = require("path");
+var path = require('path');
 exports.create = function create (base) {
   return function javascript (module, callback) {
     try {

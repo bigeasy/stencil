@@ -6,10 +6,10 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
   step(function () {
 
     xstencil.generate('fixtures/attribute.xstencil', {
-        target: null, src: "world.png", alt: "Hello, World!"
+        target: null, src: 'world.png', alt: 'Hello, World!'
     }, step());
     _stencil.generate('fixtures/attribute.stencil', {
-        target: null, src: "world.png", alt: "Hello, World!"
+        target: null, src: 'world.png', alt: 'Hello, World!'
     }, step());
     fixture('fixtures/attribute-generate.xml', step());
     fixture('fixtures/attribute-regenerate.xml', step());
@@ -20,7 +20,7 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     step(function () {
       xstencil.regenerate(xattribute, {
-        target: "_self", src: "nurse.png", alt: "Hello, Nurse!"
+        target: '_self', src: 'nurse.png', alt: 'Hello, Nurse!'
       }, step());
 
     }, function (xattribute) {
@@ -29,13 +29,13 @@ require('./proof')(4, function (step, xstencil, _stencil, fixture, ok, compare) 
 
     });
 
-//    console.log("x-->" + attribute.document + "<-")
- //   console.log("z" + generate)
+//    console.log('x-->' + attribute.document + '<-')
+ //   console.log('z' + generate)
     ok(compare(attribute.document, generate), 'stencil generate');
 
     step(function () {
       _stencil.regenerate(attribute, {
-        target: "_self", src: "nurse.png", alt: "Hello, Nurse!"
+        target: '_self', src: 'nurse.png', alt: 'Hello, Nurse!'
       }, step());
 
     }, function (attribute) {

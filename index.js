@@ -1,6 +1,6 @@
 ! function (definition) {
-  if (typeof module == "object" && module.exports) definition(require, module.exports, module);
-  else if (typeof define == "function" && typeof define.amd == "object") define(definition)
+  if (typeof module == 'object' && module.exports) definition(require, module.exports, module);
+  else if (typeof define == 'function' && typeof define.amd == 'object') define(definition)
 } (function (require, exports, module) { exports.create = function (javascript, xml, json, html) {
   var slice = [].slice, templates = {};
 
@@ -12,7 +12,7 @@
 
   function get (url, property, callback) {
     var xhr = new XMLHttpRequest(), done;
-    xhr.open( "GET", url, true );
+    xhr.open( 'GET', url, true );
     xhr.onerror = function (event) {
       console.log(event);
     }
@@ -63,13 +63,13 @@
   function say () { console.log.apply(console, slice.call(arguments, 0)) }
 
   function validator (callback) {
-    if (typeof callback != "function") throw new Error("no callback");
+    if (typeof callback != 'function') throw new Error('no callback');
     return function (forward) { return check(callback, forward) }
   }
 
   function check (callback, forward) {
-    if (typeof callback != "function") throw new Error("no callback");
-    if (typeof forward != "function") throw new Error("no forward");
+    if (typeof callback != 'function') throw new Error('no callback');
+    if (typeof forward != 'function') throw new Error('no forward');
     return function (error) {
       if (error) {
         callback(error);
@@ -143,7 +143,7 @@
       parameters.push.apply(parameters, Object.keys(context));
       functions[source] = compiled = {
         parameters: parameters,
-        expression: Function.apply(Function, parameters.concat([ "return " + source ]))
+        expression: Function.apply(Function, parameters.concat([ 'return ' + source ]))
       }
     } else {
       parameters = compiled.parameters;
@@ -156,7 +156,7 @@
 
   function invoke (result, context, callback) {
     try {
-      if (typeof result == "function") {
+      if (typeof result == 'function') {
         result.call(context, callback);
       } else {
         callback(null, result);
@@ -193,7 +193,7 @@
           }
           path.push(child.nodeValue);
           follow(page, path).begin = child;
-        } else if (child.nodeValue == "?") {
+        } else if (child.nodeValue == '?') {
           follow(page, path).end = child;
           path.pop();
         }
@@ -270,15 +270,15 @@
 
   function each (source, parent, frames, page, template, includes, labeled,
            directive, element, context, path, generating, callback) {
-    var idSource = element.getAttribute("key").trim(),
-        as = element.getAttribute("as").trim(),
-        label = element.getAttribute("label").trim(),
+    var idSource = element.getAttribute('key').trim(),
+        as = element.getAttribute('as').trim(),
+        label = element.getAttribute('label').trim(),
         head = follow(page, path), items = head.items,
         previous = head.end, parentNode = previous.parentNode,
         base = path.slice(0, path.length - 1),
         markers = follow(page, base).markers,
         index = 0,
-        wrap = element.localName == "with",
+        wrap = element.localName == 'with',
         okay = validator(callback);
 
     if (label) {
@@ -307,7 +307,7 @@
           else scribble(index++);
         } else {
           for (id in items) {
-            part = directive.id + ";" + id;
+            part = directive.id + ';' + id;
             marker = follow(page, base.concat([ part ]));
             erase(marker.begin, marker.end.nextSibling);
             delete markers[part];
@@ -322,7 +322,7 @@
         delete items[id];
         head.items[id] = true;
 
-        var qualified = directive.id + ";" + id,
+        var qualified = directive.id + ';' + id,
             path = base.concat([ qualified ]),
             marker = follow(page, path);
 
@@ -352,10 +352,10 @@
     // context.
     value: function (parent, frames, page, template, includes, labeled,
                      directive, element, context, path, generating, callback) {
-      var source = element.getAttribute("select").trim(), marker = follow(page, path);
+      var source = element.getAttribute('select').trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
-        var value = element.getAttribute("type") == "html"
+        var value = element.getAttribute('type') == 'html'
                   ? html(page.document, value)
                   : page.document.createTextNode(value);
         // Delete the directive body.
@@ -369,7 +369,7 @@
     },
     if: function (parent, frames, page, template, includes, labeled,
                   directive, element, context, path, generating, callback) {
-      var source = element.getAttribute("select").trim(), marker = follow(page, path);
+      var source = element.getAttribute('select').trim(), marker = follow(page, path);
 
       evaluate(source, context, check(callback, function (value) {
         parent.condition = !!value;
@@ -394,7 +394,7 @@
     },
     else: function (parent, frames, page, template, includes, labeled,
                     directive, element, context, path, generating, callback) {
-      element.setAttribute("select", "true");
+      element.setAttribute('select', 'true');
       handlers.elseif(parent, frames, page, template, includes, labeled,
                       directive, element, context, path, generating, callback);
     },
@@ -406,36 +406,36 @@
         follow(page, path).markers = {};
         callback();
       } else {
-        handlers["if"](parent, frames, page, template, includes, labeled,
+        handlers['if'](parent, frames, page, template, includes, labeled,
                        directive, element, context, path, generating, callback);
       }
     },
     each: function (parent, frames, page, template, includes, labeled,
                     directive, element, context, path, generating, callback) {
-      var source = element.getAttribute("select");
+      var source = element.getAttribute('select');
       each(source, parent, frames, page, template, includes, labeled,
            directive, element, context, path, generating, callback);
     },
     with: function (parent, frames, page, template, includes, labeled,
                     directive, element, context, path, generating, callback) {
-      var source = element.getAttribute("select");
+      var source = element.getAttribute('select');
       each(source, parent, frames, page, template, includes, labeled,
            directive, element, context, path, generating, callback);
     },
     recurse: function (parent, frames, page, template, includes, labeled, directive, element,
                    context, path, generating, callback) {
-      var visit = labeled[element.getAttribute("label")],
-          source = element.getAttribute("select");
+      var visit = labeled[element.getAttribute('label')],
+          source = element.getAttribute('select');
       frames = [visit.frame].concat(frames);
       each(source, parent, frames, page, template, includes, labeled,
             visit.directive, visit.directive.element, context, path, generating, callback);
     },
     when: function (parent, frames, page, template, includes, labeled, directive, element,
                      context, path, generating, callback) {
-      var source = element.getAttribute("select").trim(), marker = follow(page, path);
+      var source = element.getAttribute('select').trim(), marker = follow(page, path);
       evaluate(source, context, check(callback, function (value) {
         if (value) {
-          handlers["if"](parent, frames, page, template, includes, labeled, directive, element,
+          handlers['if'](parent, frames, page, template, includes, labeled, directive, element,
                          context, path, generating, callback);
         } else {
           if (generating) {
@@ -448,7 +448,7 @@
     },
     block: function (parent, frames, page, template, includes, labeled, directive, element,
                      context, path, generating, callback) {
-      var name = element.getAttribute("label"), marker, fragment, definition,
+      var name = element.getAttribute('label'), marker, fragment, definition,
           caller = frames[0], prototype, i, I, params, tmp = {};
       if (name) {
         definition = caller.directive.directives.filter(function (directive) {
@@ -493,7 +493,7 @@
       }
       directive = extend({}, directive);
       directive.frame = frames[0];
-      includes[includes[template.url]].tags[element.getAttribute("label")] = directive;
+      includes[includes[template.url]].tags[element.getAttribute('label')] = directive;
       callback();
     }
   }
@@ -542,7 +542,7 @@
 
       function operate (operation) {
         switch (operation && operation.type) {
-        case "require":
+        case 'require':
           javascript(absolutize(template.url + '/..', operation.href), okay(function (module) {
             invoke(module, context, okay(function (value) {
               context[operation.name] = value;
@@ -550,7 +550,7 @@
             }));
           }));
           break;
-        case "include":
+        case 'include':
           fetch(absolutize(template.url + '/..', operation.href), okay(function (included) {
             // See `tag` directive handler for where we need to lookup the URL
             // of the included document by the URI specified as the attribute
@@ -562,7 +562,7 @@
             operate(operations.shift());
           }));
           break;
-        case "attribute":
+        case 'attribute':
           evaluate(operation.value, context, okay(function (value) {
             if (value == null) {
               element.removeAttribute(operation.name);
@@ -703,14 +703,14 @@
       for (var i = 0; i < node.attributes.length; i++) {
         var attr = node.attributes[i], protocol;
         switch (attr.namespaceURI) {
-        case "http://www.w3.org/2000/xmlns/":
+        case 'http://www.w3.org/2000/xmlns/':
           if (protocol = attr.nodeValue.split(/:/).shift()) {
             var href = normalize(attr.nodeValue.substring(protocol.length + 1));
-            if (!"require".indexOf(protocol)) {
-              operations.unshift({ type: "require", href: href, name: attr.localName });
+            if (!'require'.indexOf(protocol)) {
+              operations.unshift({ type: 'require', href: href, name: attr.localName });
               namespaces[attr.nodeValue] = true;
-            } else if (!"include".indexOf(protocol)) {
-              operations.unshift({ type: "include", href: href, uri: attr.nodeValue });
+            } else if (!'include'.indexOf(protocol)) {
+              operations.unshift({ type: 'include', href: href, uri: attr.nodeValue });
               namespaces[attr.nodeValue] = true;
             }
           }
@@ -719,15 +719,15 @@
             i--;
           }
           break;
-        case "stencil":
-          attributes.push({ type: "attribute", name: attr.localName, value: attr.nodeValue });
+        case 'stencil':
+          attributes.push({ type: 'attribute', name: attr.localName, value: attr.nodeValue });
           break;
         }
       }
 
       // Clear out the calculated attribute declarations from the prototype.
       attributes.forEach(function (attribute) {
-        node.removeAttributeNS("stencil", attribute.name);
+        node.removeAttributeNS('stencil', attribute.name);
       });
 
       var directive = { operations: operations.concat(attributes), directives: [], tags: {} };
@@ -741,7 +741,7 @@
       // discovered calculated attributes. If we're not a Stencil directive, we
       // insert a placeholder marker as a child of the element.
       if (namespaces[node.namespaceURI] || attributes.length) {
-        directive.id = url + ":" + (identifier++);
+        directive.id = url + ':' + (identifier++);
       }
 
       // Otherwise, we have operations that will alter the variable context, but
@@ -763,8 +763,8 @@
         directives.push(directive);
         directives = directive.directives;
 
-        if (node.namespaceURI == "stencil" && node.localName == "tag") {
-          tags[node.getAttribute("label")] = directive;
+        if (node.namespaceURI == 'stencil' && node.localName == 'tag') {
+          tags[node.getAttribute('label')] = directive;
           tags = directive.tags;
         }
       }
@@ -782,7 +782,7 @@
           }
           removeChild(parentNode, node);
         }
-        return insertBefore(parentNode, document.createComment("?"), end);
+        return insertBefore(parentNode, document.createComment('?'), end);
       }
       return node;
     }
@@ -849,7 +849,7 @@
 
       function result () {
         insertBefore(page.document, page.fragment);
-        var comment = page.document.createComment("stencil:" + url);
+        var comment = page.document.createComment('stencil:' + url);
         insertBefore(page.document.documentElement, comment, page.document.documentElement.firstChild);
         callback(null, page);
       }

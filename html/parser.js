@@ -1,12 +1,12 @@
-var htmlparser = require("htmlparser2");
+var htmlparser = require('htmlparser2');
 
 function copy (document, parent, dom) {
   dom.forEach(function (node) {
     switch (node.type) {
-    case "text":
+    case 'text':
       var child = document.createTextNode(node.data);
       break;
-    case "tag":
+    case 'tag':
       var child = document.createElement(node.name);
       for (var key in node.attribs) {
         child.setAttribute(key, node.attribs[key]);

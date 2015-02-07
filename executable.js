@@ -19,17 +19,17 @@ exports.createServer = function (options, callback) {
         })
         .use(connect.static(options.directory))
                        /*
-                            if (req.url == "/routes.json") {
-                                res.setHeader("Content-Type", "application/json");
+                            if (req.url == '/routes.json') {
+                                res.setHeader('Content-Type', 'application/json');
                                 res.end(JSON.stringify(routes));
                             } else {
                                 next();
                             }
                                             })
-                                              .use(require("connect-npm")({
-                                                  modules: [ "reactor", "stencil" ],
+                                              .use(require('connect-npm')({
+                                                  modules: [ 'reactor', 'stencil' ],
                                                       require: require,
-                                                          format: "/npm/%s.js"
+                                                          format: '/npm/%s.js'
                                                             }))
                                                               .use(function(req, res, next){
                                                                   var url = parse(req.url, true);
@@ -84,7 +84,7 @@ exports.routes = function routes (base) {
 
             stencils.generate(match.route.script, { pathInfo: pathInfo }, step());
         }, function (generated) {
-            response.setHeader("Content-Type", "text/html; charset=utf8");
+            response.setHeader('Content-Type', 'text/html; charset=utf8');
             response.end(serializer(generated.document.documentElement));
             step(null, true)
         })(matches)
