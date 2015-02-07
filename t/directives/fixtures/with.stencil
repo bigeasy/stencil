@@ -1,7 +1,7 @@
 <html>
 <body>
-<% with (person) |bedrockian| %>
-  <p><%=bedrockian.firstName %> <%= bedrockian.lastName %></p>
-<% end %>
+[ with (person) |bedrockian| ] {
+  <p>[<< bedrockian.firstName ] [<< bedrockian.lastName ]</p>
+}
 </body>
 </html>
