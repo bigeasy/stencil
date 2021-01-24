@@ -1,3 +1,0 @@
-[ library ] {
-  [ tag @attribute ]{ <p>[<< $attributes.greeting ]</p>[ block ] {} }
-}

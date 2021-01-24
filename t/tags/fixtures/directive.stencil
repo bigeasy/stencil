@@ -1,5 +1,0 @@
-<html include:d="_directive.stencil">
-<body>
-[ d.directive ]{ <p>[<< greeting ]</p> }
-</body>
-</html>

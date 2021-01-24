@@ -1,5 +1,0 @@
-<html include:a="_attribute.stencil">
-<body>
-[ a.attribute greeting="Hello, World!" ]{ <p>[<< ! this.$attributes ]</p> }
-</body>
-</html>

@@ -18,7 +18,7 @@
 */
 require('arguable')(module, async arguable => {
     arguable.helpIf(arguable.ultimate.help)
-    const delegate = arguable.delegate(require, './stencil.%s', arguable.argv.shift())
+    const delegate = arguable.delegate(require, 'stencil.%s', arguable.argv.shift())
     const child = delegate(arguable.argv)
     arguable.destroyed.then(child.destroy.bind(child))
     return await child.exit

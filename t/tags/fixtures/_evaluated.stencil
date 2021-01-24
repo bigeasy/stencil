@@ -1,9 +1,0 @@
-[ library ] {
-  [ tag @loop ] {
-    <ul>
-      [ each select=($attributes.select) as=($attributes.as) ] {
-        <li>[ value select=($attributes.display) ] {}</li>
-      }
-    </ul>
-  }
-}

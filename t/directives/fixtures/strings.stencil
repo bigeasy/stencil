@@ -1,7 +1,0 @@
-<html>
-<body>
-[ each ([ { string: ")\"" } ]) |object| [object.string + ']'] ] {
-  <p>[<< object.string ]</p>
-}
-</body>
-</html>

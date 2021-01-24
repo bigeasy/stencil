@@ -16,27 +16,25 @@
     },
     "devDependencies":
     {
-                        "proof": "0.0.44",
-                        "uglify-js": "~1.3",
-                        "reactor": "0.0.7",
-                        "connect": "~2",
-                        "request": ">=0",
-                        "htmlparser2": "3.5.1"
+        "proof": "^9.0.3"
     },
     "dependencies":
     {
-                        "xmldom": "0.1.15",
-                        "arguable": "0.0.9",
-                        "cadence": "0.0.23"
+                            "arguable":                     "12.0.5",
+                            "cheerio":                      "1.0.0-rc.5",
+                            "marked":                       "1.2.7",
+                            "pug":                          "3.0.0",
+                            "highlight.js":                 "10.5.0",
+                            "eject":                        "0.2.3"
     },
     "licenses":
     [{
                         "type": "MIT",
                         "url": "http://github.com/bigeasy/stencil/raw/master/LICENSE"
     }],
-    "bin":              "./stencil.bin.js",
+    "bin":              "stencil.bin",
     "scripts":
     {
-                        "test": "proof platform win32 && proof test t/*/*.t.js || t/test"
+                        "test": "proof test/*.t.js"
     }
 }

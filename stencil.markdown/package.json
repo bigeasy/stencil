@@ -1,0 +1,38 @@
+{
+    "name":                 "edify.markdown",
+    "version":              "0.2.1",
+    "description":
+
+      "Markdown generator for static JavaScript.",
+
+    "keywords":
+    [
+                            "documentation", "api", "docs", "cms", "website",
+                            "github", "pages", "html", "markdown", "docco"
+    ],
+    "author":               "Alan Gutierrez <alan@prettyrobots.com>",
+    "homepage":             "https://github.com/bigeasy/edify",
+    "bugs":                 "https://github.com/bigeasy/edify/issues",
+    "license":              "MIT",
+    "repository":
+    {
+                            "type": "git",
+                            "url": "bigeasy/edify"
+    },
+    "dependencies":
+    {
+                            "arguable":                     "^12.0.3",
+                            "cheerio":                      "1.0.0-rc.5",
+                            "marked":                       "1.2.7",
+                            "eject":                        "0.2.3"
+    },
+    "devDependencies":
+    {
+                            "proof":                        "^9.0.2"
+    },
+    "main":                 "markdown.bin",
+    "scripts":
+    {
+                            "test": "proof test/*.test.js"
+    }
+}

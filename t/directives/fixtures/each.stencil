@@ -1,9 +1,0 @@
-<html>
-<body>
-<ul>
-[ each (watchers) |watcher| [watcher.id] ] {
-  <li>[<< watcher.login ]</li>
-}
-</ul>
-</body>
-</html>

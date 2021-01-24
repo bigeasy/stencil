@@ -1,6 +1,0 @@
-[ library ] {
-  [ tag @sub ] {
-    [ tag @child ] { <p>Hello, World!</p> }
-    [ block ] {}
-  }
-}

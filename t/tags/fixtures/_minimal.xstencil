@@ -1,3 +1,0 @@
-<s:library xmlns:s="stencil">
-  <s:tag label="minimal"><p>Hello, World!</p></s:tag>
-</s:library>

@@ -1,5 +1,0 @@
-<html include:b="_bodied.stencil">
-<body>
-[ b.bodied ]{ <p>Hello, World!</p> }
-</body>
-</html>

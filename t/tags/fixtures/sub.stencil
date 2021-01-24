@@ -1,7 +1,0 @@
-<html include:sub="_sub.stencil">
-<body>
-[ sub.sub ] {
-  [ sub.child ] {}
-}
-</body>
-</html>

@@ -1,0 +1,40 @@
+{
+    "name":                 "edify.ls",
+    "version":              "0.2.2",
+    "description":
+
+      "Generate a directory listing.",
+
+    "keywords":
+    [
+                            "documentation", "api", "docs", "cms", "website",
+                            "github", "pages", "html", "markdown", "docco"
+    ],
+    "author":               "Alan Gutierrez <alan@prettyrobots.com>",
+    "homepage":             "https://github.com/bigeasy/edify",
+    "bugs":                 "https://github.com/bigeasy/edify/issues",
+    "license":              "MIT",
+    "repository":
+    {
+                            "type": "git",
+                            "url": "bigeasy/edify"
+    },
+    "dependencies":
+    {
+                            "arguable":                     "^12.0.5",
+                            "extant":                       "^1.0.21"
+    },
+    "devDependencies":
+    {
+                            "proof":                        "^9.0.3"
+    },
+    "main":                 "ls.bin",
+    "scripts":
+    {
+                            "test": "proof test/*.bin.test.js"
+    },
+    "dots":
+    {
+                            "title":                        "Edify List"
+    }
+}

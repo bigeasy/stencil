@@ -1,3 +1,0 @@
-[ library ] {
-  [ tag @conditional ] { [ block ] {} }
-}

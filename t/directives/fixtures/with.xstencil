@@ -1,7 +1,0 @@
-<html xmlns:s="stencil">
-<body>
-<s:with select="person" as="bedrockian">
-  <p><s:value select="bedrockian.firstName"/> <s:value select="bedrockian.lastName"/></p>
-</s:with>
-</body>
-</html>

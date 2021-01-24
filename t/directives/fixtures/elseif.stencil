@@ -1,7 +1,0 @@
-<html>
-<body>
-[ if (value == 'a') ] { <p>A: [<< value ]</p> }
-[ elseif (value == 'b') ] { <p>B: [<< value ]</p> }
-[ else ] { <p>Else: [<< value ]</p> }
-</body>
-</html>

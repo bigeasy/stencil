@@ -1,3 +1,0 @@
-[ library ] {
- [ tag @minimal ]{ <p>Hello, World!</p> }
-}

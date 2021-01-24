@@ -1,3 +1,0 @@
-<s:library xmlns:s="stencil">
-  <s:tag label="attribute"><p><s:value select="$attributes.greeting"/></p><s:block/></s:tag>
-</s:library>

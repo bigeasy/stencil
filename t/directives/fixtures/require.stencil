@@ -1,5 +1,0 @@
-<html require:salutation="greetings.js">
-<body>
-<p>[<< salutation ]</p>
-</body>
-</html>
