@@ -6,7 +6,7 @@ require('proof')(5, async okay => {
     })
     okay(await child.exit, 0, 'exit')
     const json = JSON.parse(child.options.$stdout.read().toString())
-    okay(json.length, 6, 'length')
+    okay(json.length, 8, 'length')
     okay(json[0].stats != null, 'stats')
     okay(/\.bin\.t\.js$/.test(json[0].path), 'path')
     okay(json[0].isFile, 'is file')
