@@ -1,9 +1,5 @@
-/node_modules
-/.proof.out
+/.nyc_output
+/.wiseguy
 /coverage
-
-# todo: temporary
-
-/example/increment/_*
-/example/increment/bundle.js
-/**/node_modules
+/docs
+/node_modules
