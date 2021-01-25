@@ -14,7 +14,9 @@ GitHub Pages generation with Makefile-friendly command line utilities.
 | Coverage:     | https://codecov.io/gh/bigeasy/stencil         |
 | License:      | MIT                                           |
 
+
 ```text
+//{ "mode": "text" }
 npm install stencil
 ```
 
