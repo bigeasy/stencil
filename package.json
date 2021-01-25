@@ -1,40 +1,39 @@
 {
-    "name":             "stencil",
-    "description":      "Asynchronous HTML5 and XML templates for Node.js and the browser.",
-    "author":           "Alan Gutierrez",
-    "version":          "0.0.5",
+    "name":                 "stencil",
+    "version":              "0.1.0-alpha.0",
+    "description":
+
+      "Asynchronous HTML5 and XML templates for Node.js and the browser.",
+
     "keywords":
     [
-                        "template", "html", "xml", "text", "xhtml", "async", "asynchronous"
+                            "template", "html", "xml", "text", "xhtml", "async",
+                            "asynchronous"
     ],
-    "homepage":         "http://bigeasy.github.io/stencil",
-    "bugs":             "https://github.com/bigeasy/stencil/bugs",
+    "author":               "Alan Gutierrez",
+    "homepage":             "http://bigeasy.github.io/stencil",
+    "bugs":                 "https://github.com/bigeasy/stencil/bugs",
     "repository":
     {
-                        "type": "git",
-                        "url": "bigeasy/stencil"
-    },
-    "devDependencies":
-    {
-        "proof": "^9.0.3"
+                            "type": "git",
+                            "url": "bigeasy/stencil"
     },
     "dependencies":
     {
                             "arguable":                     "12.0.6",
                             "cheerio":                      "1.0.0-rc.5",
-                            "marked":                       "1.2.7",
-                            "pug":                          "3.0.0",
+                            "eject":                        "0.2.3",
                             "highlight.js":                 "10.5.0",
-                            "eject":                        "0.2.3"
+                            "marked":                       "1.2.7",
+                            "pug":                          "3.0.0"
     },
-    "licenses":
-    [{
-                        "type": "MIT",
-                        "url": "http://github.com/bigeasy/stencil/raw/master/LICENSE"
-    }],
-    "bin":              "stencil.bin",
+    "devDependencies":
+    {
+                            "proof":                        "^9.0.3"
+    },
+    "bin":                  "stencil.bin",
     "scripts":
     {
-                        "test": "proof test/*.t.js"
+                            "test": "proof test/*.t.js"
     }
 }
