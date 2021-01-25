@@ -31,7 +31,7 @@
     {
                             "proof":                        "^9.0.3"
     },
-    "bin":                  "stencil.bin",
+    "bin":                  "stencil.bin.js",
     "scripts":
     {
                             "test": "proof test/*.t.js"
